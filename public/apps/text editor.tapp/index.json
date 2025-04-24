@@ -1,0 +1,8 @@
+{
+    "name": "Text Editor",
+    "config": {
+        "title": "Text Editor",
+        "icon": "/fs/apps/system/text editor.tapp/icon.svg",
+        "src": "/fs/apps/system/text editor.tapp/index.html"
+    }
+}

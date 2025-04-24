@@ -1,0 +1,8 @@
+.diffuse {
+    filter: blur(10px);
+    background: linear-gradient(120deg, #ff8686, #e09dff, #7ca1ff, #e09dff, #ff8686);
+}
+
+.broken_button {
+    height: 42px;
+}

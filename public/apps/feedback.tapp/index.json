@@ -1,0 +1,13 @@
+{
+    "name": "Feedback",
+    "config": {
+        "title": "Feedback",
+        "icon": "/fs/apps/system/feedback.tapp/icon.svg",
+        "src": "https://forms.gle/m664xxmrugWQADQt9",
+        "proxy": true,
+        "size": {
+            "width": 600,
+            "height": 500
+        }
+    }
+}

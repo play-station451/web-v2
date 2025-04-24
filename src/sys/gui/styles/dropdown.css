@@ -1,0 +1,75 @@
+.dropdown {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.dropdown .dropdown-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 6px 8px 12px;
+    border-radius: 8px;
+    gap: 20px;
+    color: #ffffff;
+    backdrop-filter: blur(20px);
+    box-shadow: 0px 0px 6px 0px #00000052, inset 0 0 0 0.5px #ffffff38;
+    background-color: #ffffff10;
+    font-weight: 700;
+    cursor: var(--cursor-pointer);
+    transition: all 150ms ease-in-out;
+}
+
+.dropdown .dropdown-title:hover {
+    background-color: #ffffff28;
+}
+
+.dropdown .dropdown-title svg {
+    stroke-width: .8px;
+    stroke: #ffffff;
+}
+
+.dropdown .dropdown-options {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    width: 100%;
+    opacity: 1;
+    pointer-events: all;
+    border-radius: 8px;
+    color: #ffffff;
+    backdrop-filter: blur(20px);
+    box-shadow: 0px 0px 6px 0px #00000052, inset 0 0 0 0.5px #ffffff38;
+    background-color: #ffffff10;
+    transition: 150ms ease-in-out;
+    overflow: hidden;
+}
+
+@keyframes not-active {
+    100% {
+        height: 0px;
+    }
+}
+
+.dropdown .dropdown-options:not(.active) {
+    opacity: 0;
+    pointer-events: none;
+    animation: not-active 160ms ease-in-out forwards;
+}
+
+.dropdown .dropdown-options .dropdown-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 8px 12px;
+    font-weight: 600;
+    cursor: var(--cursor-pointer);
+    transition: all 150ms ease-in-out;
+}
+
+.dropdown .dropdown-options .dropdown-option:hover {
+    background-color: #ffffff28;
+}

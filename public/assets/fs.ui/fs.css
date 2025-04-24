@@ -1,0 +1,65 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@media (prefers-color-scheme: light) {
+    :root {
+        --cursor-normal: url("/cursors/light/normal.svg") 6 0, default;
+        --cursor-pointer: url("/cursors/light/pointer.svg") 6 0, pointer;
+        --cursor-text: url("/cursors/light/text.svg") 10 0, text;
+        --cursor-crosshair: url("/cursors/light/crosshair.svg") 0 0, crosshair;
+        --cursor-wait: url("/cursors/light/wait.svg") 0 0, wait;
+    }
+
+    body {
+        background-color: #ffffff;
+        color: #000000c8;
+        cursor: var(--cursor-normal);
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --cursor-normal: url("/cursors/dark/normal.svg") 6 0, default;
+        --cursor-pointer: url("/cursors/dark/pointer.svg") 6 0, pointer;
+        --cursor-text: url("/cursors/dark/text.svg") 10 0, text;
+        --cursor-crosshair: url("/cursors/dark/crosshair.svg") 0 0, crosshair;
+        --cursor-wait: url("/cursors/dark/wait.svg") 0 0, wait;
+    }
+
+    body {
+        background-color: #0e0e0e;
+        color: #ffffffde;
+        cursor: var(--cursor-normal);
+    }
+}
+
+@font-face {
+    font-family: Inter;
+    src: url("/fonts/Inter.ttf") format("truetype");
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: Inter;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 100%;
+}
+::-webkit-scrollbar-thumb {
+    background-color: #ffffff28;
+    border-radius: 8px;
+}
+::-webkit-scrollbar-track {
+    background-color: #ffffff10;
+    border-radius: 8px;
+}

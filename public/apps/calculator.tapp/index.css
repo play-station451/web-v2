@@ -1,0 +1,85 @@
+@font-face {
+    font-family: Inter;
+    src: url("/fonts/Inter.ttf");
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+body {
+    font-family: Inter;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 20px;
+    color: #ffffff;
+    background-color: transparent;
+}
+
+.topbar {
+    height: 96px;
+    padding: 0 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.eq {
+    width: 100%;
+    background-color: transparent;
+    border: none;
+    outline: none;
+    pointer-events: none;
+    color: #ffffff;
+    font-family: Inter;
+    font-size: 48px;
+    font-weight: 800;
+    line-height: 48px;
+    text-align: right;
+}
+
+.buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(5, 1fr);
+    background-color: #ffffff28;
+    gap: 6px;
+    padding: 8px;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    overflow: hidden;
+}
+
+.buttons button {
+    width: 76px;
+    height: 76px;
+    background-color: transparent;
+    border: none;
+    border-radius: 10px;
+    outline: none;
+    font-family: Inter;
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 20px;
+    padding: 0;
+    color: #ffffff;
+    cursor: var(--cursor-pointer);
+    transition: 150ms ease-in-out;
+}
+
+.buttons button svg {
+    width: 26px;
+    height: 26px;
+}
+
+.buttons button:hover {
+    background-color: #ffffff42;
+}
+
+.buttons button.two-space {
+    grid-column: span 2;
+    width: 158px;
+}

@@ -1,0 +1,62 @@
+@keyframes fade-in {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes fade-out {
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+.fade-in {
+    animation: fade-in 150ms ease-in-out forwards;
+}
+
+.fade-out {
+    animation: fade-out 150ms ease-in-out forwards;
+}
+
+body .context-menu {
+    background-color: #2020208c;
+    color: #ffffff;
+}
+
+.context-menu {
+    backdrop-filter: brightness(0.8) blur(100px);
+}
+
+.custom-menu {
+    position: absolute;
+    background-color: #ffffff1f;
+    color: #fff;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    width: 200px;
+    border-radius: 8px;
+    overflow: hidden;
+    z-index: 99999;
+}
+
+.custom-menu-item {
+    background-color: transparent;
+    display: flex;
+    font-size: 15.5px;
+    font-weight: 700;
+    line-height: 18px;
+    padding: 8px 8px;
+    border-color: transparent;
+    transition: 150ms ease-in-out;
+}
+
+body .custom-menu-item:hover {
+    background-color: #ffffff1f;
+}

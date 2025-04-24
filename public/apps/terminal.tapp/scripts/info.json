@@ -1,0 +1,119 @@
+[
+  {
+    "name": "help",
+    "description": "Display this help message",
+    "usage": "help [command]"
+  },
+  {
+    "name": "mkdir",
+    "description": "Create a directory",
+    "usage": "mkdir [directory]"
+  },
+  {
+    "name": "touch",
+    "description": "Create a file",
+    "usage": "touch [file]"
+  },
+  {
+    "name": "rm",
+    "description": "Remove a file or directory",
+    "usage": "rm [file/directory]",
+    "options": {
+      "-r, --recursive": "Remove directories and their contents recursively.",
+      "-f, --force": "Ignore nonexistent files and arguments, never prompt."
+    }
+  },
+  {
+    "name": "rmdir",
+    "description": "Remove a directory",
+    "usage": "rmdir [directory]"
+  },
+  {
+    "name": "cd",
+    "description": "Change directory",
+    "usage": "cd [directory]"
+  },
+  {
+    "name": "ls",
+    "description": "List files in current directory",
+    "usage": "ls"
+  },
+  {
+    "name": "pkg",
+    "description": "Package manager for Terbium",
+    "usage": "pkg <command> [package]",
+    "options": {
+      "install": "Install a package",
+      "remove": "Remove a package",
+      "update": "Update a package",
+      "list": "List all packages"
+    }
+  },
+  {
+    "name": "git",
+    "description": "Git for Terbium",
+    "usage": "git [command]",
+    "options": {
+      "clone": "Clones a repository",
+      "init": "Initiates a blank repository",
+      "checkout": "Switches the remote branch",
+      "add": "Adds Files to Push",
+      "rm": "Removes Files to Push",
+      "status": "Shows status of Pending Changes (Not implemented yet)",
+      "pull": "Pulls Latest Commit from remote repository",
+      "push": "Pushes Latest Commit to remote repository",
+      "fetch": "Fetches Latest repository Information"
+    }
+  },
+  {
+    "name": "sysfetch",
+    "description": "Display system information",
+    "usage": "sysfetch"
+  },
+  {
+    "name": "curl",
+    "description": "Allows you to fetch a script from the internet and run it",
+    "usage": "curl [script url], -s [path]"
+  },
+  {
+    "name": "javascript",
+    "description": "Allows you to run JavaScript code",
+    "usage": "javascript [code] | [file]"
+  },
+  {
+    "name": "ping",
+    "description": "Allows you to ping a site",
+    "usage": "ping [url], -t [pingtime]"
+  },
+  {
+    "name": "echo",
+    "description": "Print text",
+    "usage": "echo [text]"
+  },
+  {
+    "name": "cat",
+    "description": "Display the contents of a file",
+    "usage": "cat [file]"
+  },
+  {
+    "name": "taskkill",
+    "description": "Lets you kill a task",
+    "usage": "taskkill [PID]",
+    "options": {
+      "list": "Lists all Processes"
+    }
+  },
+  {
+    "name": "pkill",
+    "description": "Lets you kill a task",
+    "usage": "pkill [PID]",
+    "options": {
+      "list": "Lists all Processes"
+    }
+  },
+  {
+    "name": "clear",
+    "description": "Clear the console",
+    "usage": "clear"
+  }
+]

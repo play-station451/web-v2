@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Terbium</title>
+    <link rel="stylesheet" href="./app.css">
+</head>
+    <body>
+        <img src="/assets/img/logo.png" alt="TB Logo" class="centered-image">
+        <h4 class="centered-text">Terbium WebOS</h4>
+        <h4 class="centered-text" id="version"></h4>
+        <h4 class="centered-text" id="liquor"></h4>
+        <h4 class="centered-text">Developers: SNOOT, XSTARS, IllusionTBA, Rafflesia</h4>
+        <h4 class="centered-text">&copy; Copyright 2025 TerbiumOS</h4>
+        <h4 class="centered-text">Licensed under the <a href="https://www.gnu.org/licenses/agpl-3.0.en.html" target="_blank">AGPL 3.0 License</a></h4>
+    </body>
+    <script>
+        document.all.liquor.innerText = "Liquor Version: " + parent.anura.version.pretty
+        document.all.version.innerText = `Version: ${parent.tb.system.version()}`
+    </script>
+</html>

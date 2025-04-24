@@ -1,0 +1,389 @@
+@font-face {
+    font-family: Inter;
+    src: url(/fonts/Inter.ttf);
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    font-family: Inter;
+    color: #ffffff;
+}
+
+.topbar {
+    position: relative;
+    color: #ffffff;
+    width: calc(100%);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 8px 8px 8px;
+}
+
+.nav-buttons {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.nav-button {
+    width: 18px;
+    height: 18px;
+    stroke-width: 2px;
+    stroke: currentColor;
+    cursor: var(--cursor-pointer) !important;
+}
+
+.nav-input {
+    outline: none;
+    border: none;
+    background-color: #00000028;
+    color: #ffffff;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-weight: 700;
+    font-family: Inter;
+    font-size: 14.5px;
+}
+
+.nav-input.dir {
+    width: 100%;
+}
+
+button {
+    background-color: transparent;
+    border-color: transparent;
+    color: #ffffff;
+    cursor: var(--cursor-pointer) !important;
+}
+
+button.path-button {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+button.path-button svg {
+    width: 18px;
+    height: 18px;
+}
+
+.icon-button {
+    width: 18px;
+    height: 18px;
+    stroke-width: 2px;
+    stroke: currentColor;
+    cursor: var(--cursor-pointer) !important;
+}
+
+.sidebar {
+    position: relative;
+    width: var(--sidebar-width);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 8px;
+    padding-right: 0;
+    overflow: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #ffffff30 transparent;
+}
+
+.sidebar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background-color: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background-color: #ffffff30;
+    border-radius: 8px;
+    border: 2px solid transparent;
+}
+
+.absolute-path-item {
+    width: max-content;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px 4px 6px;
+    border-radius: 6px;
+    cursor: var(--cursor-pointer) !important;
+    transition: 150ms ease-in-out;
+    user-select: none;
+}
+
+.absolute-path-item:hover {
+    background-color: #ffffff30;
+}
+
+.absolute-path-item .icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.absolute-path-item svg {
+    width: 18px;
+    height: 18px;
+}
+
+.absolute-path-item .title {
+    font-size: 16px;
+    font-weight: 500;
+    margin: 0;
+    padding: 0;
+}
+
+.absolute-path-item .title, .absolute-path-item .icon, .absolute-path-item .icon svg, .absolute-path-item .icon svg path {
+    pointer-events: none;
+}
+
+.collapsible-path .title {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    width: max-content;
+    cursor: var(--cursor-pointer) !important;
+    padding: 4px 6px;
+    border-radius: 6px;
+    transition: 150ms ease-in-out;
+}
+
+.collapsible-path .title h2 {
+    font-size: 18px;
+    font-weight: 800;
+    margin: 0;
+    padding: 0;
+    cursor: default;
+}
+
+.collapsible-path .title .collapsible-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.collapsible-path .title svg.collapsed {
+    transform: rotate(-90deg);
+}
+
+.collapsible-path .title svg, .collapsible-path .title svg path, .collapsible-path .title h2 {
+    pointer-events: none;
+}
+
+.collapsible-path .paths {
+    display: flex;
+    flex-direction: column;
+    padding-left: 10px;
+    width: max-content;
+}
+
+.collapsible-path .paths.collapsed {
+    display: none;
+}
+
+.collapsible-path .path-item {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: max-content;
+    gap: 8px;
+    padding: 4px 8px 4px 6px;
+    border-radius: 6px;
+    cursor: var(--cursor-pointer) !important;
+    transition: 150ms ease-in-out;
+    user-select: none;
+}
+
+.collapsible-path .path-item:hover {
+    background-color: #ffffff30;
+}
+
+.collapsible-path .path-item svg {
+    width: 18px;
+    height: 18px;
+}
+
+.collapsible-path .path-item span {
+    font-size: 16px;
+    font-weight: 500;
+    margin: 0;
+    padding: 0;
+    cursor: default;
+}
+
+.collapsible-path .path-item svg, .collapsible-path .path-item svg path, .collapsible-path .path-item span {
+    pointer-events: none;
+}
+
+main {
+    display: flex;
+    flex-direction: row;
+    height: calc(100% - var(--topbar-height));
+}
+
+.exp {
+    position: relative;
+    width: calc(100% - var(--sidebar-width));
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 8px;
+    overflow: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #ffffff30 transparent;
+}
+
+.exp::-webkit-scrollbar {
+    width: 8px;
+}
+
+.exp::-webkit-scrollbar-track {
+    background-color: transparent;
+}
+
+.exp::-webkit-scrollbar-thumb {
+    background-color: #ffffff30;
+    border-radius: 8px;
+    border: 2px solid transparent;
+}
+
+.exp .path-item {
+    width: max-content;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid transparent;
+    padding: 4px 8px 4px 6px;
+    border-radius: 6px;
+    cursor: var(--cursor-pointer) !important;
+    transition: 150ms ease-in-out;
+    transition-property: background-color;
+    user-select: none;
+}
+
+.exp .path-item.selected {
+    border: 1px solid #ffffff;
+    background-color: #ffffff20;
+}
+
+.exp .path-item:hover {
+    background-color: #ffffff30;
+}
+
+.exp .path-item svg {
+    width: 24px;
+    height: 24px;
+}
+
+.exp .path-item img {
+    width: 24px;
+    height: 24px;
+}
+
+.exp .path-item .icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.exp .path-item .title {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+    padding: 0;
+}
+
+.exp .path-item .title, .exp .path-item .icon, .exp .path-item .icon svg, .exp .path-item .icon svg path {
+    pointer-events: none;
+}
+
+.exp .sd-items {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.exp .sd-items .sd-item {
+    width: max-content;
+    height: max-content;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    border-radius: 6px;
+    transition: 150ms ease-in-out;
+    user-select: none;
+    background-color: #ffffff30;
+}
+
+.exp .sd-items .sd-item .icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.exp .sd-items .sd-item .icon svg {
+    width: 42px;
+    height: 42px;
+}
+
+.exp .sd-items .sd-item .icon img {
+    width: 42px;
+    height: 42px;
+}
+
+.exp .info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.exp .info .title {
+    font-size: 16px;
+    font-weight: 500;
+    margin: 0;
+    padding: 0;
+}
+
+.exp .info .title, .exp .info .icon, .exp .info .icon svg, .exp .info .icon svg path {
+    pointer-events: none;
+}
+
+.exp .info .percent-container {
+    width: 160px;
+    height: 8px;
+    background-color: #ffffff30;
+    border-radius: 16px;
+    border: 1px solid #ffffff30;
+}
+
+.exp .info .percent {
+    display: block;
+    height: 8px;
+    background-color: #ffffff;
+    border-radius: 4px;
+}
+
+.exp .info .percent.low {
+    background-color: #df3a3a;
+}

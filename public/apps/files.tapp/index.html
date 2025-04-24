@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terbium File Manager</title>
+    <link rel="stylesheet" href="./index.css">
+    <link rel="stylesheet" href="./cm.css">
+    <script src="/assets/libs/filer.min.js"></script>
+    <script src="/assets/libs/tailwind.min.js"></script>
+    <script src="./files.com.js"></script>
+    <link rel="stylesheet" href="/assets/materialsymbols.css" />
+  </head>
+  <body>
+    <div class="topbar">
+      <div class="nav-buttons">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="icon-button" id="back" action="back">
+          <path fill-rule="evenodd" d="M7.72 12.53a.75.75 0 010-1.06l7.5-7.5a.75.75 0 111.06 1.06L9.31 12l6.97 6.97a.75.75 0 11-1.06 1.06l-7.5-7.5z" clip-rule="evenodd" />
+        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="icon-button" id="forward" action="forward">
+          <path fill-rule="evenodd" d="M16.28 11.47a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 01-1.06-1.06L14.69 12 7.72 5.03a.75.75 0 011.06-1.06l7.5 7.5z" clip-rule="evenodd" />
+        </svg>
+      </div>
+      <input class="nav-input dir focus-within:outline-none" type="text" />
+      <div class="relative flex">
+        <input class="nav-input search focus-within:outline-none max-w-48" type="text" placeholder="Search" />
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="clear-search absolute size-6 right-1 top-1/2 -translate-y-1/2 stroke-[currentColor] stroke-[1px] opacity-0 pointer-events-none duration-150">
+          <path fill-rule="evenodd" d="M5.47 5.47a.75.75 0 0 1 1.06 0L12 10.94l5.47-5.47a.75.75 0 1 1 1.06 1.06L13.06 12l5.47 5.47a.75.75 0 1 1-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 0 1-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+        </svg>
+      </div>
+    </div>
+    <main>
+      <div class="sidebar"></div>
+      <div class="exp"></div>
+    </main>
+    <script src="./index.js" type="module"></script>
+  </body>
+</html>

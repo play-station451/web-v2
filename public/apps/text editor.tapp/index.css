@@ -1,0 +1,33 @@
+@font-face {
+    font-family: Inter;
+    src: url(/fonts/Inter.ttf);
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    display: flex;
+    font-family: Inter;
+    color: #ffffff;
+    scrollbar-width: thin;
+    scrollbar-color: #ffffff44 transparent;
+    overflow: hidden;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #ffffff44;
+    border-radius: 20px;
+    border: transparent;
+}

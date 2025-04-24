@@ -1,0 +1,8 @@
+{
+    "name": "Media Viewer",
+    "config": {
+        "title": "Media Viewer",
+        "icon": "/fs/apps/system/media viewer.tapp/icon.svg",
+        "src": "/fs/apps/system/media viewer.tapp/index.html"
+    }
+}

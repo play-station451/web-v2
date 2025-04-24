@@ -1,0 +1,14 @@
+{
+    "name": "Calculator",
+    "config": {
+        "title": "Calculator",
+        "icon": "/fs/apps/system/calculator.tapp/icon.svg",
+        "src": "/fs/apps/system/calculator.tapp/index.html",
+        "snapable": false,
+        "maximizable": false,
+        "size": {
+            "width": 338,
+            "height": 556
+        }
+    }
+}

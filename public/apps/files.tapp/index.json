@@ -1,0 +1,12 @@
+{
+    "name": "Files",
+    "config": {
+        "title": "Files",
+        "icon": "/fs/apps/system/files.tapp/icon.svg",
+        "src": "/fs/apps/system/files.tapp/index.html",
+        "size": {
+            "width": 600,
+            "height": 500
+        }
+    }
+}

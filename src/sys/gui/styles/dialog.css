@@ -1,0 +1,144 @@
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fade-out {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+.dialog-container {
+    position: fixed;
+    inset: 0;
+    background-color: #00000078;
+    backdrop-filter: blur(6px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: 150ms ease-in-out;
+    z-index: 9999999999999999999999;
+}
+
+.dialog-container.fade-in {
+    animation: fade-in 150ms ease-in-out;
+}
+
+.dialog-container.fade-out {
+    animation: fade-out 150ms ease-in-out;
+}
+
+@media screen and (max-width: 1920px) {
+    .dialog-container .dialog {
+        min-width: 600px;
+    }
+}
+
+@media screen and (max-width: 800px) {
+    .dialog-container .dialog {
+        min-width: 400px;
+    }
+}
+
+@media screen and (max-width: 645px) {
+    .dialog-container .dialog {
+        min-width: 340px;
+    }
+}
+
+.dialog-container .dialog {
+    display: flex;
+    flex-direction: column;
+    background-color: #ffffff28;
+    color: #ffffff;
+    padding: 10px;
+    gap: 10px;
+    backdrop-filter: blur(100px);
+    border-radius: 12px;
+}
+
+.dialog-container .dialog .dialog-title {
+    font-family: Inter;
+    font-size: 20px;
+    line-height: 20px;
+    font-weight: 700;
+    padding: 4px 0px 4px 4px;
+}
+
+.dialog-container .dialog .dialog-message {
+    font-family: Inter;
+    font-size: 20px;
+    line-height: 20px;
+    font-weight: 700;
+    padding: 4px 0px 4px 4px;
+    text-align: center;
+}
+
+.dialog-container .dialog .dialog-files {
+    position: relative;
+    min-height: 100px;
+    max-height: 300px;
+    background-color: #00000068;
+    border: 2px solid #ffffff28;
+    border-radius: 8px;
+}
+
+.dialog-container .dialog .dialog-buttons {
+    display: flex;
+    justify-content: space-between;
+}
+
+.dialog-container .dialog .dialog-buttons .disabled{
+    background-color: #ffffff10;
+    font-family: Inter;
+    font-size: 16px;
+    font-weight: 800;
+    line-height: 16px;
+    padding: 12px 12px;
+    border-radius: 8px;
+    border: 2px solid #ffffff28;
+    transition: 150ms ease-in-out;
+    cursor: var(--cursor-normal);
+    z-index: -999;
+}
+
+.dialog-container .dialog .dialog-buttons .dialog-action-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.dialog-container .dialog .dialog-input {
+    background-color: #ffffff38;
+    border: none;
+    outline: none;
+    color: #ffffff;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: 150ms ease-in-out;
+    cursor: var(--cursor-text);
+    font-weight: 600;
+}
+
+.dialog-container .dialog .file-info {
+    margin-top: 10px;
+    background-color: #21212130;
+}
+
+.dialog-container .dialog .file-info:hover {
+    margin-top: 10px;
+    background-color: #58585830;
+}
+
+.dialog-container .dialog .file-name {
+    margin-top: -34px;
+    margin-left: 56px;
+}
