@@ -4,7 +4,7 @@
   "version": "2.0.0-beta",
   "type": "module",
   "scripts": {
-    "start": "vite build && tsx bootstrap.ts",
+    "start": "npm run build && tsx bootstrap.ts",
     "start:nobuild": "tsx bootstrap.ts",
     "build-apps-json": "tsx bootstrap.ts --apps-only",
     "dev": "tsx bootstrap.ts --dev && vite dev",

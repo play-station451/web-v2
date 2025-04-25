@@ -59,6 +59,7 @@ export async function BuildApps() {
     exec("git rev-parse HEAD", (error, stdout, stderr) => {
         if (error || stderr) {
             consola.error("Failed to get git commit hash");
+            fs.writeFileSync(path.join(__dirname, "./src/hash.json"), JSON.stringify({ hash: "2b14b5", repository: "terbiumos/web-v2"}, null, 2), "utf-8");
         } else {
             const hash = stdout.trim();
             exec("git remote get-url origin", (remoteError, remoteStdout, remoteStderr) => {
