@@ -1,10 +1,16 @@
 # Security Policy
 
-### Supported Versions
+### Supported Terbium Versions
 
 | Version | Supported |
 | ------- | --------- |
-| 2.0.0   | ✅ |
+| 2.0.0-beta   | ✅ |
+
+### Supported Liquor Versions
+
+| Version | Supported |
+| ------- | --------- |
+| 2.1.0 (stable) | ✅ |
 
 ## Reporting a Vulnerability
 
