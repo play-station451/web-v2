@@ -441,7 +441,7 @@ export default function Setup() {
         }, 150);
 
         return (
-            <div className={`absolute bottom-2.5 left-2.5 right-2.5 h-max flex justify-center items-center`}>
+            <div className={`absolute bottom-2.5 left-2.5 right-2.5 h-max flex justify-center items-center max-w-full overflow-x-auto overflow-y-hidden`}>
                 {
                     currentStep === 1 ? (
                         <button ref={(el) => {currentMotionEl.current = el}} className="translate-y-8 opacity-0 cursor-pointer bg-[#ffffff0a] text-[#ffffff38] border-[#ffffff22] hover:bg-[#ffffff10] hover:text-[#ffffff8d] focus:bg-[#ffffff1f] focus:text-[#ffffff8d] focus:border-[#73a9ffd6] focus:ring-[#73a9ff74] focus:outline-hidden focus:ring-2 ring-[transparent] ring-0 border-[1px] font-[600] px-[20px] py-[8px] rounded-[6px] duration-150" onMouseDown={() => {
@@ -455,8 +455,10 @@ export default function Setup() {
                 }
                 {
                     currentStep > 1 ? (
-                        <div ref={(el) => {currentStep < 4 && (currentMotionEl.current = el)}} className={`${currentStep === 2 && beforeSetup !== 3 && "translate-y-8 opacity-0"} duration-150 w-full flex justify-between`}>
-                            <button className="cursor-pointer bg-[#ffffff0a] text-[#ffffff38] border-[#ffffff22] hover:bg-[#ffffff10] hover:text-[#ffffff8d] focus:bg-[#ffffff1f] focus:text-[#ffffff8d] focus:border-[#73a9ffd6] focus:ring-[#73a9ff74] focus:outline-hidden focus:ring-2 ring-[transparent] ring-0 border-[1px] font-[600] px-[20px] py-[8px] rounded-[6px] duration-150" onMouseDown={Back}>Previous</button>
+                        <div ref={(el) => {currentStep < 4 && (currentMotionEl.current = el)}} className={`${currentStep === 2 && beforeSetup !== 3 && "translate-y-8 opacity-0"} duration-150 w-full flex flex-wrap justify-between gap-2 max-w-full`}>
+                            {currentStep < 5 && (
+                                <button className={`cursor-pointer bg-[#ffffff0a] text-[#ffffff38] border-[#ffffff22] hover:bg-[#ffffff10] hover:text-[#ffffff8d] focus:bg-[#ffffff1f] focus:text-[#ffffff8d] focus:border-[#73a9ffd6] focus:ring-[#73a9ff74] focus:outline-hidden focus:ring-2 ring-[transparent] ring-0 border-[1px] font-[600] px-[20px] py-[8px] rounded-[6px] duration-150 ${currentStep === 5 || currentStep === 4 ? "translate-y-8 opacity-0 pointer-events-none" : ""}`} onMouseDown={Back}>Previous</button>
+                            )}
                             <button ref={(el) => {
                                 currentStep === 4 && (currentMotionEl.current = el);
                             }} className={`${currentStep === 5 && "translate-y-8 opacity-0"} cursor-pointer bg-[#ffffff0a] text-[#ffffff38] border-[#ffffff22] hover:bg-[#ffffff10] hover:text-[#ffffff8d] focus:bg-[#ffffff1f] focus:text-[#ffffff8d] focus:border-[#73a9ffd6] focus:ring-[#73a9ff74] focus:outline-hidden focus:ring-2 ring-[transparent] ring-0 border-[1px] font-[600] px-[20px] py-[8px] rounded-[6px] duration-150`} onMouseDown={() => {

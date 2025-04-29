@@ -154,7 +154,7 @@ export async function Updater() {
             consola.error("Failed to get local repository URL");
             return;
         }
-        const repo = `https://raw.githubusercontent.com/${remoteStdout.trim().replace("https://github.com/", "")}/refs/heads/main/package.json` || "https://raw.githubusercontent.com/TerbiumOS/web-react/refs/heads/main/package.json";
+        const repo = `https://raw.githubusercontent.com/${remoteStdout.trim().replace("https://github.com/", "").replace(".git", "")}/refs/heads/main/package.json` || "https://raw.githubusercontent.com/TerbiumOS/web-react/refs/heads/main/package.json";
         try {
             const response = await fetch(repo);
             const ver = (await response.json()).version;

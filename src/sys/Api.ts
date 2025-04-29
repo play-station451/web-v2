@@ -367,7 +367,6 @@ export default async function Api() {
                         sync: "/scramjet/scramjet.sync.js",
                     },
                     defaultFlags: {
-                        serviceworker: true,
                         rewriterLogs: false,
                     },
                     codec: {
