@@ -44,7 +44,7 @@ export default function Setup() {
             "password": pass,
             "pfp": data["pfp"],
             "perm": data["perm"],
-            "proxy": data["proxy"]
+            "proxy": sessionStorage.getItem("selectedProxy") || "Ultraviolet",
         }), "utf8")
         await Filer.fs.promises.writeFile("/system/etc/terbium/sudousers.json", JSON.stringify([usr]), "utf8")
         await Filer.fs.promises.mkdir(`/home/${usr}/documents/`)
@@ -85,6 +85,7 @@ export default function Setup() {
             window.location.reload()
             sessionStorage.setItem('firstRun', 'true')
         }
+        sessionStorage.removeItem("new-user");
     }
 
     const Step1 = () => {
