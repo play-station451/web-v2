@@ -7,7 +7,7 @@
     "start": "npm run build && tsx bootstrap.ts",
     "start:nobuild": "tsx bootstrap.ts",
     "build-apps-json": "tsx bootstrap.ts --apps-only",
-    "build-static": "touch .env && vite build",
+    "build-static": "touch .env && tsx bootstrap.ts --apps-only && vite build",
     "dev": "tsx bootstrap.ts --dev && vite dev",
     "build": "tsx bootstrap.ts --apps-only && vite build",
     "lint": "eslint .",
