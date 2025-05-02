@@ -24,6 +24,8 @@
 
 ## <span style="color: #32ae62;">Setup</span>
 
+> <span style="font-family: url('https://fonts.googleapis.com/css2?family=Roboto&display=swap'); color: #ffd900;">⚠</span> <span style="color: #ffd900;">NOTE:</span> Terbium **WILL NOT** build on versions of Node older than version 20.
+
 To get started its pretty easy you need either npm or pnpm which can be installed by running: `npm i -g pnpm` and then just need to the run following command
 
 ```bash
