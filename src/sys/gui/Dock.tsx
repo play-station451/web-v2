@@ -43,6 +43,7 @@ const Dock: FC<IDockProps> = ({ pinned }) => {
 
     const startRef = useRef<HTMLDivElement>(null);
     const searchRef = useRef<HTMLInputElement>(null);
+    const searchDockRef = useRef<HTMLDivElement>(null);
     const [searchHasText, setSearchHasText] = useState<boolean>((searchRef.current?.value?.length ?? 0) >= 1);
     const [searchActive, setSearchActive] = useState<boolean>(false);
     const placeholderRef = useRef<HTMLSpanElement>(null);
@@ -85,6 +86,69 @@ const Dock: FC<IDockProps> = ({ pinned }) => {
         )
     )
 
+    const openStart = (focusSearch: boolean) => {
+        const clickElsewhere = (e: MouseEvent) => {
+            if(e.target !== startRef.current && e.target !== startButtonRef.current && !startRef.current?.contains(e.target as Node) && !searchDockRef.current?.contains(e.target as Node)) {
+                setStartOpen(false);
+                setSearchHasText(false);
+                if (searchRef.current) {
+                    searchRef.current.value = "";
+                }
+                const systemApps = systemAppsRef.current;
+                const pinnedApps = pinnedAppsRef.current;
+                if(systemApps !== null && pinnedApps !== null) {
+                    const systemAppsChildren = systemApps.children;
+                    const pinnedAppsChildren = pinnedApps.children;
+                    for(let i = 0; i < systemAppsChildren.length; i++) {
+                        const child: Element = systemAppsChildren[i];
+                        child.classList.remove("hidden");
+                        child.classList.remove("-translate-x-2");
+                        child.classList.remove("opacity-0");
+                    }
+                    for(let i = 0; i < pinnedAppsChildren.length; i++) {
+                        const child: Element = pinnedAppsChildren[i];
+                        child.classList.remove("hidden");
+                        child.classList.remove("-translate-x-2");
+                        child.classList.remove("opacity-0");
+                    }
+                }
+                window.removeEventListener("mousedown", clickElsewhere);
+            }
+        }
+        window.addEventListener("mousedown", clickElsewhere);
+        setStartOpen(true);
+        if (focusSearch) {
+            setTimeout(() => {
+                searchRef.current?.focus()
+            }, 150)
+        }
+        setTimeout(() => {
+            if (searchRef.current) {
+                searchRef.current.value = "";
+            }
+            setSearchHasText(false);
+            const systemApps = systemAppsRef.current;
+            const pinnedApps = pinnedAppsRef.current;
+            if(systemApps !== null && pinnedApps !== null) {
+                const systemAppsChildren = systemApps.children;
+                const pinnedAppsChildren = pinnedApps.children;
+                for(let i = 0; i < systemAppsChildren.length; i++) {
+                    const child: Element = systemAppsChildren[i];
+                    child.classList.remove("hidden");
+                    child.classList.remove("-translate-x-2");
+                    child.classList.remove("opacity-0");
+                }
+                for(let i = 0; i < pinnedAppsChildren.length; i++) {
+                    const child: Element = pinnedAppsChildren[i];
+                    child.classList.remove("hidden");
+                    child.classList.remove("-translate-x-2");
+                    child.classList.remove("opacity-0");
+                }
+            }
+        }
+        , 150)
+    }
+
     return (
         <div className="flex relative justify-center pb-[6px] z-9999999">
             <div ref={startRef} className={`
@@ -107,7 +171,7 @@ const Dock: FC<IDockProps> = ({ pinned }) => {
                             setSearchActive(true);
                         }} onBlur={() => {
                             setSearchActive(false);
-                        }} onChange={(e: any) => {
+                        }} onInput={(e: any) => {
                             if(e.target.value.length > 0) {
                                 setSearchHasText(true);
                             } else {
@@ -211,44 +275,19 @@ const Dock: FC<IDockProps> = ({ pinned }) => {
                         }
                     </div>
                 </div>
-                <span ref={searchMatchRef} className={`absolute top-1/2 left-1/2 -translate-x-1/2 font-[700] duration-150 ${searchMatch === false ? "opacity-0 pointer-events-none" : "opacity-100 pointer-events-auto"}`}>No Search Match.</span>
+                <span ref={searchMatchRef} className={`absolute top-1/2 left-1/2 -translate-x-1/2 font-black duration-150 ${searchMatch === false ? "opacity-0 pointer-events-none" : "opacity-100 pointer-events-auto"}`}>No Search Match.</span>
             </div>
             <div className="flex items-center gap-2">
-                <div className="shadow-tb-border-shadow backdrop-blur-[8px] bg-[#2020208c] p-2 rounded-[8px]">
-                    <svg ref={startButtonRef} viewBox="0 0 24 24" fill="currentColor" className="cursor-pointer w-7 h-7" onClick={async () => {
-                        const clickElsewhere = (e: MouseEvent) => {
-                            if(e.target !== startRef.current && e.target !== startButtonRef.current && !startRef.current?.contains(e.target as Node)) {
-                                setStartOpen(false);
-                                setSearchHasText(false);
-                                if (searchRef.current) {
-                                    searchRef.current.value = "";
-                                }
-                                const systemApps = systemAppsRef.current;
-                                const pinnedApps = pinnedAppsRef.current;
-                                if(systemApps !== null && pinnedApps !== null) {
-                                    const systemAppsChildren = systemApps.children;
-                                    const pinnedAppsChildren = pinnedApps.children;
-                                    for(let i = 0; i < systemAppsChildren.length; i++) {
-                                        const child: Element = systemAppsChildren[i];
-                                        child.classList.remove("hidden");
-                                        child.classList.remove("-translate-x-2");
-                                        child.classList.remove("opacity-0");
-                                    }
-                                    for(let i = 0; i < pinnedAppsChildren.length; i++) {
-                                        const child: Element = pinnedAppsChildren[i];
-                                        child.classList.remove("hidden");
-                                        child.classList.remove("-translate-x-2");
-                                        child.classList.remove("opacity-0");
-                                    }
-                                }
-                                window.removeEventListener("mousedown", clickElsewhere);
-                            }
-                        }
-                        window.addEventListener("mousedown", clickElsewhere);
-                        setStartOpen(prev => !prev);
-                    }}>
+                <div className="flex items-center gap-1.5 shadow-tb-border-shadow backdrop-blur-[8px] bg-[#2020208c] p-2 rounded-[8px]">
+                    <svg ref={startButtonRef} viewBox="0 0 24 24" fill="currentColor" className="cursor-pointer w-7 h-7" onClick={() => openStart(false)}>
                         <path className="pointer-events-none" fillRule="evenodd" d="M3 6a3 3 0 0 1 3-3h2.25a3 3 0 0 1 3 3v2.25a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V6Zm9.75 0a3 3 0 0 1 3-3H18a3 3 0 0 1 3 3v2.25a3 3 0 0 1-3 3h-2.25a3 3 0 0 1-3-3V6ZM3 15.75a3 3 0 0 1 3-3h2.25a3 3 0 0 1 3 3V18a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v-2.25Zm9.75 0a3 3 0 0 1 3-3H18a3 3 0 0 1 3 3V18a3 3 0 0 1-3 3h-2.25a3 3 0 0 1-3-3v-2.25Z" clipRule="evenodd" />
                     </svg>
+                    <div ref={searchDockRef} className="flex items-center min-w-34 gap-1 p-2 bg-[#ffffff10] rounded-full cursor-text shadow-tb-border-shadow" onMouseDown={() => openStart(true)}>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-4 text-[#ffffff] pointer-events-none stroke-1 stroke-current">
+                            <path fillRule="evenodd" d="M10.5 3.75a6.75 6.75 0 1 0 0 13.5 6.75 6.75 0 0 0 0-13.5ZM2.25 10.5a8.25 8.25 0 1 1 14.59 5.28l4.69 4.69a.75.75 0 1 1-1.06 1.06l-4.69-4.69A8.25 8.25 0 0 1 2.25 10.5Z" clipRule="evenodd" />
+                        </svg>
+                        <span className="leading-none text-[#ffffffa6] font-bold pointer-events-auto">Search</span>
+                    </div>
                 </div>
                 <div ref={openAppsRef} className={`
                     shadow-tb-border-shadow backdrop-blur-[8px] bg-[#2020208c]
