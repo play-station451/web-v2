@@ -2,7 +2,7 @@
     "name": "Browser",
     "config": {
         "title": "Browser",
-        "icon": "/apps/browser.tapp/icon.svg",
+        "icon": "/fs/apps/browser.tapp/icon.svg",
         "src": "/apps/browser.tapp/index.html"
     }
 }

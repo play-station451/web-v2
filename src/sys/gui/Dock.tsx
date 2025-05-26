@@ -2,7 +2,8 @@ import { FC, ReactNode, useEffect, useRef, useState } from "react"
 import { MagnifyingGlassIcon, ChevronRightIcon, PuzzlePieceIcon } from "@heroicons/react/24/solid"
 import "./styles/dock.css"
 import { dirExists, Filer, isURL, WindowConfig } from "../types"
-import { useWindowStore } from "../Store"
+import { useWindowStore, useSearchMenuStore } from "../Store"
+import SearchMenu from "./Search"
 
 export type TDockItem = {
     className?: string;
@@ -16,6 +17,7 @@ export type TDockItem = {
     pid?: string
     wid?: string
     proxy?: boolean
+    user?: string
     onClick?: (e: MouseEvent) => void
     onContextMenu?: (e: MouseEvent) => void
 }
@@ -36,10 +38,20 @@ interface IDockProps {
     pinned: Array<TDockItem> | null
 }
 
+interface IUser {
+    pfp: string | undefined
+    username: string | undefined
+}
+
 const Dock: FC<IDockProps> = ({ pinned }) => {
     const windowStore = useWindowStore();
+    const searchMenuStore = useSearchMenuStore();
 
     const [isStartOpen, setStartOpen] = useState<boolean>(false);
+    const [user, setUser] = useState<IUser>({
+        pfp: undefined,
+        username: undefined
+    });
 
     const startRef = useRef<HTMLDivElement>(null);
     const searchRef = useRef<HTMLInputElement>(null);
@@ -54,6 +66,7 @@ const Dock: FC<IDockProps> = ({ pinned }) => {
     const searchMatchRef = useRef<HTMLDivElement>(null);
     const pinnedAppsDockRef = useRef<HTMLDivElement>(null);
     const openedAppsDockRef = useRef<HTMLDivElement>(null);
+    const userOptsRef = useRef<HTMLDivElement>(null);
     const [searchMatch, setSearchMatch] = useState<boolean>(false);
     const [systemApps, setSysApps] = useState<Array<TDockItem>>([]);
     const [pins, setPins] = useState<Array<TDockItem>>([]);
@@ -73,9 +86,26 @@ const Dock: FC<IDockProps> = ({ pinned }) => {
         return () => window.removeEventListener("updApps", fetchData)
     }, [])
 
+    useEffect(() => {
+        const fetchUser = async () => {
+            const pfp = await window.tb.user.pfp();
+            const username = await window.tb.user.username();
+            const user = {
+                pfp: pfp,
+                username: username
+            }
+            setUser(user);
+        }
+        window.addEventListener("accUpd", fetchUser);
+        fetchUser();
+        return () => window.removeEventListener("accUpd", fetchUser);
+    }, [])
+
     const filteredSysApps = (systemApps).filter((item, index, self) =>
         index === self.findIndex((t) =>
             t.title === item.title && t.icon === item.icon && t.src === item.src
+        ) && (
+            !item.user || item.user === user.username
         )
     )
 
@@ -86,11 +116,39 @@ const Dock: FC<IDockProps> = ({ pinned }) => {
         )
     )
 
-    const openStart = (focusSearch: boolean) => {
+    var openStart = (focusSearch?: boolean | null, close?: boolean) => {
+        if(close) {
+            setStartOpen(false);
+            setSearchHasText(false);
+            setSearchMatch(false);
+            if (searchRef.current) {
+                searchRef.current.value = "";
+            }
+            const systemApps = systemAppsRef.current;
+            const pinnedApps = pinnedAppsRef.current;
+            if(systemApps !== null && pinnedApps !== null) {
+                const systemAppsChildren = systemApps.children;
+                const pinnedAppsChildren = pinnedApps.children;
+                for(let i = 0; i < systemAppsChildren.length; i++) {
+                    const child: Element = systemAppsChildren[i];
+                    child.classList.remove("hidden");
+                    child.classList.remove("-translate-x-2");
+                    child.classList.remove("opacity-0");
+                }
+                for(let i = 0; i < pinnedAppsChildren.length; i++) {
+                    const child: Element = pinnedAppsChildren[i];
+                    child.classList.remove("hidden");
+                    child.classList.remove("-translate-x-2");
+                    child.classList.remove("opacity-0");
+                }
+            }
+            return;
+        }
         const clickElsewhere = (e: MouseEvent) => {
             if(e.target !== startRef.current && e.target !== startButtonRef.current && !startRef.current?.contains(e.target as Node) && !searchDockRef.current?.contains(e.target as Node)) {
                 setStartOpen(false);
                 setSearchHasText(false);
+                setSearchMatch(false);
                 if (searchRef.current) {
                     searchRef.current.value = "";
                 }
@@ -116,7 +174,8 @@ const Dock: FC<IDockProps> = ({ pinned }) => {
             }
         }
         window.addEventListener("mousedown", clickElsewhere);
-        setStartOpen(true);
+        setStartOpen(prev => !prev);
+        openSearchMenu(true);
         if (focusSearch) {
             setTimeout(() => {
                 searchRef.current?.focus()
@@ -127,6 +186,7 @@ const Dock: FC<IDockProps> = ({ pinned }) => {
                 searchRef.current.value = "";
             }
             setSearchHasText(false);
+            setSearchMatch(false);
             const systemApps = systemAppsRef.current;
             const pinnedApps = pinnedAppsRef.current;
             if(systemApps !== null && pinnedApps !== null) {
@@ -145,27 +205,47 @@ const Dock: FC<IDockProps> = ({ pinned }) => {
                     child.classList.remove("opacity-0");
                 }
             }
+        }, 200)
+    }
+
+    var openSearchMenu = (close?: boolean) => {
+        const clearout = () => {
+            searchMenuStore.setOpen(false);
         }
-        , 150)
+        if(close) {
+            clearout();
+            return
+        }
+        const clickElsewhere = (e: MouseEvent) => {
+            if(e.target !== searchDockRef.current && e.target !== startButtonRef.current && !searchDockRef.current?.contains(e.target as Node) && !searchMenuStore.searchMenuRef.current?.contains(e.target as Node)) {
+                clearout();
+                window.removeEventListener("mousedown", clickElsewhere);
+            }
+        }
+        window.addEventListener("mousedown", clickElsewhere);
+        searchMenuStore.setOpen(!searchMenuStore.open);
+        openStart(null, true)
     }
 
     return (
-        <div className="flex relative justify-center pb-[6px] z-9999999">
+        <div className="flex flex-col relative justify-center items-center pb-[6px] z-9999999">
+            <SearchMenu className={`absolute ${searchMenuStore.open ? "bottom-[calc(12px+48px)] duration-150" : "opacity-0 pointer-events-none bottom-[40px] duration-200"}`} />
             <div ref={startRef} className={`
                 absolute flex flex-col
-                bg-[#2020208c] shadow-tb-border-shadow backdrop-blur-[8px] p-2 rounded-xl
+                bg-[#2020208c] shadow-tb-border-shadow backdrop-blur-sm rounded-xl overflow-hidden
                 w-max min-w-[440px] h-max min-h-[200px] ease-in
-                ${isStartOpen ? "opacity-100 bottom-[calc(6px+54px)] duration-150" : "opacity-0 pointer-events-none bottom-[calc(6px+14px)] duration-200"}
+                ${isStartOpen ? "bottom-[calc(12px+48px)] duration-150" : "opacity-0 pointer-events-none bottom-[40px] duration-200"}
                 ${searchHasText ? "scale-110" : ""}
             `} style={{backgroundImage: "url(/assets/img/grain.png)"}}>
                 <div className={`flex gap-2 items-center
-                        ${
-                            isStartOpen ? "" : "translate-y-2 opacity-0"
-                        } duration-700
+                    p-2 pb-0 text-[#ffffffa4]
+                    ${
+                        isStartOpen ? "" : "translate-y-2 opacity-0"
+                    } duration-700
                 `}>
-                    <MagnifyingGlassIcon className="w-6 h-6 text-white stroke-current stroke-[1.4px]" />
+                    <MagnifyingGlassIcon className="size-6 text-[#ffffff86] stroke-current stroke-[2px]" />
                     <div className="relative flex items-center w-full">
-                        <span ref={placeholderRef} className={`absolute font-[680] text-lg pointer-events-none duration-150 ${searchHasText ? "opacity-0" : searchActive ? "opacity-100" : "opacity-75"}`}>Search</span>
+                        <span ref={placeholderRef} className={`absolute font-[680] text-lg pointer-events-none duration-150 ${searchHasText ? "opacity-0 -translate-x-8" : searchActive ? "opacity-100" : "opacity-75"}`}>Search</span>
                         <input ref={searchRef} className={`bg-transparent focus-within:outline-hidden text-lg font-[680] cursor-[var(--cursor-text)] w-full`} type="text"
                         onFocus={() => {
                             setSearchActive(true);
@@ -228,10 +308,11 @@ const Dock: FC<IDockProps> = ({ pinned }) => {
                         }} />
                     </div>
                 </div>
-                <div className={`flex justify-between items-center h-full w-full gap-2
-                        ${
-                            isStartOpen ? "" : "translate-y-4 opacity-0"
-                        } duration-1000
+                <div className={`relative flex items-center min-h-[104px] h-[196px] w-full gap-2 p-2 pt-0
+                    ${
+                        isStartOpen ? "" : "translate-y-4 opacity-0"
+                    } duration-1000
+                    ${searchMatch ? "justify-center" : "justify-between"}
                 `}>
                     <div ref={systemAppsRef} className={`
                         grid ${pins.length > 0 ? "max-h-[188px] grid-cols-2" : "w-full grid-cols-3"} gap-1 overflow-y-auto
@@ -253,40 +334,109 @@ const Dock: FC<IDockProps> = ({ pinned }) => {
                             ))
                         }
                     </div>
-                    <div ref={pinnedAppsRef} className={`
-                        flex flex-col bg-[#ffffff10] max-h-[200px] overflow-y-auto w-max rounded-lg last:rounded-b-lgration-1000
-                    `}>
-                        {
-                            pins.length > 0 ? pins.map((item, index) => (
-                                <StartItem className="first:rounded-t-lg last:rounded-b-lg" inPins pid={undefined} key={index} title={item.title} icon={item.icon} onClick={(e: MouseEvent) => {
-                                    if(e.button === 0)
-                                    item.onClick?.(new MouseEvent('click'));
-                                    windowStore.addWindow({
-                                        src: item.src,
-                                        icon: typeof item.icon === 'string' ? item.icon : undefined,
-                                        size: item.size,
-                                        title: item.title,
-                                        proxy: item.proxy,
-                                        snapable: item.snapable
-                                    });
-                                    setStartOpen(false);
-                                }} />
-                            )) : null
-                        }
+                    {
+                        pins.length > 0 ? (
+                            <div className="flex flex-col gap-2 h-full">
+                                <span className="font-semibold">Pinned Apps</span>
+                                <div ref={pinnedAppsRef} className={`
+                                    flex flex-col bg-[#ffffff10] max-h-[200px] overflow-y-auto w-max rounded-lg last:rounded-b-lgration-1000
+                                `}>
+                                    {
+                                            pins.length > 0 ? pins.map((item, index) => (
+                                                <StartItem className="first:rounded-t-lg last:rounded-b-lg" inPins pid={undefined} key={index} title={item.title} icon={item.icon} onClick={(e: MouseEvent) => {
+                                                    if(e.button === 0)
+                                                    item.onClick?.(new MouseEvent('click'));
+                                                    windowStore.addWindow({
+                                                        src: item.src,
+                                                        icon: typeof item.icon === 'string' ? item.icon : undefined,
+                                                        size: item.size,
+                                                        title: item.title,
+                                                        proxy: item.proxy,
+                                                        snapable: item.snapable
+                                                    });
+                                                    setStartOpen(false);
+                                                }} />
+                                            )) : null
+                                    }
+                                </div>
+                            </div>
+                        ) : null
+                    }
+                    <div ref={searchMatchRef} className={"absolute top-1/2 left-1/2 -translate-1/2 flex gap-1.5 duration-150" + " " + `${searchMatch ? "" : "opacity-0 pointer-events-none -translate-x-3"}`}>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-6">
+                            <path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2Zm1.5 14.25h-3v-1.5h3v1.5Zm0-3h-3V7.5h3v5.75Z" />
+                        </svg>
+                        <span className="text-sm">No results found</span>
                     </div>
                 </div>
-                <span ref={searchMatchRef} className={`absolute top-1/2 left-1/2 -translate-x-1/2 font-black duration-150 ${searchMatch === false ? "opacity-0 pointer-events-none" : "opacity-100 pointer-events-auto"}`}>No Search Match.</span>
+                <div ref={userOptsRef} className="flex items-center gap-2 p-2 bg-[#00000048] rounded-b-lg last:rounded-b-lg">
+                    <div className="flex items-center gap-2 p-1.5 rounded-md hover:bg-[#ffffff19] hover:scale-95 duration-150 cursor-pointer" onClick={() => {
+                        window.tb.contextmenu.create({
+                            x: userOptsRef.current?.getBoundingClientRect().x ?? 0,
+                            y: userOptsRef.current ? userOptsRef.current.getBoundingClientRect().y - 75 : 0,
+                            options: [
+                                { text: "Manage Account", click: () => {
+                                    window.tb.window.create({
+                                        title: "Settings",
+                                        src: "/fs/apps/system/settings.tapp/index.html",
+                                        icon: "/fs/apps/system/settings.tapp/icon.svg",
+                                        single: true,
+                                        message: JSON.stringify({page: "privacy"})
+                                    })
+                                }},
+                                { text: "Sign out", click: () => {
+                                    sessionStorage.setItem("logged-in", "false")
+                                    window.location.reload()
+                                }}
+                            ]
+                        })
+                    }}>
+                        <img className="size-8 rounded-full pointer-events-none" src={user.pfp} alt={user.username} />
+                        <span className="font-bold text-lg pointer-events-none">{user.username}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-[#ffffff58]">
+                        <span className="font-medium hover:text-[#ffffff98] cursor-pointer duration-150" onClick={() => {
+                            window.tb.window.create({
+                                title: "Settings",
+                                src: "/fs/apps/system/settings.tapp/index.html",
+                                icon: "/fs/apps/system/settings.tapp/icon.svg",
+                            })
+                            setStartOpen(false);
+                        }}>Settings</span>
+                        <span className="font-medium hover:text-[#ffffff98] cursor-pointer duration-150" onClick={() => {
+                            window.tb.window.create({
+                                title: "About",
+                                src: "/fs/apps/system/about.tapp/index.html",
+                                icon: "/fs/apps/system/about.tapp/icon.svg",
+                            })
+                            setStartOpen(false);
+                        }}>About</span>
+                        <span className="font-medium hover:text-[#ffffff98] cursor-pointer duration-150" onClick={() => {
+                            sessionStorage.setItem("ldir", `/home/${user.username}/Documents`)
+                            window.tb.window.create({
+                                "title": "Files",
+                                "icon": "/fs/apps/system/files.tapp/icon.svg",
+                                "src": "/fs/apps/system/files.tapp/index.html",
+                                "size": {
+                                    "width": 600,
+                                    "height": 500
+                                }
+                            })
+                            setStartOpen(false);
+                        }}>Documents</span>
+                    </div>
+                </div>
             </div>
             <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1.5 shadow-tb-border-shadow backdrop-blur-[8px] bg-[#2020208c] p-2 rounded-[8px]">
                     <svg ref={startButtonRef} viewBox="0 0 24 24" fill="currentColor" className="cursor-pointer w-7 h-7" onClick={() => openStart(false)}>
                         <path className="pointer-events-none" fillRule="evenodd" d="M3 6a3 3 0 0 1 3-3h2.25a3 3 0 0 1 3 3v2.25a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V6Zm9.75 0a3 3 0 0 1 3-3H18a3 3 0 0 1 3 3v2.25a3 3 0 0 1-3 3h-2.25a3 3 0 0 1-3-3V6ZM3 15.75a3 3 0 0 1 3-3h2.25a3 3 0 0 1 3 3V18a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v-2.25Zm9.75 0a3 3 0 0 1 3-3H18a3 3 0 0 1 3 3V18a3 3 0 0 1-3 3h-2.25a3 3 0 0 1-3-3v-2.25Z" clipRule="evenodd" />
                     </svg>
-                    <div ref={searchDockRef} className="flex items-center min-w-34 gap-1 p-2 bg-[#ffffff10] rounded-full cursor-text shadow-tb-border-shadow" onMouseDown={() => openStart(true)}>
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-4 text-[#ffffff] pointer-events-none stroke-1 stroke-current">
+                    <div ref={searchDockRef} className="flex items-center min-w-34 gap-1 p-2 bg-[#ffffff10] rounded-full cursor-text shadow-tb-border-shadow" onMouseDown={() => openSearchMenu()}>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-4 text-[#ffffffb9] pointer-events-none stroke-2 stroke-current">
                             <path fillRule="evenodd" d="M10.5 3.75a6.75 6.75 0 1 0 0 13.5 6.75 6.75 0 0 0 0-13.5ZM2.25 10.5a8.25 8.25 0 1 1 14.59 5.28l4.69 4.69a.75.75 0 1 1-1.06 1.06l-4.69-4.69A8.25 8.25 0 0 1 2.25 10.5Z" clipRule="evenodd" />
                         </svg>
-                        <span className="leading-none text-[#ffffffa6] font-bold pointer-events-auto">Search</span>
+                        <span className="leading-none text-[#ffffffa6] font-bold pointer-events-none select-none">Search</span>
                     </div>
                 </div>
                 <div ref={openAppsRef} className={`
@@ -491,7 +641,7 @@ const PinnedDockItem: FC<TDockItem> = ({ className, icon, title, src, onClick, o
     );
 }
 
-const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, className, src }) => {
+export const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, className, src }) => {
     // @ts-expect-error
     const chars = typeof title === 'string' ? title.split("") : title?.text.split("");
     const [resolvedIcon, setResolvedIcon] = useState<string | boolean | undefined>(false);
@@ -560,23 +710,56 @@ const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, className, sr
                         { text: "Open", click: () => {
                             onClick?.(new MouseEvent("click"))
                         } },
-                        { text: "Pin to Dock", click: () => {
-                            window.tb.desktop.dock.pin({
-                                src: src,
-                                icon: typeof icon === 'string' ? icon : undefined,
-                                title: title,
-                            })
+                        { text: "Pin to Dock", click: async () => {
+                            let configData: any = null;
+                            try {
+                                // @ts-expect-error
+                                const data = JSON.parse(await Filer.promises.readFile(`/apps/system/${typeof title === "string" ? title : title?.text.toLowerCase()}.tapp/index.json`)).config;
+                                configData = {
+                                    ...data
+                                }
+                            } catch (e) {
+                                console.log(e);
+                                configData = {
+                                    // @ts-expect-error
+                                    title: typeof title === 'string' ? title : title?.text,
+                                    icon: typeof icon === 'string' ? icon : undefined,
+                                    isPinnable: true,
+                                    src: src,
+                                }
+                            }
+                            window.tb.desktop.dock.pin(configData)
                         } },
                         { text: "Unpin from Start", click: async () => {
                             const apps: any = JSON.parse(await Filer.promises.readFile("/system/var/terbium/start.json", "utf8"));
                             apps.pinned_apps = apps.pinned_apps.filter((app: any) =>
-                                !(app.title === title && app.icon === icon)
+                                !(app.title === title && app.icon === icon) &&
+                                !(app.name === title && app.icon === icon)
                             );
                             await Filer.promises.writeFile("/system/var/terbium/start.json", JSON.stringify(apps, null, 2));
                             window.dispatchEvent(new Event("updApps"));
                         } },
-                        // @ts-expect-error
-                        ...(isSystemApp ? [] : [{ text: "Uninstall", click: async () => { await (new Filer.Shell()).promises.rm(src?.replace("/fs", "").replace(/\/[^/]+\.html$/, "/").replace(/\/\.\//, "/"), { recursive: true }); await window.tb.launcher.removeApp(chars); window.dispatchEvent(new Event("updApps")) } }])
+                        ...(isSystemApp ? [] : [{ text: "Uninstall", click: async () => {
+                            let appPath = "";
+                            const appName = typeof title === "string" ? title : (title && typeof title === "object" && "text" in title ? (title as { text: string }).text : "");
+                            if (src?.startsWith("/fs/apps/user/")) {
+                                if (src.includes(".tapp")) {
+                                    appPath = `/apps/user/${await window.tb.user.username()}/${appName.toLowerCase()}.tapp`;
+                                } else {
+                                    appPath = `/apps/user/${await window.tb.user.username()}/${appName.toLowerCase()}`;
+                                }
+                            } else if (src?.startsWith("/fs/apps/system/")) {
+                                appPath = `/apps/system/${appName.toLowerCase()}.tapp`;
+                            } else {
+                                appPath = `/apps/user/${await window.tb.user.username()}/${appName}`;
+                            }
+                            let installedApps = JSON.parse(await Filer.promises.readFile(`/apps/installed.json`, "utf8"));
+                            installedApps = installedApps.filter((app: any) => app.title === title);
+                            await Filer.promises.writeFile(`/apps/installed.json`, JSON.stringify(installedApps));
+                            // @ts-expect-error
+                            await (new Filer.Shell()).promises.rm(appPath, { recursive: true });
+                            await window.tb.launcher.removeApp(chars); window.dispatchEvent(new Event("updApps"));
+                        } }])
                     ]
                 })
             }}>
@@ -589,7 +772,7 @@ const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, className, sr
                 </div>
                 <ChevronRightIcon onClick={async () => {
                     const apps: any = JSON.parse(await Filer.promises.readFile("/system/var/terbium/start.json", "utf8"));
-                    apps.pinned_apps = apps.pinned_apps.filter((app: any) => 
+                    apps.pinned_apps = apps.pinned_apps.filter((app: any) =>
                         !(app.title === title && app.icon === icon)
                     );
                     await Filer.promises.writeFile("/system/var/terbium/start.json", JSON.stringify(apps, null, 2));
@@ -616,12 +799,25 @@ const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, className, sr
                         } },
                         isPinnedDock ? { text: "Unpin from Dock", click: () => {
                             window.tb.desktop.dock.unpin(title)
-                        } } : { text: "Pin to Dock", click: () => {
-                            window.tb.desktop.dock.pin({
-                                src: src,
-                                icon: typeof icon === 'string' ? icon : undefined,
-                                title: title,
-                            })
+                        } } : { text: "Pin to Dock", click: async () => {
+                            let configData: any = null;
+                            try {
+                                // @ts-expect-error
+                                const data = JSON.parse(await Filer.promises.readFile(`/apps/system/${typeof title === "string" ? title : title?.text.toLowerCase()}.tapp/index.json`)).config;
+                                configData = {
+                                    ...data
+                                }
+                            } catch (e) {
+                                console.log(e);
+                                configData = {
+                                    // @ts-expect-error
+                                    title: typeof title === 'string' ? title : title?.text,
+                                    icon: typeof icon === 'string' ? icon : undefined,
+                                    isPinnable: true,
+                                    src: src,
+                                }
+                            }
+                            window.tb.desktop.dock.pin(configData)
                         } },
                         isPinnedStart ? { text: "Unpin from Start", click: async () => {
                             const apps: any = JSON.parse(await Filer.promises.readFile("/system/var/terbium/start.json", "utf8"));
@@ -637,12 +833,35 @@ const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, className, sr
                             if (appsStart.pinned_apps.some((app: any) => app.title === appConfig.config.title && app.icon === appConfig.config.icon)) {
                                 return;
                             }
-                            appsStart.pinned_apps.push(appConfig.config);
+
+                            appsStart.pinned_apps.push({
+                                name: typeof appConfig.config.title === "string" ? appConfig.config.title : appConfig.config.title.text,
+                                ...appConfig.config
+                            });
                             await Filer.promises.writeFile("/system/var/terbium/start.json", JSON.stringify(appsStart, null, 2));
                             window.dispatchEvent(new Event("updApps"));
                         } },
-                        // @ts-expect-error
-                        ...(isSystemApp ? [] : [{ text: "Uninstall", click: async () => { await (new Filer.Shell()).promises.rm(src?.replace("/fs", "").replace(/\/[^/]+\.html$/, "/").replace(/\/\.\//, "/"), { recursive: true }); await window.tb.launcher.removeApp(chars); window.dispatchEvent(new Event("updApps")) } }])
+                        ...(isSystemApp ? [] : [{ text: "Uninstall", click: async () => { 
+                            let appPath = "";
+                            const appName = typeof title === "string" ? title : (title && typeof title === "object" && "text" in title ? (title as { text: string }).text : "");
+                            if (src?.startsWith("/fs/apps/user/")) {
+                                if (src.includes(".tapp")) {
+                                    appPath = `/apps/user/${await window.tb.user.username()}/${appName.toLowerCase()}.tapp`;
+                                } else {
+                                    appPath = `/apps/user/${await window.tb.user.username()}/${appName.toLowerCase()}`;
+                                }
+                            } else if (src?.startsWith("/fs/apps/system/")) {
+                                appPath = `/apps/system/${appName.toLowerCase()}.tapp`;
+                            } else {
+                                appPath = `/apps/user/${await window.tb.user.username()}/${appName}`;
+                            }
+                            let installedApps = JSON.parse(await Filer.promises.readFile(`/apps/installed.json`, "utf8"));
+                            installedApps = installedApps.filter((app: any) => app.title === title);
+                            await Filer.promises.writeFile(`/apps/installed.json`, JSON.stringify(installedApps));
+                            // @ts-expect-error
+                            await (new Filer.Shell()).promises.rm(appPath, { recursive: true });
+                            await window.tb.launcher.removeApp(chars); window.dispatchEvent(new Event("updApps"));
+                         } }])
                     ]
                 })
             }}>

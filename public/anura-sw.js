@@ -756,7 +756,6 @@ workbox.routing.registerRoute(
 					},
 				);
 			}
-		
 	},
 );
 
@@ -785,12 +784,19 @@ methods.forEach((method) => {
 	);
 });
 
+scramjet.loadConfig()
+
 methods.forEach((method) => {
 	workbox.routing.registerRoute(
 		/\/service\//,
 		async ({ event }) => {
 			console.debug("Got SJ req");
-			await scramjet.loadConfig();
+			try {
+				await scramjet.loadConfig();
+			} catch (error) {
+				console.error(error);
+				return new Response("Internal Server Error", { status: 500 });
+			}
 			if (scramjet.route(event)) {
 				return scramjet.fetch(event);
 			}
@@ -815,11 +821,11 @@ function offlineError() {
                 margin: 0;
             }
             #wrapper {
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-              justify-content: center;
-              height: 100vh;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				height: 100vh;
             }
             </style>
             </head>
