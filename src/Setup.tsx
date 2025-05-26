@@ -7,7 +7,7 @@ import "./sys/gui/styles/oobe.css";
 import "./sys/gui/styles/dropdown.css";
 import pwd from "./sys/apis/Crypto";
 import { init } from "./init";
-import { fileExists } from "./sys/types";
+import { fileExists, User } from "./sys/types";
 const pw = new pwd();
 
 export default function Setup() {
@@ -26,26 +26,30 @@ export default function Setup() {
     };
     const saveData = async () => {
         await init();
-        let bare: any;
-        let data: any = JSON.parse(sessionStorage.getItem("new-user") as string);
-        data["bare"] = bare;
+        let data: User = JSON.parse(sessionStorage.getItem("new-user") as string);
         sessionStorage.setItem("new-user", JSON.stringify(data));
         const usr = data["username"]
         data["id"] = usr
         let pass: any
-        if (data["password"] !== false) {
+        if (typeof data["password"] === "string" && data["password"].length > 0) {
             pass = pw.harden(data["password"])
         } else {
             pass = false
         }
-        await Filer.fs.promises.writeFile(`/home/${usr}/user.json`, JSON.stringify({
+        const userInf: User = {
             "id": usr,
             "username": usr,
             "password": pass,
             "pfp": data["pfp"],
             "perm": data["perm"],
-            "proxy": sessionStorage.getItem("selectedProxy") || "Ultraviolet",
-        }), "utf8")
+        }
+        if (data.securityQuestion) {
+            userInf["securityQuestion"] = {
+                question: data.securityQuestion.question,
+                answer: pw.harden(data.securityQuestion.answer),
+            }
+        }
+        await Filer.fs.promises.writeFile(`/home/${usr}/user.json`, JSON.stringify(userInf), "utf8")
         await Filer.fs.promises.writeFile("/system/etc/terbium/sudousers.json", JSON.stringify([usr]), "utf8")
         await Filer.fs.promises.mkdir(`/home/${usr}/documents/`)
         await Filer.fs.promises.mkdir(`/home/${usr}/images/`)
@@ -112,6 +116,9 @@ export default function Setup() {
         const usernameRef = useRef<HTMLInputElement>(null);
         const passwordRef = useRef<HTMLInputElement>(null);
         const pfpRef = useRef<HTMLDivElement>(null);
+        const secQ = useRef<HTMLInputElement>(null);
+        const secA = useRef<HTMLInputElement>(null);
+        const [showSec, setShowsec] = useState(false);
 
         nextButtonClick = () => {
             const pfp = pfpRef.current?.getAttribute("data-src");
@@ -127,6 +134,12 @@ export default function Setup() {
             data["username"] = username;
             data["password"] = password;
             data["perm"] = "admin";
+            if (secA.current?.value && secQ.current?.value && secA.current.value.length > 0 && secQ.current.value.length > 0) {
+                data["securityQuestion"] = {
+                    question: secQ.current.value,
+                    answer: secA.current.value,
+                }
+            }
             sessionStorage.setItem("new-user", JSON.stringify(data));
             currentViewRef.current?.classList.add("-translate-x-6");
             currentViewRef.current?.classList.add("opacity-0");
@@ -246,9 +259,21 @@ export default function Setup() {
                                     }
                                 }} />
                             <div className="pass relative flex justify-center items-center gap-[10px]">
-                                <input ref={passwordRef} type="password" className="password cursor-[var(--cursor-text)] rounded-[6px] px-[10px] py-[8px] text-[#ffffff] caret-[#ffffff] placeholder-[#ffffff38] bg-[#ffffff0a] border-[#ffffff22] border-[1px] transition duration-150 ring-[transparent] ring-0 focus:bg-[#ffffff1f] focus:border-[#73a9ffd6] focus:ring-[#73a9ff74] focus:text-[#ffffff] focus:placeholder-[#ffffff48] focus:outline-hidden focus:ring-2"
-                                    placeholder="Password"/>
+                                <input ref={passwordRef} type="password" className="password cursor-[var(--cursor-text)] rounded-[6px] px-[10px] py-[8px] text-[#ffffff] caret-[#ffffff] placeholder-[#ffffff38] bg-[#ffffff0a] border-[#ffffff22] border-[1px] transition duration-150 ring-[transparent] ring-0 focus:bg-[#ffffff1f] focus:border-[#73a9ffd6] focus:ring-[#73a9ff74] focus:text-[#ffffff] focus:placeholder-[#ffffff48] focus:outline-hidden focus:ring-2" placeholder="Password" onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                    if (e.target.value.length > 0) {
+                                        setShowsec(true);
+                                    } else {
+                                        setShowsec(false);
+                                    }
+                                }}/>
                             </div>
+                            {(showSec) ? (
+                                <div className="security-section mt-4 p-3 rounded bg-[#ffffff0a] border border-[#ffffff22] w-[250]">
+                                    <div className="font-semibold text-[#ffffffa0] mb-2">Security Question (optional)</div>
+                                    <input ref={secQ} type="text" className="security-question mb-2 w-full rounded-[6px] px-[10px] py-[8px] text-[#ffffff] placeholder-[#ffffff38] bg-[#ffffff0a] border-[#ffffff22] border-[1px] transition duration-150 ring-[transparent] ring-0 focus:bg-[#ffffff1f] focus:border-[#73a9ffd6] focus:ring-[#73a9ff74] focus:text-[#ffffff] focus:placeholder-[#ffffff48] focus:outline-hidden focus:ring-2" placeholder="Enter a security question" />
+                                    <input ref={secA} type="text" className="security-answer w-full rounded-[6px] px-[10px] py-[8px] text-[#ffffff] placeholder-[#ffffff38] bg-[#ffffff0a] border-[#ffffff22] border-[1px] transition duration-150 ring-[transparent] ring-0 focus:bg-[#ffffff1f] focus:border-[#73a9ffd6] focus:ring-[#73a9ff74] focus:text-[#ffffff] focus:placeholder-[#ffffff48] focus:outline-hidden focus:ring-2" placeholder="Enter your answer" />
+                                </div>
+                            ) : null}
                         </div>
                     </div>
                 </div>

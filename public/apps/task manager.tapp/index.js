@@ -48,7 +48,7 @@ function getSpecs() {
     let canvas = document.createElement("canvas")
     let gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl")
     if (!gl) {
-        displayOutput("%cGPU%c: Information not available", `color: ${accent}`, "color: #b6b6b6")
+        console.error("%cGPU%c: Information not available", `color: ${accent}`, "color: #b6b6b6")
         return
     }
     let gpuName
@@ -60,14 +60,21 @@ function getSpecs() {
         gpuName = match ? match[1] : 'Not Available'
     }
     navigator.storage.estimate().then((estimate) => {
-        let formattedSize
-        const usedSize = estimate.usage
+        const totalSize = estimate.quota;
+        const usedSize = estimate.usage;
+        const usedPercentage = (usedSize / totalSize) * 100;
+        let formattedUsedSize, formattedTotalSize;
         if (usedSize >= 1024 * 1024 * 1024) {
-            formattedSize = `${(usedSize / (1024 * 1024 * 1024)).toFixed(2)} GB`
+            formattedUsedSize = `${(usedSize / (1024 * 1024 * 1024)).toFixed(2)} GB`;
         } else {
-            formattedSize = `${(usedSize / (1024 * 1024)).toFixed(2)} MB`
+            formattedUsedSize = `${(usedSize / (1024 * 1024)).toFixed(2)} MB`;
         }
-        ssdtxt.textContent = `${formattedSize} used of 2GB`
+        if (totalSize >= 1024 * 1024 * 1024) {
+            formattedTotalSize = `${(totalSize / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+        } else {
+            formattedTotalSize = `${Math.round((totalSize / (1024 * 1024)).toFixed(2))} MB`;
+        }
+        ssdtxt.textContent = `${formattedUsedSize} of ${formattedTotalSize}`
     })
     let cpuCors = navigator.hardwareConcurrency
     cputxt.textContent = `${cpuCors} Logical Cores (${Math.floor(cpuCors / 2)} Cores ${cpuCors} threads)`

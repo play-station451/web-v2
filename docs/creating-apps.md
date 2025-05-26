@@ -224,7 +224,7 @@ Pull Requests for apps are always viewed and heres some basic guidelines for you
 
 ## <span style="color: #32ae62;">Formatting TAPP's</span>
 
-- The easiest way to creat TAPP's is to download the TB Dev SDK 2024 from the XSTARZ XTRAS repo and use the feilds to generate your TAPP and Manifest.
+- The easiest way to creat TAPP's is to download the TB Dev SDK 2025 from the XSTARZ XTRAS repo and use the feilds to generate your TAPP and Manifest.
 - The app should be put into the assets folder with the naming scheme: {appname}.TAPP.zip or com.tb.{appname}.TAPP.zip
 - Also you can put into the app repo manifest where you want to download the TAPP from if you want to host it somewhere else for some reason, Image assets can still be stored in a folder in the assets folder as long as it follows the naming scheme of com.tb.{appname}
   - Example

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import "./styles/shell.css";
 import { createId } from "@paralleldrive/cuid2";
 

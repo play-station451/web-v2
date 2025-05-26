@@ -269,6 +269,7 @@ async function openFile(url, ext) {
     }
 }
 
+let asked = false;
 window.addEventListener("message", async (e) => {
     let data;
     try {
@@ -276,8 +277,46 @@ window.addEventListener("message", async (e) => {
     } catch(e) {
         data = e.data
     }
-    if(data === undefined) return
-    if(data.type === "process") {
+    if(data === undefined && !asked) {
+        asked = true;
+        tb.dialog.FileBrowser({
+            title: "Open a file",
+            onOk: async (file) => {
+                const ext = file.split(".").pop()
+                let json = JSON.parse(await Filer.fs.promises.readFile("/apps/system/files.tapp/extensions.json", "utf8"))
+                if (file.includes("http")) {
+                    openFile(file, ext);
+                } else if (json["image"].includes(ext)) {
+                    let img = await Filer.fs.promises.readFile(file);
+                    let blob = new Blob([img], { type: "image/" + ext });
+                    let url = URL.createObjectURL(blob);
+                    openFile(url, ext);
+                } else if (json["animated"].includes(ext)) {
+                    let img = await Filer.fs.promises.readFile(file);
+                    let blob = new Blob([img], { type: "image/" + ext });
+                    let url = URL.createObjectURL(blob);
+                    openFile(url, ext);
+                } else if (json["pdf"].includes(ext)) {
+                    let pdf = await Filer.fs.promises.readFile(file);
+                    let blob = new Blob([pdf], { type: "application/pdf" });
+                    let url = URL.createObjectURL(blob);
+                    openFile(url, ext);
+                } else if (json["video"].includes(ext)) {
+                    let video = await Filer.fs.promises.readFile(file);
+                    let blob = new Blob([video], { type: "video/" + ext });
+                    let url = URL.createObjectURL(blob);
+                    openFile(url, ext);
+                } else if (json["audio"].includes(ext)) {
+                    let audio = await Filer.fs.promises.readFile(file);
+                    let blob = new Blob([audio], { type: "audio/" + ext });
+                    let url = URL.createObjectURL(blob);
+                    openFile(url, ext);
+                }
+            }
+        })
+    }
+    if(data && data.type === "process") {
+        asked = false;
         if(data.path) {
             const ext = data.path.split(".").pop()
             let json = JSON.parse(await Filer.fs.promises.readFile("/apps/system/files.tapp/extensions.json", "utf8"))

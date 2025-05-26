@@ -154,7 +154,7 @@ export async function Updater() {
             consola.error("Failed to get local repository URL");
             return;
         }
-        const repo = `https://raw.githubusercontent.com/${remoteStdout.trim().replace("https://github.com/", "").replace(".git", "")}/refs/heads/main/package.json` || "https://raw.githubusercontent.com/TerbiumOS/web-react/refs/heads/main/package.json";
+        const repo = `https://raw.githubusercontent.com/${remoteStdout.trim().replace("https://github.com/", "").replace(".git", "")}/refs/heads/main/package.json` || "https://raw.githubusercontent.com/TerbiumOS/web-v2/refs/heads/main/package.json";
         try {
             const response = await fetch(repo);
             const ver = (await response.json()).version;
@@ -163,7 +163,17 @@ export async function Updater() {
                     type: "confirm"
                 });
                 if (res) {
-                    open(`${remoteStdout.trim()}/releases/latest`);
+                    consola.info("Downloading new version...");
+                    exec("git pull", async (remoteError, remoteStdout, remoteStderr) => {
+                        if (remoteError || remoteStderr) {
+                            consola.error("Failed to update Terbium, Please update manually");
+                            open(`${remoteStdout.trim()}/releases/latest`);
+                            return;
+                        }
+                        consola.success("Terbium updated successfully");
+                        await BuildApps();
+                        await CreateAppsPaths();
+                    });
                     return;
                 } else return;
             } else {

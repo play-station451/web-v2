@@ -172,6 +172,14 @@ export class Anura {
             })
             await Filer.fs.promises.writeFile("/system/var/terbium/start.json", JSON.stringify(apps, null, 2));
             window.dispatchEvent(new Event("updApps"));
+            await Filer.fs.promises.writeFile(`/system/etc/anura/configs/${app.name}.json`, JSON.stringify(app, null, 2));
+            const installedApps = JSON.parse(await Filer.fs.promises.readFile("/apps/installed.json", "utf8"));
+            installedApps.push({
+                name: app.name,
+                config: `/system/etc/anura/configs/${app.name}.json`,
+                user: "System",
+            })
+            await Filer.fs.promises.writeFile("/apps/installed.json", JSON.stringify(installedApps));
         }
         this.apps[app.package] = {
             title: app.name,
@@ -284,6 +292,7 @@ export class Anura {
             const file = await this.fs.promises.readFile(
                 `${searchPath}/${scope}/${name}/${filename}`,
             );
+            // @ts-expect-error
             const blob = new Blob([file], { type: "application/javascript" });
             const url = URL.createObjectURL(blob);
             // @vite-ignore

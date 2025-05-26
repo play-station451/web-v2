@@ -115,7 +115,7 @@ const customWallpaper = () => {
             wimg.classList.add("wallpaper-option");
 
             const delete_button = document.createElement('img');
-            delete_button.src = "/apps/settings.tapp/delete.svg";
+            delete_button.src = "/fs/apps/system/settings.tapp/delete.svg";
             delete_button.classList.add("delete-wallpaper");
             delete_button.addEventListener('click', async (e) => {
                 let data = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"))
@@ -339,7 +339,7 @@ const getWallpapers = async () => {
         img.src = `/fs/${path}`;
         img.classList.add("wallpaper-option");
         const delete_button = document.createElement('img');
-        delete_button.src = "/apps/settings.tapp/delete.svg";
+        delete_button.src = "/fs/apps/system/settings.tapp/delete.svg";
         delete_button.classList.add("delete-wallpaper");
         delete_button.addEventListener('click', (e) => {
             Filer.fs.readFile(`/home/${sessionStorage.getItem('currAcc')}/settings.json`, "utf8", (err, data) => {

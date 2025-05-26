@@ -88,6 +88,6 @@ tb_island.addControl({
     appname: "Settings",
     id: "help",
     click: () => {
-        window.open("https://github.com/TerbiumOS", "_blank")
+        window.open("https://github.com/TerbiumOS/web-v2/blob/main/docs/README.md", "_blank")
     }
 })

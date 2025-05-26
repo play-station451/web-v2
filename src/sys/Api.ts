@@ -25,6 +25,7 @@ import { hash } from "../hash.json";
 const system = new System;
 const Filer = window.Filer;
 const pw = new pwd();
+declare const tb: COM;
 declare global {
     interface Window {
         tb: COM,
@@ -271,6 +272,7 @@ export default async function Api() {
         contextmenu: {
             create(props: cmprops) {
                 window.dispatchEvent(new CustomEvent("ctxm", { detail: { props: {
+                    titlebar: props.titlebar || false,
                     x: props.x,
                     y: props.y,
                     options: props.options
@@ -352,11 +354,6 @@ export default async function Api() {
                         await connection.setTransport("/libcurl/index.mjs", [{ wisp: wispserver }]);
                     }
                 }
-                navigator.serviceWorker.register("anura-sw.js", {
-                    scope: '/',
-                }).then(() => {
-                    updateTransport()
-                });
                 const scramjet = new window.ScramjetController({
                     prefix: "/service/",
                     files: {
@@ -394,6 +391,11 @@ export default async function Api() {
                     }
                 });
                 scramjet.init()
+                navigator.serviceWorker.register("anura-sw.js", {
+                    scope: '/',
+                }).then(() => {
+                    updateTransport()
+                });
                 navigator.serviceWorker.ready.then(async () => {
                     await updateTransport()
                 })
@@ -522,16 +524,23 @@ export default async function Api() {
                 async list() {
                 },
                 async add(user: User) {
-                    const { username, password, pfp, perm } = user
+                    const { username, password, pfp, perm, securityQuestion } = user
                     const userDir = `/home/${username}`
                     await Filer.fs.promises.mkdir(userDir)
-                    await Filer.fs.promises.writeFile(`${userDir}/user.json`, JSON.stringify({
+                    const userJson: User = {
                         "id": username,
                         "username": username,
                         "password": password,
                         "pfp": pfp,
                         "perm": perm
-                    }))
+                    }
+                    if (securityQuestion) {
+                        userJson.securityQuestion = {
+                            question: securityQuestion.question,
+                            answer: securityQuestion.answer
+                        }
+                    }
+                    await Filer.fs.promises.writeFile(`${userDir}/user.json`, JSON.stringify(userJson))
                     let userSettings = {
                         "wallpaper": "/assets/wallpapers/1.png",
                         "wallpaperMode": "cover",
@@ -569,7 +578,7 @@ export default async function Api() {
                             "drives": true,
                         }
                     }), "utf8")
-                    await Filer.promises.writeFile(`/apps/user/${user}/files/davs.json`, JSON.stringify([]))
+                    await Filer.fs.promises.writeFile(`/apps/user/${username}/files/davs.json`, JSON.stringify([]))
                     const response = await fetch('/apps/files.tapp/icons.json')
                     const dat = await response.json()
                     await Filer.fs.promises.writeFile(`/apps/user/${username}/files/icns.json`, JSON.stringify(dat))
@@ -584,7 +593,8 @@ export default async function Api() {
                     }), "utf8")
                     let items: any[] = []
                     let r2 = []
-                    apps.forEach(async (app, i) => {
+                    for (let i = 0; i < apps.length; i++) {
+                        const app = apps[i];
                         const name = app.name.toLowerCase()
                         var topPos: number = 0;
                         var leftPos: number = 0;
@@ -618,15 +628,9 @@ export default async function Api() {
                                 left: leftPos
                             }
                         })
-                        await Filer.fs.promises.mkdir(`/apps/system/${name}`)
-                        await Filer.fs.promises.writeFile(`/apps/system/${name}/index.json`, JSON.stringify({
-                            name: app.name,
-                            config: app.config,
-                            icon: app.config.icon,
-                        }))
-                        await Filer.fs.promises.symlink(`/apps/system/${name}/index.json`, `/home/${username}/desktop/${name}.lnk`)
-                    })
-                    await Filer.fs.promises.writeFile(`/home/${username}/desktop/.desktop.json`, JSON.stringify(apps))
+                        await Filer.fs.promises.symlink(`/apps/system/${name}.tapp/index.json`, `/home/${username}/desktop/${name}.lnk`)
+                    }
+                    await Filer.fs.promises.writeFile(`/home/${username}/desktop/.desktop.json`, JSON.stringify(items))
                     return true
                 },
                 async remove(id: string) {
@@ -649,10 +653,42 @@ export default async function Api() {
                     } catch (err: any) {
                         throw new Error(err.message)
                     }
+                    const sudoUsers: string[] = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/sudousers.json", "utf8"));
+                    const users = await Filer.fs.promises.readdir("/home/");
+                    const idx = sudoUsers.indexOf(id);
+                    if (idx !== -1) {
+                        sudoUsers.splice(idx, 1);
+                        await Filer.fs.promises.writeFile("/system/etc/terbium/sudousers.json", JSON.stringify(sudoUsers, null, 2), "utf8");
+                        if (sudoUsers.length === 0) {
+                            window.tb.dialog.Select({
+                                title: "Select new sudo user",
+                                message: "Please select a new sudo user",
+                                options: users.map(u => ({ text: u, value: u })),
+                                onOk: async (selected: string) => {
+                                    await Filer.fs.promises.writeFile("/system/etc/terbium/sudousers.json", JSON.stringify({ id: selected }), "utf8")
+                                    window.tb.notification.Toast({
+                                        application: "System",
+                                        iconSrc: "/fs/apps/system/about.tapp/icon.svg",
+                                        message: `Sudo user changed to ${selected}`,
+                                    });
+                                    const syssettings: SysSettings = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"))
+                                    if (id === syssettings.defaultUser) {
+                                        syssettings.defaultUser = selected
+                                        await Filer.fs.promises.writeFile("/system/etc/terbium/settings.json", JSON.stringify(syssettings, null, 2), "utf8")
+                                    }
+                                    if (id === sessionStorage.getItem('currAcc')) {
+                                        sessionStorage.setItem("logged-in", "false")
+                                        sessionStorage.removeItem("currAcc")
+                                        window.location.reload()
+                                    }
+                                }
+                            });
+                        }
+                    }
                     return true
                 },
                 async update(user: User) {
-                    const { username, password, pfp, perm } = user
+                    const { username, password, pfp, perm, securityQuestion } = user
                     const userDir = `/home/${username}`
                     const userConfig = JSON.parse(await Filer.fs.promises.readFile(`${userDir}/user.json`, "utf8"))
                     await Filer.fs.promises.writeFile(`${userDir}/user.json`, JSON.stringify({
@@ -660,7 +696,12 @@ export default async function Api() {
                         "username": username === userConfig.username ? userConfig.username : username,
                         "password": password === userConfig.password ? userConfig.password : password,
                         "pfp": pfp === userConfig.pfp ? userConfig.pfp : pfp,
-                        "perm": perm === userConfig.perm ? userConfig.perm : perm
+                        "perm": perm === userConfig.perm ? userConfig.perm : perm,
+                        ...(securityQuestion !== undefined
+                            ? { securityQuestion: securityQuestion === userConfig.securityQuestion ? userConfig.securityQuestion : securityQuestion }
+                            : userConfig.securityQuestion !== undefined
+                                ? { securityQuestion: userConfig.securityQuestion }
+                                : {})
                     }))
                 },
             },
@@ -748,8 +789,8 @@ export default async function Api() {
                 if (!navigator.mediaDevices.getDisplayMedia) throw new Error('API Not Avalible on your browser')
                 // @ts-expect-error
                 const stream = await navigator.mediaDevices.getDisplayMedia({preferCurrentTab:true})
-                // @ts-expect-error
                 const capture = new ImageCapture(stream.getVideoTracks()[0]);
+                // @ts-expect-error
                 const frame = await capture.grabFrame();
                 stream.getVideoTracks()[0].stop()
                 const canvas: HTMLCanvasElement = document.createElement('canvas');
@@ -770,7 +811,6 @@ export default async function Api() {
                     // @ts-expect-error
                     reader.readAsArrayBuffer(dataURI);
                 });
-                // @ts-expect-error
                 await tb.dialog.SaveFile({
                     title: "Save screenshot",
                     filename: "screenshot.png",

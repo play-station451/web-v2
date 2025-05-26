@@ -47,14 +47,15 @@ export default function DialogContainer() {
     );
 }
 
-export function Alert({ title, message }: dialogProps) {
+export function Alert({ title, message, onOk }: dialogProps) {
     const container = useRef<HTMLDivElement>(null);
     const dialog = useRef<HTMLDivElement>(null);
-    const onOk = () => {
+    const OK = () => {
         if (container.current) {
             container.current.classList.add('fade-out');
             setTimeout(() => {
                 container.current?.remove();
+                if (onOk) onOk();
             }, 200);
         }
         removeFn();
@@ -62,7 +63,7 @@ export function Alert({ title, message }: dialogProps) {
     useEffect(() => {
         document.addEventListener('mousedown', (e) => {
             if (container.current && e.target !== dialog.current && e.target === container.current) {
-                onOk();
+                if (onOk) onOk();
             }
         })
     })
@@ -72,7 +73,7 @@ export function Alert({ title, message }: dialogProps) {
                 <div className="font-extrabold text-xl leading-none select-none">{title}</div>
                 <div className="dialog-message">{message}</div>
                 <div className="flex justify-end">
-                    <button className="flex gap-1.5 w-max py-2 px-5 rounded-md cursor-pointer bg-[#86ff9085] shadow-[0px_0px_6px_0px_#00000052,_inset_0_0_0_0.5px_#ffffff38] hover:bg-[#8fff98a2] duration-150" onMouseDown={onOk}>OK</button>
+                    <button className="flex gap-1.5 w-max py-2 px-5 rounded-md cursor-pointer bg-[#86ff9085] shadow-[0px_0px_6px_0px_#00000052,_inset_0_0_0_0.5px_#ffffff38] hover:bg-[#8fff98a2] duration-150" onMouseDown={OK}>OK</button>
                 </div>
             </div>
         </div>
@@ -641,11 +642,6 @@ export function SaveFile({title, defualtDir, filename, onOk, onCancel}: dialogPr
             onCancel()
         }
     };
-    const onChange = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter') {
-            openDirectory((e.target as HTMLInputElement).value);
-        }
-    };
     return (
         <div className="fixed inset-0 z-999999999 flex flex-col items-center justify-center bg-[#00000078] backdrop-blur-xs duration-150">
             <div className="flex flex-col p-2.5 gap-2.5 backdrop-blur-md rounded-lg sm:min-w-[340px] md:min-w-[400px] lg:min-w-[600px] bg-[#ffffff18] text-white shadow-tb-border-shadow duration-150">
@@ -692,11 +688,20 @@ export function SaveFile({title, defualtDir, filename, onOk, onCancel}: dialogPr
                     <input
                         ref={fileInp}
                         type="text"
-                        value={`${currentDirectory}/${filename || "file.txt"}`}
+                        value={selectedEntry || `${currentDirectory}/${filename || "file.txt"}`}
                         placeholder="Enter file name"
                         className="p-2 pl-4 rounded-lg bg-[#ffffff16] cursor-text outline-hidden shadow-tb-border-shadow duration-150"
-                        onKeyDown={onChange}
-                        onChange={(e) => setCurrentDirectory(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                const inputPath = fileInp.current!.value;
+                                if (inputPath.endsWith('/')) {
+                                    setCurrentDirectory(inputPath);
+                                } else {
+                                    onSave();
+                                }
+                            }
+                        }}
+                        onChange={(e) => setSelectedEntry(e.target.value)}
                     />
                     <button className="flex gap-1.5 w-max py-2 px-5 rounded-md cursor-pointer bg-[#86ff9085] shadow-[0px_0px_6px_0px_#00000052,_inset_0_0_0_0.5px_#ffffff38] hover:bg-[#8fff98a2] duration-150" onMouseDown={onSave}>Select</button>
                 </div>

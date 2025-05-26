@@ -6,6 +6,12 @@ declare let $el: any;
 // problem if someone for some reason tries to create a file descriptor manually or did some external logic based on the file descriptor being a
 // number.
 type FilerFS = {
+    constants: {
+        F_OK: number;
+        R_OK: number;
+        W_OK: number;
+        X_OK: number;
+    }
     watch(
         filename: string,
         listener: (event: string, filename: string) => void,
@@ -22,7 +28,11 @@ type FilerFS = {
                 cat: () => Promise<string>;
                 cd: (t: string, r?: any) => Promise<void>;
                 exec: (command: string) => Promise<any>;
-                find: (path: string) => Promise<any>;
+                find: (path: string, options?: {
+                    name?: string,
+                    regex?: RegExp | string,
+                    exec?: boolean | Function<any>,
+                }) => Promise<any>;
                 ls: (dir: string) => Promise<string[]>;
                 mkdirp: (dir: string) => Promise<void>;
                 rm: (path: string) => Promise<void>;

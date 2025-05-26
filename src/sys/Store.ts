@@ -1,5 +1,6 @@
+import React from "react";
 import { create } from "zustand";
-import { WindowConfig, cmprops } from "./types";
+import { WindowConfig, cmprops, fileExists } from "./types";
 import { init } from '@paralleldrive/cuid2';
 import { updateInfo } from "./gui/AppIsland";
 
@@ -15,16 +16,17 @@ interface WindowState {
   currentPID?: string;
 }
 
-interface MenuProps {
-  x: number;
-  y: number;
-  options: any[];
-}
-
 interface ContextMenuState {
-  menu: MenuProps;
+  menu: cmprops;
   setContextMenu: (options: any) => void;
   clearContextMenu: () => void;
+}
+
+interface SearchMenuState {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  searchRef: React.RefObject<HTMLInputElement | null>;
+  searchMenuRef: React.RefObject<HTMLDivElement | null>;
 }
 
 export const createPID = () => {
@@ -50,46 +52,87 @@ export const createWID = () => {
 const useWindowStore = create<WindowState>()((set) => ({
   windows: [],
   matchedWindows: [],
-  addWindow: (config: WindowConfig) => set((state) => {
-    const indexes = state.windows.map((w) => w.zIndex ?? 0);
-    config.zIndex = Math.max(...indexes) + 1;
-    config.focused = true;
-    if (config.zIndex === -Infinity) {
-      // This will be removed in the future but this is a temporary fix - XSTARS
-      config.zIndex = 2;
-    }
-    state.windows.forEach((w) => {
-      if (w.wid !== config.wid) {
-        w.focused = false;
-        if (w.zIndex !== undefined) {
-          w.zIndex -= 1;
+  addWindow: async (config: WindowConfig) => {
+    const recentApps = await fileExists("/system/var/terbium/recent.json") ? JSON.parse(await Filer.fs.promises.readFile("/system/var/terbium/recent.json", "utf8")) : (await Filer.fs.promises.writeFile("/system/var/terbium/recent.json", JSON.stringify([], null, 2), "utf8").catch((err: any) => console.error(err)), []);
+    const updateState = async (state: WindowState) => {
+      const indexes = state.windows.map((w) => w.zIndex ?? 0);
+      config.zIndex = Math.max(...indexes) + 1;
+      config.focused = true;
+      if (config.zIndex === -Infinity) {
+        config.zIndex = 2;
+      }
+      state.windows.forEach((w) => {
+        if (w.wid !== config.wid) {
+          w.focused = false;
+          if (w.zIndex !== undefined) {
+            w.zIndex -= 1;
+          }
+        }
+      });
+
+      // @ts-expect-error
+      const matched = state.matchedWindows.findIndex(group =>
+        // @ts-expect-error
+        group.some(w => (typeof w.title === 'string' ? w.title : w.title?.text) === (typeof config.title === 'string' ? config.title : config.title?.text))
+      )
+
+      if (matched !== -1) {
+        state.matchedWindows[matched].push(config);
+      } else {
+        state.matchedWindows.push([config]);
+      }
+
+      config.wid = createWID();
+      config.pid = createPID();
+      const appName = typeof config.title === 'string' ? config.title : config.title?.text;
+      let configData: any = null;
+      try {
+        const data = JSON.parse(await Filer.fs.promises.readFile(`/apps/system/${appName.toLowerCase()}.tapp/index.json`, "utf8")).config
+        configData = {
+          ...data,
+          weight: 1,
+        };
+      } catch (err) {
+        configData = {
+          title: appName,
+          icon: config.icon,
+          src: config.src,
+          weight: 1,
         }
       }
-    });
 
-    // @ts-expect-error
-    const matched = state.matchedWindows.findIndex(group =>
-      // @ts-expect-error
-      group.some(w => (typeof w.title === 'string' ? w.title : w.title?.text) === (typeof config.title === 'string' ? config.title : config.title?.text))
-    )
+      if (recentApps.length > 10) {
+        const lowestWeight = Math.min(...recentApps.map((app: any) => app.weight));
+        const lowestWeightIndex = recentApps.findIndex((app: any) => app.weight === lowestWeight);
+        recentApps.splice(lowestWeightIndex, 1);
+      }
 
-    if (matched !== -1) {
-      state.matchedWindows[matched].push(config);
-    } else {
-      state.matchedWindows.push([config]);
-    }
+      const recentAppIndex = recentApps.findIndex((app: any) => {
+        return (typeof app.title === "string" ? app.title.toLowerCase() : app.title?.text.toLowerCase()) ===
+          (typeof configData.title === "string" ? configData.title.toLowerCase() : configData.title?.text.toLowerCase());
+      });
 
-    config.wid = createWID();
-    config.pid = createPID();
+      if(recentAppIndex === -1) {
+        recentApps.push(configData);
+      } else {
+        recentApps[recentAppIndex].weight += 1;
+      }
+      await Filer.fs.promises.writeFile("/system/var/terbium/recent.json", JSON.stringify(recentApps, null, 2), "utf8").catch((err: any) => {
+        console.error("Error writing recent apps file:", err);
+      });
 
-    set({ currentPID: config.pid });
-    window.dispatchEvent(new CustomEvent("selwin-upd", { detail: typeof config.title === 'string' ? config.title : config.title?.text }));
+      window.dispatchEvent(new CustomEvent("selwin-upd", { detail: typeof config.title === 'string' ? config.title : config.title?.text }));
 
-    return {
-      windows: [...state.windows, config],
-      matchedWindows: [...state.matchedWindows]
+      return {
+        windows: [...state.windows, config],
+        matchedWindows: [...state.matchedWindows],
+        currentPID: config.pid
+      };
     };
-  }),
+
+    const newState = await updateState(useWindowStore.getState());
+    set(newState);
+  },
   killWindow: (pid: string) =>
     set((state: any) => {
       const windows = state.windows.filter((w: any) => w.pid !== pid);
@@ -174,4 +217,11 @@ const useContextMenuStore = create<ContextMenuState>()((set) => ({
   clearContextMenu: () => set({ menu: { x: 0, y: 0, options: [] } })
 }));
 
-export { useWindowStore, useContextMenuStore };
+const useSearchMenuStore = create<SearchMenuState>()((set) => ({
+  open: false,
+  setOpen: (open: boolean) => set({ open }),
+  searchRef: React.createRef<HTMLInputElement | null>(),
+  searchMenuRef: React.createRef<HTMLDivElement | null>(),
+}))
+
+export { useWindowStore, useContextMenuStore, useSearchMenuStore };

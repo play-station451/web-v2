@@ -2,6 +2,8 @@ import { useEffect, useState, useRef } from "react";
 import "./sys/gui/styles/login.css";
 import { GetTime, GetDate } from "./sys/apis/Date";
 import pwd from "./sys/apis/Crypto";
+import DialogContainer, { setDialogFn } from "./sys/apis/Dialogs";
+import { User } from "./sys/types";
 const pw = new pwd();
 
 export default function Login() {
@@ -14,6 +16,7 @@ export default function Login() {
     const [selectedUser, setSelectedUser] = useState<string | any>(sessionStorage.getItem("currAcc") || "/home/user/");
     const [profilePictures, setProfilePictures] = useState<{ [key: string]: string | null }>({});
     const [wallpaper, setWallpaper] = useState<string | null>(null);
+    const [changingpw, setChangepw] = useState(false);
     const passwordRef = useRef<HTMLInputElement>(null);
     useEffect(() => {
         const intervalId = setInterval(() => {
@@ -119,7 +122,7 @@ export default function Login() {
                 if(user.password !== false) {
                     setIsLoggingIn(true);
                     setTimeout(() => {
-                        if(passwordRef.current) {
+                        if(passwordRef.current && !changingpw) {
                             passwordRef.current.focus();
                             if(e.key.match(/^[a-zA-Z0-9]$/) && passwordRef.current.value.length === 0) {
                                 passwordRef.current.value = e.key;
@@ -134,7 +137,7 @@ export default function Login() {
         return () => {
             window.removeEventListener("keydown", keyCheck);
         }
-    }, [isLoggingIn, selectedUser]);
+    }, [isLoggingIn, selectedUser, changingpw]);
 
     return (
         <>
@@ -148,7 +151,7 @@ export default function Login() {
                     if(user.password !== false) {
                         setIsLoggingIn(true);
                         setTimeout(() => {
-                            if(passwordRef.current) {
+                            if(passwordRef.current && !changingpw) {
                                 passwordRef.current.focus();
                             }
                         }, 200)
@@ -187,6 +190,7 @@ export default function Login() {
                     </div>
                     <h1 className="text-[#ffffffcb] text-xl font-bold">Press any key to login</h1>
                 </div>
+                <DialogContainer />
                 <div className={`
                     absolute
                     flex flex-col justify-center items-center gap-5 size-full backdrop-blur-lg duration-150 ${wallpaper ? "bg-[#0e0e0e99]" : "bg-[#0e0e0e]"}
@@ -210,7 +214,7 @@ export default function Login() {
                                                     absolute
                                                     flex justify-center items-center border-[1px] border-[#ffffff10] rounded-full bg-[center] size-[120px] duration-150
                                                     ${selectedUser === account ? "" : "scale-[0.85] opacity-0"}
-                                                `} style={{ backgroundImage: `url("${profilePictures[account] || ''}")`, backgroundSize: "102%", backgroundRepeat: "no-repeat" }}>
+                                                `} key={i} style={{ backgroundImage: `url("${profilePictures[account] || ''}")`, backgroundSize: "102%", backgroundRepeat: "no-repeat" }}>
                                                     <div className="text-xl font-bold" style={{
                                                         textShadow: "0 0 16px #000000",
                                                         color: "#ffffff"
@@ -255,9 +259,39 @@ export default function Login() {
                                             </div>
                                             {hasPw && (
                                                 <div className="forgot cursor-pointer text-[#ffffff38] text-[16px] font-[700] transition duration-150 hover:text-[#ffffff87] focus:outline-hidden focus:text-[#ffffff87]"
-                                                onMouseDown={() => {
-                                                    localStorage.removeItem('setup');
-                                                    window.location.replace(`${window.location.origin}`);
+                                                onMouseDown={async () => {
+                                                    const changepw = async () => {
+                                                        setChangepw(true);
+                                                        let settings: User = JSON.parse(await Filer.fs.promises.readFile(`/home/${selectedUser}/user.json`, "utf8"));
+                                                        if (settings.securityQuestion) {
+                                                            setDialogFn("message", { title: `${settings.securityQuestion.question}`, onOk: (val: string) => {
+                                                                if (pw.harden(val) === settings.securityQuestion!.answer) {
+                                                                    setDialogFn("message", { title: `Enter a new Password for the account: ${selectedUser}`, onOk: (val: string) => {
+                                                                        settings.password = pw.harden(val);
+                                                                        Filer.fs.promises.writeFile(`/home/${selectedUser}/user.json`, JSON.stringify(settings, null, 4));
+                                                                        setChangepw(false);
+                                                                        sessionStorage.setItem("logged-in", "true");
+                                                                        sessionStorage.setItem("currAcc", selectedUser);
+                                                                        window.location.reload();
+                                                                    } })
+                                                                } else {
+                                                                    setDialogFn("alert", { title: `Incorrect answer to the security question`, onOk: () => {
+                                                                        changepw();
+                                                                    } })
+                                                                }
+                                                            } })
+                                                        } else {
+                                                            setDialogFn("message", { title: `Enter a new Password for the account: ${selectedUser}`, onOk: (val: string) => {
+                                                                settings.password = pw.harden(val);
+                                                                Filer.fs.promises.writeFile(`/home/${selectedUser}/user.json`, JSON.stringify(settings, null, 4));
+                                                                setChangepw(false);
+                                                                sessionStorage.setItem("logged-in", "true");
+                                                                sessionStorage.setItem("currAcc", selectedUser);
+                                                                window.location.reload();
+                                                            } })
+                                                        }
+                                                    }
+                                                    changepw();
                                                 }}>Forgot Password?</div>
                                             )}
                                         </div>

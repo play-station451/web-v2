@@ -5,6 +5,7 @@
 | Version | Supported |
 | ------- | --------- |
 | 2.0.0-beta   | ✅ |
+| 2.0.0-beta2   | ✅ |
 
 ### Supported Liquor Versions
 

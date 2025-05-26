@@ -1,11 +1,40 @@
 declare let Filer: FilerType;
 declare let $el: any;
-declare module 'filer' {
-    export = Filer;
-}
 
+// Note: this is different from the Anura Filesystem type because file descriptors are internally stored as numbers rather than the AnuraFD type.
+// This should still be fully compatible as file descriptors are obtained from other methods and are not created directly. This will only be a
+// problem if someone for some reason tries to create a file descriptor manually or did some external logic based on the file descriptor being a
+// number.
 type FilerFS = {
-    Shell: any;
+    watch(
+        filename: string,
+        listener: (event: string, filename: string) => void,
+        options?: { recursive: boolean },
+    ): void;
+    Shell: {
+        new (): {
+            cd: (t: string, r?: any) => void;
+            pwd: () => string;
+            env: () => Record<string, string>;
+            fs: () => any;
+            rm: (directory: string, options?: { recursive: boolean, force: boolean }) => void;
+            promises: {
+                cat: () => Promise<string>;
+                cd: (t: string, r?: any) => Promise<void>;
+                exec: (command: string) => Promise<any>;
+                find: (path: string, options?: {
+                    name?: string,
+                    regex?: RegExp | string,
+                    exec?: boolean | Function<any>,
+                }) => Promise<any>;
+                ls: (dir: string) => Promise<string[]>;
+                mkdirp: (dir: string) => Promise<void>;
+                rm: (path: string) => Promise<void>;
+                tempDir: () => Promise<string>;
+                touch: (filePath: string) => Promise<void>;
+            };
+        };
+    };
 
     rename(
         oldPath: string,
@@ -79,7 +108,7 @@ type FilerFS = {
 
     mkdir(
         path: string,
-        mode: number | any,
+        mode: number,
         callback?: (err: Error | null) => void,
     ): void;
 
@@ -290,12 +319,12 @@ type FilerFS = {
         getxattr(path: string, name: string): Promise<string | object>;
         link(srcPath: string, dstPath: string): Promise<void>;
         lstat(path: string): Promise<TStats>;
-        mkdir(path: string, mode?: number | any): Promise<void>;
+        mkdir(path: string, mode?: number): Promise<void>;
         mkdtemp(
             prefix: string,
             options?: { encoding: string },
         ): Promise<string>;
-        mknod(path: string, mode: number | string): Promise<void>;
+        mknod(path: string, mode: number): Promise<void>;
         open(
             path: string,
             flags: "r" | "r+" | "w" | "w+" | "a" | "a+",
@@ -316,7 +345,7 @@ type FilerFS = {
             value: string | object,
             flag?: "CREATE" | "REPLACE",
         ): Promise<void>;
-        stat(path: string): Promise<TStats>;
+        stat(path: string, callback?: void | any): Promise<TStats>;
         symlink(srcPath: string, dstPath: string, type?: string): Promise<void>;
         truncate(path: string, len: number): Promise<void>;
         unlink(path: string): Promise<void>;
@@ -328,8 +357,8 @@ type FilerFS = {
         writeFile(
             path: string,
             data: any | string,
-            encoding?: string, 
-            mode?: number, 
+            encoding?: string,
+            mode?: number,
             flag?: string,
         ): Promise<void>;
     };

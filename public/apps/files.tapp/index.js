@@ -1,4 +1,4 @@
-import * as webdav from "/assets/libs/webdav.js";
+import * as webdav from "./webdav.js";
 const Filer = window.Filer;
 
 const user = sessionStorage.getItem("currAcc");
@@ -546,7 +546,7 @@ const cm = async (e) => {
                                     try {
                                         const zipFilePath = e.target.getAttribute("path");
                                         const targetDirectory = `/apps/user/${window.parent.sessionStorage.getItem('currAcc')}/${appName}`;
-                                        await unzip(zipFilePath, targetDirectory);
+                                        await unzip(zipFilePath, targetDirectory, true);
                                         console.log("Done!");
                                         const appConf = await Filer.fs.promises.readFile(`/apps/user/${window.parent.sessionStorage.getItem('currAcc')}/${appName}/.tbconfig`, 'utf8');
                                         const appData = JSON.parse(appConf);
@@ -569,7 +569,23 @@ const cm = async (e) => {
                                             controls: appData.wmArgs.controls,
                                             message: appData.wmArgs.message,
                                             snapable: appData.wmArgs.snapable,
+                                            user: window.parent.sessionStorage.getItem('currAcc'),
                                         });
+                                        try {
+                                            let apps = JSON.parse(await Filer.fs.promises.readFile(`/apps/installed.json`, "utf8"))
+                                            apps.push({
+                                                name: appName,
+                                                user: await window.parent.tb.user.username(),
+                                                config: `/apps/system/${appName}.tapp/.tbconfig`
+                                            })
+                                            await Filer.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(apps))
+                                        } catch {
+                                            await Filer.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify([{
+                                                name: appName,
+                                                user: await window.parent.tb.user.username(),
+                                                config: `/apps/system/${appName}.tapp/.tbconfig`
+                                            }]))
+                                        }
                                         window.parent.tb.notification.Toast({
                                             "message": `${appName} has been installed!`,
                                             "application": "Files",
@@ -885,7 +901,7 @@ const cm = async (e) => {
             e.target.getAttribute("path") === "/system/trash" || isTrash ? null : {
                 text: "New Folder",
                 click: async () => {
-                    const response = await tb.dialog.Message({
+                    await tb.dialog.Message({
                         title: "Enter a name for the new folder",
                         defaultValue: "",
                         onOk: async (response) => {
@@ -905,6 +921,68 @@ const cm = async (e) => {
                     })
                 }
             },
+            /* To be finished soon
+            e.target.getAttribute("path") === "/system/trash" || isTrash ? null : {
+                text: "ZIP Folder",
+                click: async () => {
+                    self.t = e
+                    let zip = {};
+                    async function addzip(inp, basePath = '') {
+                        const files = await Filer.fs.promises.readdir(inp);
+                        for (const file of files) {
+                            const fullPath = `${inp}/${file}`;
+                            const stats = await Filer.fs.promises.stat(fullPath);
+                            const zipPath = `${basePath}${file}`;
+                            if (stats.isDirectory()) {
+                                await addzip(fullPath, `${zipPath}/`);
+                            } else {
+                                const fileData = await Filer.fs.promises.readFile(fullPath);
+                                zip[zipPath] = new Uint8Array(fileData);
+                            }
+                        }
+                    }
+                    await addzip(e.target.getAttribute("path"));
+                    await tb.dialog.Select({
+                        title: "Where do you want to save the ZIP?",
+                        options: [{
+                            text: "File System",
+                            value: "fs"
+                        }, {
+                            text: "Computer",
+                            value: "pc"
+                        }],
+                        onOk: async (perm) => {
+                            const zipped = window.parent.tb.fflate.zipSync(zip);
+                            if (perm === "fs") {
+                                await tb.dialog.SaveFile({
+                                    title: "Enter a name for the ZIP file",
+                                    defualtDir: `/home/${window.parent.sessionStorage.getItem("currAcc")}/`,
+                                    filename: `${e.target.getAttribute("name")}.zip`,
+                                    onOk: async (value) => {
+                                        const zipBlob = new Blob([zipped.buffer], { type: 'application/zip' });
+                                        const ab = await zipBlob.arrayBuffer();
+                                        await Filer.fs.promises.writeFile(value, new Uint8Array(ab));
+                                        window.parent.tb.notification.Toast({
+                                            message: `ZIP file created at ${value}`,
+                                            application: "Files",
+                                            iconSrc: "/fs/apps/system/files.tapp/icon.svg",
+                                            time: 5000,
+                                        });
+                                    },
+                                });
+                            } else if (perm === "pc") {
+                                const zipBlob = new Blob([zipped.buffer], { type: 'application/zip' });
+                                const url = URL.createObjectURL(zipBlob);
+                                const link = document.createElement('a');
+                                link.href = url;
+                                link.download = `${e.target.getAttribute("name")}.zip`;
+                                link.click();
+                                setTimeout(() => URL.revokeObjectURL(url), 1000);
+                            }
+                        }
+                    });
+                }
+            },*/
             e.target.getAttribute("path") === "/system/trash" || isTrash || e.target.getAttribute("system-folder") === "true" ? null : {
                 text: "Rename",
                 click: async () => {
@@ -1235,7 +1313,7 @@ const createPath = async (title, path, type) => {
                             try {
                                 const zipFilePath = e.target.getAttribute("path");
                                 const targetDirectory = `/apps/user/${window.parent.sessionStorage.getItem('currAcc')}/${appName}`;
-                                await unzip(zipFilePath, targetDirectory);
+                                await unzip(zipFilePath, targetDirectory, true);
                                 console.log("Done!");
                                 const appConf = await Filer.fs.promises.readFile(`/apps/user/${window.parent.sessionStorage.getItem('currAcc')}/${appName}/.tbconfig`, 'utf8');
                                 const appData = JSON.parse(appConf);
@@ -1258,7 +1336,23 @@ const createPath = async (title, path, type) => {
                                     controls: appData.wmArgs.controls,
                                     message: appData.wmArgs.message,
                                     snapable: appData.wmArgs.snapable,
+                                    user: window.parent.sessionStorage.getItem('currAcc'),
                                 });
+                                try {
+                                    let apps = JSON.parse(await Filer.fs.promises.readFile(`/apps/installed.json`, "utf8"))
+                                    apps.push({
+                                        name: appName,
+                                        user: await window.parent.tb.user.username(),
+                                        config: `/apps/user/${await window.parent.tb.user.username()}/${appName}/.tbconfig`
+                                    })
+                                    await Filer.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(apps))
+                                } catch {
+                                    await Filer.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify([{
+                                        name: appName,
+                                        user: await window.parent.tb.user.username(),
+                                        config: `/apps/user/${await window.parent.tb.user.username()}/${appName}/.tbconfig`
+                                    }]))
+                                }
                                 window.parent.tb.notification.Toast({
                                     "message": `${appName} has been installed!`,
                                     "application": "Files",
@@ -1705,14 +1799,16 @@ const openPath = async (path) => {
 self.openPath = openPath;
 self.emptyTrash = emptyTrash;
 
-async function unzip(path, target) {
+async function unzip(path, target, app) {
     const response = await fetch('/fs/' + path);
-    window.parent.tb.notification.Installing({
-        "message": `Unzipping...`,
-        "application": "Files",
-        "iconSrc": "/fs/apps/system/files.tapp/icon.svg",
-        "time": 500,
-    });
+    if (!app) {
+        window.parent.tb.notification.Installing({
+            "message": `Unzipping...`,
+            "application": "Files",
+            "iconSrc": "/fs/apps/system/files.tapp/icon.svg",
+            "time": 500,
+        });   
+    }
     const zipFileContent = await response.arrayBuffer();
     if (!await dirExists(target)) {
         await Filer.fs.promises.mkdir(target, { recursive: true });
@@ -1749,12 +1845,14 @@ async function unzip(path, target) {
             }
         }
     }
-    window.parent.tb.notification.Toast({
-        "message": `Finished unzipping ${path}`,
-        "application": "Files",
-        "iconSrc": "/fs/apps/system/files.tapp/icon.svg",
-        "time": 500,
-    });
+    if (!app) {
+        window.parent.tb.notification.Toast({
+            "message": `Finished unzipping ${path}`,
+            "application": "Files",
+            "iconSrc": "/fs/apps/system/files.tapp/icon.svg",
+            "time": 500,
+        });
+    }
     return "Done!"
 }
 

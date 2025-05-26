@@ -35,7 +35,7 @@ export default function MediaIsland() {
         };
     }, []);
     return (
-        <div className={`island media_island w-[250px] h-[50px] ${mediaType ? 'opacity-100' : 'opacity-0'}`} style={{ backgroundImage: `url(${(mediaProps as MediaProps).background})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat'}}>
+        <div className={`island media_island w-[250px] h-[50px] rounded-lg ${mediaType ? 'opacity-100' : 'opacity-0'}`} style={{ backgroundImage: `url(${(mediaProps as MediaProps).background})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat'}}>
             {mediaType === 'music' && <Music {...(mediaProps as MediaProps)} onRemove={removeMedia} />}
             {mediaType === 'video' && <Video {...(mediaProps as MediaProps)} onRemove={removeMedia} />}
         </div>

@@ -45,7 +45,6 @@ export default function Recovery() {
     }
     getTmp();
 
-    // @ts-expect-error used below, ignore this error
     const prodins = async () => {
         setShowCursor(false);
         msgbox.current!.classList.remove("flex");
@@ -78,6 +77,9 @@ export default function Recovery() {
         localStorage.setItem("setup", "true");
         window.location.reload();
     }
+
+    // @ts-expect-error types
+    window.prodins = prodins
 
     const zipins = async () => {
         const fauxput = document.createElement("input");

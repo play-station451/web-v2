@@ -23,7 +23,20 @@ const getAccounts = async () => {
 
 const deleteAccount = async (id) => {
     const sudoUsers = JSON.parse(await Filer.fs.promises.readFile('/system/etc/terbium/sudousers.json', 'utf8'))
+    let sudoWithPassword = null;
+    for (const sudoUser of sudoUsers) {
+        const sudoUserData = JSON.parse(await Filer.fs.promises.readFile(`/home/${sudoUser}/user.json`, 'utf8'));
+        if (sudoUserData.password !== false) {
+            sudoWithPassword = sudoUser;
+            break;
+        }
+    }
     if (!sudoUsers.includes(sessionStorage.getItem('currAcc'))) {
+        if (!sudoWithPassword) {
+            tb.system.users.remove(id)
+            document.getElementById(id).remove();
+            return;
+        }
         tb.dialog.Permissions({
             title: "Permission Denied",
             message: "You do not have permission to delete accounts, would you like to request permission from sudo?",
@@ -152,6 +165,7 @@ const changePfp = async (id) => {
                     onOk: async (img) => {
                         data["pfp"] = img;
                         await Filer.fs.promises.writeFile(`/home/${id.id}/user.json`, JSON.stringify(data))
+                        parent.window.dispatchEvent(new Event('accUpd'));
                         renderAccounts();
                     }
                 })
@@ -205,48 +219,36 @@ const createAccount = async () => {
                             data["password"] = false
                         }
                         await tb.dialog.Select({
-                            title: "Do you want to set a profile picture?",
-                            options: [{
-                              text: "Yes",
-                              value: "yes"
-                            }, {
-                              text: "No",
-                              value: "no"
-                            }],
-                            onOk: async (perm) => {
-                                if (perm === "yes") {
-                                    const pfpInp = document.createElement('input');
-                                    pfpInp.type = 'file';
-                                    pfpInp.accept = 'image/*';
-                                    pfpInp.click();
-                                    pfpInp.onchange = async (e) => {
-                                        if (e.target.files.length === 0) {
-                                            const randomColorStr = ["blue", "green", "orange", "pink", "purple", "red", "yellow"][Math.floor(Math.random() * 7)];
-                                            data["pfp"] = `/assets/img/default - ${randomColorStr}.png`;
-                                        } else {
-                                            const file = e.target.files[0];
-                                            const reader = new FileReader();
-                                            reader.onload = async (e) => {
-                                                await tb.dialog.Cropper({
-                                                    title: "Crop Profile Picture",
-                                                    img: e.target.result,
-                                                    onOk: async (img) => {
-                                                        data["pfp"] = img;
-                                                        data["perm"] = "user";
-                                                        await tb.system.users.add(data)
-                                                        renderAccounts();
-                                                    }
-                                                })
-                                            }
-                                            reader.readAsDataURL(file);
+                            title: "Do you want to set up a security question?",
+                            options: [
+                                { 
+                                    text: "Yes",
+                                    value: "yes"
+                                },
+                                {
+                                    text: "No",
+                                    value: "no"
+                                }
+                            ],
+                            onOk: async (securityChoice) => {
+                                if (securityChoice === "yes") {
+                                    await tb.dialog.Message({
+                                        title: "Set Security Question",
+                                        onOk: async (question) => {
+                                            await tb.dialog.Message({
+                                                title: "Set Security Answer",
+                                                onOk: async (answer) => {
+                                                    data["securityQuestion"] = {
+                                                        question: question,
+                                                        answer: await tb.crypto(answer)
+                                                    };
+                                                    askProfilePicture(data);
+                                                }
+                                            })
                                         }
-                                    }
+                                    })
                                 } else {
-                                    const randomColorStr = ["blue", "green", "orange", "pink", "purple", "red", "yellow"][Math.floor(Math.random() * 7)];
-                                    data["pfp"] = `/assets/img/default - ${randomColorStr}.png`;
-                                    data["perm"] = "user";
-                                    await tb.system.users.add(data)
-                                    renderAccounts();
+                                    askProfilePicture(data);
                                 }
                             }
                         })
@@ -256,18 +258,85 @@ const createAccount = async () => {
         })
     }
 
+    const askProfilePicture = async (data) => {
+        await tb.dialog.Select({
+            title: "Do you want to set a profile picture?",
+            options: [
+                {
+                    text: "Yes",
+                    value: "yes"
+                },
+                {
+                    text: "No",
+                    value: "no"
+                }
+            ],
+            onOk: async (perm) => {
+                if (perm === "yes") {
+                    const pfpInp = document.createElement('input');
+                    pfpInp.type = 'file';
+                    pfpInp.accept = 'image/*';
+                    pfpInp.click();
+                    pfpInp.onchange = async (e) => {
+                        if (e.target.files.length === 0) {
+                            const randomColorStr = ["blue", "green", "orange", "pink", "purple", "red", "yellow"][Math.floor(Math.random() * 7)];
+                            data["pfp"] = `/assets/img/default - ${randomColorStr}.png`;
+                            data["perm"] = "user";
+                            await tb.system.users.add(data)
+                            renderAccounts();
+                        } else {
+                            const file = e.target.files[0];
+                            const reader = new FileReader();
+                            reader.onload = async (e) => {
+                                await tb.dialog.Cropper({
+                                    title: "Crop Profile Picture",
+                                    img: e.target.result,
+                                    onOk: async (img) => {
+                                        data["pfp"] = img;
+                                        data["perm"] = "user";
+                                        await tb.system.users.add(data)
+                                        renderAccounts();
+                                    }
+                                })
+                            }
+                            reader.readAsDataURL(file);
+                        }
+                    }
+                } else {
+                    const randomColorStr = ["blue", "green", "orange", "pink", "purple", "red", "yellow"][Math.floor(Math.random() * 7)];
+                    data["pfp"] = `/assets/img/default - ${randomColorStr}.png`;
+                    data["perm"] = "user";
+                    await tb.system.users.add(data)
+                    renderAccounts();
+                }
+            }
+        })
+    }
+
     const sudoUsers = JSON.parse(await Filer.fs.promises.readFile('/system/etc/terbium/sudousers.json', 'utf8'))
+    let sudoWithPassword = null;
+    for (const sudoUser of sudoUsers) {
+        const sudoUserData = JSON.parse(await Filer.fs.promises.readFile(`/home/${sudoUser}/user.json`, 'utf8'));
+        if (sudoUserData.password !== false) {
+            sudoWithPassword = sudoUser;
+            break;
+        }
+    }
     if (!sudoUsers.includes(sessionStorage.getItem('currAcc'))) {
+        if (!sudoWithPassword) {
+            askNewAccountDetails();
+            return;
+        }
         tb.dialog.Permissions({
             title: "Permission Denied",
             message: "You do not have permission to create accounts, would you like to request permission from sudo?",
             onOk: async () => {
                 tb.dialog.Auth({
                     title: "Request Permission",
-                    defaultUsername: sudoUsers[0],
+                    defaultUsername: sudoWithPassword,
                     onOk: async (username, password) => {
                         const pass = await tb.crypto(password)
-                        if (pass === JSON.parse(await Filer.fs.promises.readFile(`/home/${sudoUsers[0]}/user.json`, 'utf8')).password) {
+                        if (pass === JSON.parse(await Filer.fs.promises.readFile(`/home/${sudoWithPassword}/user.json`, 'utf8')).password) {
                             askNewAccountDetails();
                         } else {
                             tb.dialog.Alert({

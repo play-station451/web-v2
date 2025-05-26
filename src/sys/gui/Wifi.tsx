@@ -73,7 +73,6 @@ const WifiIcon: React.FC<WifiIconProps> = ({ connection }) => {
 
 export default function Wifi() {
     const [connection, setConnection] = useState(false);
-    const LoadMenu = () => window.dispatchEvent(new Event("open-net"));
     useEffect(() => {
         const getConnection = async () => {
             if("onLine" in navigator) {

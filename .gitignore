@@ -30,4 +30,3 @@ dist-ssr
 src/apps.json
 src/hash.json
 src/installer.json
-tailwind.config.js

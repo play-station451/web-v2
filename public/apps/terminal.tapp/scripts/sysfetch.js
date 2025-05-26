@@ -79,14 +79,21 @@ async function getStorage() {
         accent = settings["accent"]
     }
     navigator.storage.estimate().then((estimate) => {
+        const totalSize = estimate.quota;
         const usedSize = estimate.usage;
-        let formattedSize;
+        const usedPercentage = (usedSize / totalSize) * 100;
+        let formattedUsedSize, formattedTotalSize;
         if (usedSize >= 1024 * 1024 * 1024) {
-            formattedSize = `${(usedSize / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+            formattedUsedSize = `${(usedSize / (1024 * 1024 * 1024)).toFixed(2)} GB`;
         } else {
-            formattedSize = `${(usedSize / (1024 * 1024)).toFixed(2)} MB`;
+            formattedUsedSize = `${(usedSize / (1024 * 1024)).toFixed(2)} MB`;
         }
-        displayOutput("%c    ^&@@@?      B@@@@@@@@&B5~ " + `    %cStorage%c: ${formattedSize} of 2 GB`, `color: ${accent}`, `color: ${accent}`, "color: #b6b6b6");
+        if (totalSize >= 1024 * 1024 * 1024) {
+            formattedTotalSize = `${(totalSize / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+        } else {
+            formattedTotalSize = `${Math.round((totalSize / (1024 * 1024)).toFixed(2))} MB`;
+        }
+        displayOutput("%c    ^&@@@?      B@@@@@@@@&B5~ " + `    %cStorage%c: ${formattedUsedSize} of ${formattedTotalSize}`, `color: ${accent}`, `color: ${accent}`, "color: #b6b6b6");
     })
 }
 

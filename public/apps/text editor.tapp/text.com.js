@@ -12,7 +12,7 @@ tb_island.addControl({
     id: "text-file",
     click: () => {
         tb.contextmenu.create({
-            x: 6,
+            x: 112,
             y: appisland,
             options: [
                 {
@@ -63,7 +63,7 @@ tb_island.addControl({
     id: "text-computer",
     click: () => {
         tb.contextmenu.create({
-            x: 6,
+            x: 156,
             y: appisland,
             options: [
                 {

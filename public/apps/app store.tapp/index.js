@@ -1,7 +1,7 @@
 const Filer = window.Filer;
 const ghRepo = localStorage.getItem('appRepo') || 'https://raw.githubusercontent.com/TerbiumOS/app-repo/main/apps.json'
 async function fetchFromGitHub() {
-    const response = await tb.libcurl.fetch(ghRepo);
+    const response = await window.parent.tb.libcurl.fetch(ghRepo);
     const apps = response.json();
     return apps;
 }
@@ -15,7 +15,7 @@ async function otherFetch() {
     }
     try {
         const apps = await Promise.all(repos.map(async (repo) => {
-            const response = await tb.libcurl.fetch(repo.url);
+            const response = await window.parent.tb.libcurl.fetch(repo.url);
             return response.json();
         }));
         const otherapps = [].concat(...apps);
@@ -50,7 +50,7 @@ async function displayDetails(app) {
     let icon = document.createElement("img");
     icon.classList.add("icon");
     icon.setAttribute("draggable", "false");
-    const icn = await tb.libcurl.fetch(app.icon);
+    const icn = await window.parent.tb.libcurl.fetch(app.icon);
     const blob = await icn.blob();
     const icnurl = URL.createObjectURL(blob);
     icon.src = icnurl;
@@ -147,7 +147,7 @@ async function displayDetails(app) {
         imagesContainer.classList.add("images-container", "flex", "gap-2");
         app.images.forEach(async image => {
             let img = document.createElement("img");
-            const icn = await tb.libcurl.fetch(image);
+            const icn = await window.parent.tb.libcurl.fetch(image);
             const blob = await icn.blob();
             const icnurl = URL.createObjectURL(blob);
             img.src = icnurl;
@@ -214,7 +214,7 @@ async function createAppCard(app) {
     const appCard = document.createElement("div");
     appCard.classList.add("app-card", "flex", "gap-2", "p-3", "w-[242px]", "h-[80px]", "duration-150", "select-none", "cursor-pointer", "rounded-xl", "bg-[#00000028]");
     let description = app.description;
-    const icn = await tb.libcurl.fetch(app.icon);
+    const icn = await window.parent.tb.libcurl.fetch(app.icon);
     const blob = await icn.blob();
     const icnurl = URL.createObjectURL(blob);
     appCard.innerHTML = `
@@ -336,7 +336,7 @@ async function installApp(app) {
                 "time": 500,
             });
             try {
-                await tb.system.download(downloadUrl, `${appPath}.zip`);
+                await window.parent.tb.system.download(downloadUrl, `${appPath}.zip`);
                 const targetDirectory = `/apps/system/${appName}.tapp/`;
                 await unzip(`${appPath}.zip`, targetDirectory);
                 const appConf = await Filer.fs.promises.readFile(`/apps/system/${appName}.tapp/.tbconfig`, 'utf8');
@@ -361,6 +361,21 @@ async function installApp(app) {
                     message: appData.wmArgs.message,
                     snapable: appData.wmArgs.snapable,
                 });
+                try {
+                    let apps = JSON.parse(await Filer.fs.promises.readFile(`/apps/installed.json`, "utf8"))
+                    apps.push({
+                        name: appName,
+                        user: await window.parent.tb.user.username(),
+                        config: `/apps/system/${appName}.tapp/.tbconfig`
+                    })
+                    await Filer.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(apps))
+                } catch {
+                    await Filer.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify([{
+                        name: appName,
+                        user: await window.parent.tb.user.username(),
+                        config: `/apps/system/${appName}.tapp/.tbconfig`
+                    }]))
+                }
                 window.parent.tb.notification.Toast({
                     "message": `${appName} has been installed!`,
                     "application": "App Store",
@@ -398,7 +413,7 @@ async function installApp(app) {
                 "time": 500,
             });
             try {
-                await tb.system.download(downloadUrl, `${appPath}.zip`);
+                await window.parent.tb.system.download(downloadUrl, `${appPath}.zip`);
                 const targetDirectory = `/apps/system/${appName}.tapp/`;
                 await unzip(`${appPath}.zip`, targetDirectory);
                 console.log("Done!");
@@ -444,6 +459,13 @@ async function installApp(app) {
             const appPath = `/apps/system/${appName}.tapp`;
             await (new Filer.fs.Shell()).promises.rm(appPath, {recursive: true})
             await window.parent.tb.launcher.removeApp(appName);
+            try {
+                let installedApps = JSON.parse(await Filer.fs.promises.readFile(`/apps/installed.json`, "utf8"));
+                installedApps = installedApps.filter(app => app.name !== appName);
+                await Filer.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(installedApps));
+            } catch (e) {
+                console.error(`Error updating installed.json: ${e}`);
+            }
             window.parent.tb.notification.Toast({
                 "message": `${appName} has been uninstalled!`,
                 "application": "App Store",
@@ -480,7 +502,7 @@ async function installApp(app) {
                 "time": 500,
             });
             try {
-                await tb.system.download(downloadUrl, `${appPath}.zip`);
+                await window.parent.tb.system.download(downloadUrl, `${appPath}.zip`);
                 const targetDirectory = `/apps/anura/${appName}/`;
                 await unzip(`/apps/anura/${appName}.zip`, targetDirectory);
                 console.log("Done!");
@@ -503,6 +525,21 @@ async function installApp(app) {
                     icon: appData.icon,
                     id: appData.package,
                 }
+                try {
+                    let apps = JSON.parse(await Filer.fs.promises.readFile(`/apps/installed.json`, "utf8"))
+                    apps.push({
+                        name: appData.name,
+                        user: await window.parent.tb.user.username(),
+                        config: `/apps/anura/${appName}/manifest.json`
+                    })
+                    await Filer.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(apps))
+                } catch {
+                    await Filer.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify([{
+                        name: appData.name,
+                        user: await window.parent.tb.user.username(),
+                        config: `/apps/anura/${appName}/manifest.json`
+                    }]))
+                }
                 window.parent.tb.notification.Toast({
                     "message": `${appName} has been installed!`,
                     "application": "App Store",
@@ -523,7 +560,7 @@ async function installApp(app) {
             }
         } else {
             if (document.querySelector(".install")) {
-                document.querySelector(".install").innerText = "Uninstall";
+                document.querySelector(".install").innerText = "Install";
             }
             console.log("uninstalled");
             await Filer.fs.promises.readdir(appPath, async (err, files) => {
@@ -553,6 +590,13 @@ async function installApp(app) {
                             window.parent.tb.launcher.removeApp(app["wmArgs"]["title"]);
                         }
                         await (new Filer.fs.Shell()).promises.rm(`/apps/user/${await window.parent.tb.user.username()}/${app.name}`, {recursive: true})
+                        try {
+                            let installedApps = JSON.parse(await Filer.fs.promises.readFile(`/apps/installed.json`, "utf8"));
+                            installedApps = installedApps.filter(app => app.name !== appName);
+                            await Filer.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(installedApps));
+                        } catch (e) {
+                            console.error(`Error updating installed.json: ${e}`);
+                        }
                         if(document.querySelector(".install")) {
                             document.querySelector(".install").innerText = "Install";
                         }
@@ -569,7 +613,7 @@ async function installApp(app) {
                             title: app["wmArgs"]["title"],
                             name: app.name,
                             icon: app.icon,
-                            src: `${await window.tb.proxy.get() === 'Ultraviolet' ? '/uv/service/' + await tb.proxy.encode(app["wmArgs"]["src"], 'xor') : '/service/' + await tb.proxy.encode(app["wmArgs"]["src"], 'xor')}`,
+                            src: app["wmArgs"]["src"],
                             size: {
                                 width: app["wmArgs"]["size"]["width"],
                                 height: app["wmArgs"]["size"]["height"]
@@ -578,8 +622,24 @@ async function installApp(app) {
                             resizable: app["wmArgs"]["resizable"],
                             controls: app["wmArgs"]["controls"],
                             message: app["wmArgs"]["message"],
+                            proxy: app["wmArgs"]["proxy"],
                             snapable: app["wmArgs"]["snapable"],
                         });
+                        try {
+                            let apps = JSON.parse(await Filer.fs.promises.readFile(`/apps/installed.json`, "utf8"))
+                            apps.push({
+                                name: app.name,
+                                user: await window.parent.tb.user.username(),
+                                config: `/apps/user/${await window.parent.tb.user.username()}/${app.name}/index.json`
+                            })
+                            await Filer.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(apps))
+                        } catch {
+                            await Filer.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify([{
+                                name: app.name,
+                                user: await window.parent.tb.user.username(),
+                                config: `/apps/user/${await window.parent.tb.user.username()}/${app.name}/index.json`
+                            }]))
+                        }
                         console.log(app["wmArgs"])
                         if(document.querySelector(".install")) {
                             document.querySelector(".install").innerText = "Uninstall";
@@ -592,6 +652,27 @@ async function installApp(app) {
                 apps.push(app["pkg-name"].toLowerCase());
                 data.apps = apps;
                 await Filer.fs.promises.writeFile("/apps/web_apps.json", JSON.stringify(data))
+                window.parent.tb.notification.Toast({
+                    "message": `${app.name} has been installed!`,
+                    "application": "App Store",
+                    "iconSrc": "/fs/apps/system/app store.tapp/icon.svg",
+                    "time": 5000,
+                });
+                try {
+                    let apps = JSON.parse(await Filer.fs.promises.readFile(`/apps/installed.json`, "utf8"))
+                    apps.push({
+                        name: app.name,
+                        user: await window.parent.tb.user.username(),
+                        config: `/apps/user/${await window.parent.tb.user.username()}/${app.name}/index.json`
+                    })
+                    await Filer.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(apps))
+                } catch {
+                    await Filer.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify({
+                        name: app.name,
+                        user: await window.parent.tb.user.username(),
+                        config: `/apps/user/${await window.parent.tb.user.username()}/${app.name}/index.json`
+                    }))
+                }
                 await window.parent.tb.launcher.addApp({
                     title: app["wmArgs"]["title"],
                     name: app.name,

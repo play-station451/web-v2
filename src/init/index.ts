@@ -118,6 +118,11 @@ export async function init() {
                     }
                 },
                 {
+                    title: "Media Viewer",
+                    icon: "/fs/apps/system/media viewer.tapp/icon.svg",
+                    src: "/fs/apps/system/media viewer.tapp/index.html"
+                },
+                {
                     title: "Calculator",
                     icon: "/fs/apps/system/calculator.tapp/icon.svg",
                     src: "/fs/apps/system/calculator.tapp/index.html",
@@ -148,6 +153,7 @@ export async function init() {
             "pinned_apps": []
         }
         await Filer.promises.writeFile('/system/var/terbium/start.json', JSON.stringify(startApps))
+        await Filer.promises.writeFile(`/apps/installed.json`, JSON.stringify([]))
         await Filer.promises.mkdir('/apps/anura/')
         let dockPins = [
             {
@@ -184,6 +190,9 @@ export async function init() {
         await Filer.promises.mkdir("/system/lib")
         await Filer.promises.mkdir("/system/lib/anura")
         await Filer.promises.mkdir("/system/tmp")
+
+        let recentApps: any[] = []
+        await Filer.promises.writeFile('/system/var/terbium/recent.json', JSON.stringify(recentApps))
     }
     var items: any[] = []
 
@@ -207,6 +216,7 @@ export async function init() {
         await Filer.promises.writeFile(`/home/${user}/settings.json`, JSON.stringify(userSettings));
         await Filer.promises.mkdir(`/home/${user}/desktop`)
         let r2 = []
+        let sysapps: { name: string; config: string; user: string }[] = []
         apps.forEach(async (app, i) => {
             const name = app.name.toLowerCase()
             var topPos: number = 0;
@@ -248,6 +258,11 @@ export async function init() {
                 config: app.config,
                 icon: app.config.icon,
             }))
+            sysapps.push({
+                name: app.name,
+                config: `/apps/system/${name}.tapp/index.json`,
+                user: "System",
+            })
             await Filer.promises.symlink(`/apps/system/${name}.tapp/index.json`, `/home/${user}/desktop/${name}.lnk`)
         })
         await copyfs()
@@ -269,6 +284,7 @@ export async function init() {
             "show-hidden-files": false,
         }), "utf8")
         await Filer.promises.writeFile(`/apps/user/${user}/files/davs.json`, JSON.stringify([]))
+        await Filer.promises.writeFile(`/apps/installed.json`, JSON.stringify(sysapps))
         const response = await fetch('/apps/files.tapp/icons.json')
         const dat = await response.json()
         const iconNames = Object.keys(dat["name-to-path"])

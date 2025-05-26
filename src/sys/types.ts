@@ -75,9 +75,10 @@ export const fileExists = async (path: string): Promise<boolean> => {
 export interface User {
     id: string
     username: string
-    password: string
+    password: string | boolean
     pfp: string
     perm: Perm[]
+    securityQuestion?: { question: string; answer: string };
     email?: string
     groups?: string[]
 }
@@ -245,11 +246,8 @@ export interface NotificationProps {
 export interface launcherProps {
     name: string,
     icon: string,
-    src: any,
-    /**
-     * @deprecated Used as a stub, Use src now instead of callback
-     */
-    callback?: any
+    src: string,
+    user?: string
 }
 
 export interface dialogProps {
@@ -271,6 +269,7 @@ export interface dialogProps {
 }
 
 export interface cmprops {
+    titlebar?: string | React.ReactNode,
     x: number,
     y: number,
     options: {

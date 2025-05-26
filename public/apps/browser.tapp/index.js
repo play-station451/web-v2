@@ -134,7 +134,7 @@ function newTab() {
                             activeTabContent.src = parent.window.location.origin + "/sw/" + customEncode(url);
                         }
                     } else {
-                        let url = "https://google.com/search?q=" + urlbar.value;
+                        let url = localStorage.getItem("sEngine") || "https://google.com/search?q=" + urlbar.value;
                         urlbar.value = url;
                         if (proxy === "Ultraviolet") {
                             activeTabContent.src = parent.window.location.origin + "/uv/service/" + customEncode(url);
@@ -160,9 +160,9 @@ function newTab() {
         let settings = JSON.parse(data);
         let proxy = settings["proxy"];
         if (proxy === "Ultraviolet") {
-            tab_content.src = parent.window.location.origin + "/uv/service/" + customEncode("https://www.google.com");
+            tab_content.src = parent.window.location.origin + "/uv/service/" + customEncode(localStorage.getItem("defUrl") || "https://www.google.com");
         } else {
-            tab_content.src = parent.window.location.origin + "/service/" + customEncode("https://www.google.com");
+            tab_content.src = parent.window.location.origin + "/service/" + customEncode(localStorage.getItem("defUrl") || "https://www.google.com");
         }
     });
     const unloadHandler = function () {
@@ -399,6 +399,26 @@ const showTabs = () => {
     }
 }
 
+const newengine = () => {
+    window.parent.tb.dialog.Message({
+        title: "Enter a new search engine",
+        defaultValue: "https://google.com/search?q=",
+        onOk: (value) => {
+            localStorage.setItem("sEngine", value)
+        },
+    });
+}
+
+const nt = () => {
+    window.parent.tb.dialog.Message({
+        title: "Enter a new start page",
+        defaultValue: "https://google.com",
+        onOk: (value) => {
+            localStorage.setItem("defUrl", value)
+        },
+    });
+}
+
 document.querySelector(".opt-menu").addEventListener("click", () => {
     const rect = document.querySelector(".opt-menu").getBoundingClientRect();
     window.parent.tb.contextmenu.create({
@@ -412,6 +432,14 @@ document.querySelector(".opt-menu").addEventListener("click", () => {
             {
                 text: "Add site as PWA (beta)",
                 click: async () => pwaIns()
+            },
+            {
+                text: "Change default search engine",
+                click: async () => newengine()
+            },
+            {
+                text: "Change new tab page",
+                click: async () => nt()
             },
             {
                 text: "Toggle Eruda",

@@ -46,6 +46,7 @@ export class Settings {
             Object.assign(initial, JSON.parse(raw as any));
         } catch (e) {
             fs.mkdir("/system/etc/anura/")
+            fs.mkdir("/system/etc/anura/configs/")
             fs.mkdir("/system/etc/anura/init/")
             fs.mkdir("/system/bin/anura/")
             fs.writeFile("/system/etc/anura/theme.json", JSON.stringify({

@@ -93,6 +93,114 @@ export default function Updater() {
             }
             await Filer.fs.promises.writeFile("/apps/system/settings.tapp/wisp-servers.json", await Filer.fs.promises.readFile("/system/tmp/terb-upd/wisp-servers.json"))
             await Filer.fs.promises.writeFile("/system/etc/terbium/hash.cache", hash);
+            // v2.0-Beta2 update
+            if (!await fileExists("/apps/installed.json")) {
+                statusref.current!.innerText = "Installing Terbium v2.0-Beta2...";
+                let insapps = [
+                    {
+                        name: "About",
+                        config: "/apps/system/about.tapp/index.json",
+                        user: "System"
+                    },
+                    {
+                        name: "App Store",
+                        config: "/apps/system/app store.tapp/index.json",
+                        user: "System"
+                    },
+                    {
+                        name: "Calculator",
+                        config: "/apps/system/calculator.tapp/index.json",
+                        user: "System"
+                    },
+                    {
+                        name: "Feedback",
+                        config: "/apps/system/feedback.tapp/index.json",
+                        user: "System"
+                    },
+                    {
+                        name: "Files",
+                        config: "/apps/system/files.tapp/index.json",
+                        user: "System"
+                    },
+                    {
+                        name: "Media Viewer",
+                        config: "/apps/system/media viewer.tapp/index.json",
+                        user: "System"
+                    },
+                    {
+                        name: "Settings",
+                        config: "/apps/system/settings.tapp/index.json",
+                        user: "System"
+                    },
+                    {
+                        name: "Task Manager",
+                        config: "/apps/system/task manager.tapp/index.json",
+                        user: "System"
+                    },
+                    {
+                        name: "Terminal",
+                        config: "/apps/system/terminal.tapp/index.json",
+                        user: "System"
+                    },
+                    {
+                        name: "Text Editor",
+                        config: "/apps/system/text editor.tapp/index.json",
+                        user: "System"
+                    },
+                    {
+                        name: "Anura File Manager",
+                        config: "/system/etc/anura/configs/Anura File Manager.json",
+                        user: "System"
+                    }
+                ]
+                const startApps = JSON.parse(await Filer.fs.promises.readFile("/system/var/terbium/start.json", "utf8")).system_apps;
+                for (const app of startApps) {
+                    let appName = "";
+                    let appTitle = "";
+                    if (typeof app.title === "object" && app.title !== null && "text" in app.title) {
+                        appTitle = app.title.text;
+                    } else if (typeof app.title === "string") {
+                        appTitle = app.title;
+                    } else if (typeof app.name === "string") {
+                        appTitle = app.name;
+                    }
+                    appName = appTitle?.toLowerCase?.() || "";
+                    const isSysApp = sysapps.some(s => s.toLowerCase() === appName) || appName === "anura file manager" || appName === "browser";
+                    const alreadyInstalled = insapps.some(a => a.name?.toLowerCase?.() === appName || a.name?.toLowerCase?.() === appTitle?.toLowerCase?.());
+                    if (!isSysApp && !alreadyInstalled) {
+                        let configPath = "/apps/";
+                        if (app.name) {
+                            let appDir = `/apps/system/${app.name}/`;
+                            let configFile = "";
+                            if (await fileExists(`${appDir}.tbconfig`)) {
+                                configFile = `${appDir}.tbconfig`;
+                            } else {
+                                if (sessionStorage.getItem("currAcc")) {
+                                    appDir = `/apps/user/${sessionStorage.getItem("currAcc")}/${app.name}/`;
+                                } else {
+                                    appDir = `/apps/user/${JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8")).defaultUser}/${app.name}/`;
+                                }
+                                if (await fileExists(`${appDir}.tbconfig`)) {
+                                    configFile = `${appDir}.tbconfig`;
+                                } else {
+                                    configFile = `${appDir}index.json`;
+                                }
+                            }
+                            if (configFile) {
+                                configPath = configFile;
+                            }
+                        }
+                        insapps.push({
+                            name: appTitle,
+                            config: configPath,
+                            user: sessionStorage.getItem("currAcc") || "System"
+                        });
+                    }
+                }
+                await Filer.fs.promises.mkdir("/system/etc/anura/configs/")
+                await Filer.fs.promises.writeFile("/apps/installed.json", JSON.stringify(insapps))
+                await Filer.fs.promises.writeFile("/system/var/terbium/recent.json", JSON.stringify([]))
+            }
             setProgress(80);
             statusref.current!.innerText = "Cleaning up...";
             setProgress(95);
