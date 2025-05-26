@@ -308,7 +308,7 @@ const Dock: FC<IDockProps> = ({ pinned }) => {
                         }} />
                     </div>
                 </div>
-                <div className={`relative flex items-center min-h-[104px] overflow-y-auto h-[196px] w-full gap-2 p-2 pt-0
+                <div className={`relative flex min-h-[104px] overflow-y-auto max-h-[196px] w-full gap-2 p-2 pt-0
                     ${
                         isStartOpen ? "" : "translate-y-4 opacity-0"
                     } duration-1000
