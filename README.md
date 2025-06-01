@@ -52,5 +52,6 @@ If your looking to see what Anura APIs and features are supported in terbium, re
 - [illusionTBA](https://github.com/illusionTBA)
 - [Rafflesia](https://github.com/ProgrammerIn-wonderland)
 - [Riftriot](https://github.com/Riftriot)
+- [ironswordX](https://github.com/ironswordX)
 
 Licensed under the [**AGPL3 License**](https://www.gnu.org/licenses/agpl-3.0.en.html)
