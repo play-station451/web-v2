@@ -292,7 +292,6 @@ export class Anura {
             const file = await this.fs.promises.readFile(
                 `${searchPath}/${scope}/${name}/${filename}`,
             );
-            // @ts-expect-error
             const blob = new Blob([file], { type: "application/javascript" });
             const url = URL.createObjectURL(blob);
             // @vite-ignore
