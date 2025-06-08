@@ -83,6 +83,9 @@ function newTab() {
             otab.classList.remove("active");
         }
     });
+    if (!localStorage.getItem("defUrl")) {
+        localStorage.setItem("defUrl", "about:newtab");
+    }
     tab.classList.add("active");
     document.querySelector(".tabs").appendChild(tab);
     const urlbar = document.createElement("input");
@@ -120,6 +123,8 @@ function newTab() {
             const activeTabContent = document.querySelector(".tab-content.active");
             if (url === "about:settings") {
                 //activeTabContent.contentWindow.location = "/apps/browser.tapp/settings.html";
+            } else if (url === "about:newtab") {
+                activeTabContent.src = "/apps/browser.tapp/newtab.html";
             } else {
                 Filer.promises.readFile(`/home/${user}/settings.json`, "utf8").then((data) => {
                     let settings = JSON.parse(data);
@@ -159,10 +164,24 @@ function newTab() {
     Filer.promises.readFile(`/home/${user}/settings.json`, "utf8").then((data) => {
         let settings = JSON.parse(data);
         let proxy = settings["proxy"];
-        if (proxy === "Ultraviolet") {
-            tab_content.src = parent.window.location.origin + "/uv/service/" + customEncode(localStorage.getItem("defUrl") || "https://www.google.com");
+        console.log(proxy)
+        console.log(localStorage.getItem("defUrl"))
+        if (localStorage.getItem("defUrl") === "about:newtab") {
+            urlbar.value = "about:newtab";
+            updateTab = true
+            tab_content.src = "/apps/browser.tapp/newtab.html";
+            tab_content.addEventListener("load", () => {
+                tab_content.contentWindow.addEventListener("updTab", () => {
+                    updateTab = false;
+                    tab_content.contentWindow.removeEventListener("updTab", arguments.callee);
+                });
+            });
         } else {
-            tab_content.src = parent.window.location.origin + "/service/" + customEncode(localStorage.getItem("defUrl") || "https://www.google.com");
+            if (proxy === "Ultraviolet") {
+                tab_content.src = parent.window.location.origin + "/uv/service/" + customEncode(localStorage.getItem("defUrl") || "about:newtab");
+            } else if (proxy === "Scramjet") {
+                tab_content.src = parent.window.location.origin + "/service/" + customEncode(localStorage.getItem("defUrl") || "about:newtab");
+            }
         }
     });
     const unloadHandler = function () {
@@ -285,7 +304,9 @@ function newTab() {
         url = url.replace(parent.window.location.origin, "");
         url = url.replace("/uv/service/", "");
         url = url.replace("/service/", "");
-        urlbar.value = customDecode(url);
+        if (!url.includes("about:")) {
+            urlbar.value = customDecode(url);
+        }
     });
     tab_close.addEventListener("click", () => {closeTab(id); clearInterval(interval)});
 }
@@ -332,6 +353,20 @@ document.querySelector(".navigate-forward").addEventListener("click", () => {
         window.parent.tb.mediaplayer.hide()
         window.history.forward()
     }
+})
+
+document.querySelector(".fav-button").addEventListener("click", async () => {
+    const activeTabContent = document.querySelector(".tab-content.active");
+    const dat = JSON.parse(await Filer.promises.readFile(`/apps/user/${await window.parent.tb.user.username()}/browser/favorites.json`, "utf8"));
+    const favicon = activeTabContent.contentDocument.querySelector("link[rel~='icon']")?.href ||
+                   activeTabContent.contentDocument.querySelector("link[rel='shortcut icon']")?.href ||
+                   "/apps/browser.tapp/icon.svg";
+    dat.push({
+        title: activeTabContent.contentDocument.title || "Untitled",
+        icon: favicon,
+        url: await tb.proxy.decode(activeTabContent.src.replace(window.location.origin, "").replace(/\/uv\/service\/|\/service\//, ""), "XOR"),
+    })
+    await Filer.promises.writeFile(`/apps/user/${await window.parent.tb.user.username()}/browser/favorites.json`, JSON.stringify(dat));
 })
 
 const pwaIns = async () => {
@@ -412,7 +447,7 @@ const newengine = () => {
 const nt = () => {
     window.parent.tb.dialog.Message({
         title: "Enter a new start page",
-        defaultValue: "https://google.com",
+        defaultValue: "about:newtab",
         onOk: (value) => {
             localStorage.setItem("defUrl", value)
         },

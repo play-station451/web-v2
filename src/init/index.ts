@@ -284,6 +284,8 @@ export async function init() {
             "show-hidden-files": false,
         }), "utf8")
         await Filer.promises.writeFile(`/apps/user/${user}/files/davs.json`, JSON.stringify([]))
+        await Filer.promises.mkdir(`/apps/user/${user}/browser`)
+        await Filer.promises.writeFile(`/apps/user/${user}/browser/favorites.json`, JSON.stringify([]))
         await Filer.promises.writeFile(`/apps/installed.json`, JSON.stringify(sysapps))
         const response = await fetch('/apps/files.tapp/icons.json')
         const dat = await response.json()
