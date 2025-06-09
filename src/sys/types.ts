@@ -430,6 +430,7 @@ export interface COM {
             addControl(args: any): void;
             removeControl(control_id: string): void;
         };
+        changeSrc(src: string): void;
         reload(): void;
         minimize(): void;
         maximize(): void;

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect,  } from "react"
+import { useState, useRef, useEffect } from "react"
 import { fileExists, UserSettings, WindowConfig } from "../types"
 import { clearInfo, updateInfo } from "./AppIsland"
 import { useWindowStore } from "../Store"
@@ -212,6 +212,23 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
                 ]
             })
         }
+        const changeURL = (e: CustomEvent) => {
+            const det = JSON.parse(e.detail)
+            if (det.pid === config.pid) {
+                if (srcRef.current?.contentWindow) {
+                    setSrc(det.url)
+                    Object.assign(srcRef.current?.contentWindow, {
+                        tb: window.parent.tb,
+                        anura: window.parent.anura,
+                        AliceWM: window.parent.AliceWM,
+                        LocalFS: window.parent.LocalFS,
+                        ExternalApp: window.parent.ExternalApp,
+                        ExternalLib: window.parent.ExternalLib,
+                        Filer: window.parent.Filer
+                    });
+                }
+            }
+        }
         const minall: any = () => {
             if (!minimized) setMinimized(true)
         }
@@ -224,6 +241,7 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
         window.addEventListener('upd-winbarcol', setBC as EventListener)
         window.addEventListener('upd-winbartxt', settxt as EventListener)
         window.addEventListener('upd-winbarbg', setBG as EventListener)
+        window.addEventListener('upd-src', changeURL as EventListener)
         window.addEventListener('sel-win', selWin as EventListener)
         window.addEventListener('min-wins', minall)
         if (regionRef.current) regionRef.current.addEventListener('contextmenu', debugCTX)
@@ -236,6 +254,7 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
             window.removeEventListener('upd-winbarcol', setBC as EventListener)
             window.removeEventListener('upd-winbartxt', settxt as EventListener)
             window.removeEventListener('upd-winbarbg', setBG as EventListener)
+            window.removeEventListener('upd-src', changeURL as EventListener)
             window.removeEventListener('sel-win', selWin as EventListener)
             window.removeEventListener('min-wins', minall)
             if (regionRef.current) regionRef.current.removeEventListener('contextmenu', debugCTX)

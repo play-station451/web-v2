@@ -252,6 +252,10 @@ export default async function Api() {
                     clearControls(control_id);
                 }
             },
+            changeSrc(src: string) {
+                const currWin = useWindowStore.getState().currentPID
+                window.dispatchEvent(new CustomEvent("upd-src", { detail: JSON.stringify({ pid: currWin, url: src }) }))
+            },
             reload() {
                 const currWin = useWindowStore.getState().currentPID
                 window.dispatchEvent(new CustomEvent("reload-win", { detail: currWin }))
