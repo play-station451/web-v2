@@ -4,7 +4,7 @@ import { Dialog } from "./dialog";
 import { Net } from "./net";
 
 export class Lemonade {
-    static get version(): string {
+    get version(): string {
         return "1.0.0";
     }
 
