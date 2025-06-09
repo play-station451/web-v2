@@ -18,6 +18,7 @@ declare global {
         LocalFS: any;
         ExternalApp: any;
         ExternalLib: any;
+        electron: any;
     }
 }
 

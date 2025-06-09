@@ -22,6 +22,7 @@ import { useWindowStore } from "./Store";
 import { AnuraBareClient } from "./liquor/bcc";
 import apps from "../apps.json";
 import { hash } from "../hash.json";
+import { Lemonade } from "./lemonade";
 const system = new System;
 const Filer = window.Filer;
 const pw = new pwd();
@@ -994,6 +995,7 @@ export default async function Api() {
         window.LocalFS = LocalFS;
         window.ExternalApp = ExternalApp;
         window.ExternalLib = ExternalLib;
+        window.electron = new Lemonade();
         const getupds = async () => {
             if (hash !== await Filer.fs.promises.readFile("/system/etc/terbium/hash.cache", "utf8")) {
                 window.tb.notification.Toast({
