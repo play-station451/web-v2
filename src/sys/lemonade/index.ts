@@ -1,6 +1,7 @@
 import { Notification } from "./notification";
 import { BrowserWindow } from "./window";
 import { Dialog } from "./dialog";
+import { Net } from "./net";
 
 export class Lemonade {
     static get version(): string {
@@ -10,4 +11,5 @@ export class Lemonade {
     Notification = Notification
     BrowserWindow = BrowserWindow
     dialog = new Dialog
+    net = new Net
 }
