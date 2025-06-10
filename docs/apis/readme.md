@@ -202,6 +202,12 @@ So you're looking to use Terbium APIs. Well, you're in the right place! Terbium 
       ```javascript
       tb.window.reload()
       ```
+  - **changeSrc**
+    - Description: Changes the src of the iframe (if present) in the active window.
+    - Example:
+      ```js
+      tb.window.changeSrc("/fs/apps/system/about.tapp/index.html")
+      ```
   - **getId**
     - Description: Gets the ID of the currently active window.
     - Returns: `Promise<string>` - Window ID.

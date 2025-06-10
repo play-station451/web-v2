@@ -20,6 +20,7 @@
 - App Store
 - A brand new terminal
 - Anura Compatability layer (Liquor)
+- Electron Compatability layer (Lemonade)
 - And lots more!
 
 ## <span style="color: #32ae62;">Setup</span>
@@ -43,7 +44,7 @@ If you are developing/modifying terbium you can just run `pnpm run dev`, **DO NO
 
 If you wish to develop or just learn more about terbiums components and stuff feel free to read out [Documentation](/docs/README.md)
 
-If your looking to see what Anura APIs and features are supported in terbium, refer to: [here](/docs/anura-compat.md)
+If your looking to see what Anura APIs and features are supported in terbium, refer to: [here](/docs/anura-compat.md), if your looking to see what Electron API's are supported in terbium refer to: [here](/docs/lemonade-compat.md)
 
 ### <span style="color: #32ae62;">Contributors</span>
 

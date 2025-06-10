@@ -8,6 +8,7 @@ Welcome to Terbium v2's Documentation. Here is a simple table of contents to hel
 - [Creating Apps](./creating-apps.md)
 - [Backend Configuration Options](./backend-configuration.md)
 - [Anura Compatability & API Support](./anura-compat.md)
+- [Electron Compatability & API Support](./lemonade-compat.md)
 - [Terbium API Documentation](./apis/readme.md)
 - [Static Hosting](./static-hosting.md)
 
