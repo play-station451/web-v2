@@ -125,29 +125,24 @@ function newTab() {
                 //activeTabContent.contentWindow.location = "/apps/browser.tapp/settings.html";
             } else if (url === "about:newtab") {
                 activeTabContent.src = "/apps/browser.tapp/newtab.html";
+            } else if (url === "about:extensions") {
+                activeTabContent.src = "/apps/browser.tapp/extensions.html";
             } else {
-                Filer.promises.readFile(`/home/${user}/settings.json`, "utf8").then((data) => {
+                const input = urlbar.value.trim();
+                Filer.promises.readFile(`/home/${user}/settings.json`, "utf8").then(async (data) => {
                     let settings = JSON.parse(data);
-                    let proxy = settings["proxy"];
-                    if (url.match(isURL)) {
-                        console.log("URL");
-                        if (proxy === "Ultraviolet") {
-                            activeTabContent.src = parent.window.location.origin + "/uv/service/" + customEncode(url);
-                        } else if (proxy === "Scramjet") {
-                            activeTabContent.src = parent.window.location.origin + "/service/" + customEncode(url);
-                        } else {
-                            activeTabContent.src = parent.window.location.origin + "/sw/" + customEncode(url);
-                        }
+                    const searchEngine = localStorage.getItem("sEngine") || "https://google.com/search?q=";
+                    const isUrl = /^(https?:\/\/)|(localhost(:\d+)?([\/?]|$))|([a-z0-9\-]+\.[a-z]{2,})/i.test(input) && !/\s/.test(input);
+                    let url;
+                    if (isUrl) {
+                        url = input.startsWith("http") ? input : `https://${input}`;
                     } else {
-                        let url = localStorage.getItem("sEngine") || "https://google.com/search?q=" + urlbar.value;
-                        urlbar.value = url;
-                        if (proxy === "Ultraviolet") {
-                            activeTabContent.src = parent.window.location.origin + "/uv/service/" + customEncode(url);
-                        } else if (proxy === "Scramjet") {
-                            activeTabContent.src = parent.window.location.origin + "/service/" + customEncode(url);
-                        } else {
-                            activeTabContent.src = parent.window.location.origin + "/sw/" + customEncode(url);
-                        }
+                        url = `${searchEngine}${encodeURIComponent(input)}`;
+                    }
+                    if (settings.proxy === "Scramjet") {
+                        activeTabContent.src = `${window.location.origin}/service/${await window.parent.tb.proxy.encode(url, "XOR")}`;
+                    } else {
+                        activeTabContent.src = `${window.location.origin}/uv/service/${await window.parent.tb.proxy.encode(url, "XOR")}`;
                     }
                 });
             }
@@ -346,6 +341,13 @@ document.querySelector(".navigate-back").addEventListener("click", () => {
         window.parent.tb.mediaplayer.hide()
         window.history.back()
     }
+})
+
+document.querySelector(".ext-btn").addEventListener("click", () => {
+    const activeTabContent = document.querySelector(".tab-content.active");
+    activeTabContent.contentWindow.location.href = "/apps/browser.tapp/extensions.html";
+    const activeUrlbar = document.querySelector(".urlbar.active");
+    activeUrlbar.value = "about:extensions";
 })
 
 document.querySelector(".navigate-forward").addEventListener("click", () => {

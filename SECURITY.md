@@ -4,14 +4,21 @@
 
 | Version | Supported |
 | ------- | --------- |
-| 2.0.0-beta   | ✅ |
+| 2.0.0-beta   | ❌ |
 | 2.0.0-beta2   | ✅ |
+| 2.0.0-beta3   | ✅ |
 
 ### Supported Liquor Versions
 
 | Version | Supported |
 | ------- | --------- |
 | 2.1.0 (stable) | ✅ |
+
+### Supported Lemonade Versions
+
+| Version | Supported |
+| ------- | --------- |
+| 1.0.0 (stable) | ✅ |
 
 ## Reporting a Vulnerability
 

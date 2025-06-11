@@ -96,7 +96,7 @@ export default function Updater() {
             const user = sessionStorage.getItem("currAcc") || JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8")).defaultUser
             // v2.0-Beta2 update
             if (!await fileExists("/apps/installed.json")) {
-                statusref.current!.innerText = "Installing Terbium v2.0-Beta2...";
+                statusref.current!.innerText = "Installing Terbium v2.0-Beta2 prerequisites...";
                 let insapps = [
                     {
                         name: "About",
@@ -205,6 +205,7 @@ export default function Updater() {
             if (!await fileExists(`/apps/user/${user}/browser/favorites.json`)) {
                 await Filer.fs.promises.mkdir(`/apps/user/${user}/browser/`);
                 await Filer.fs.promises.writeFile(`/apps/user/${user}/browser/favorites.json`, JSON.stringify([]))
+                await Filer.fs.promises.writeFile(`/apps/user/${user}/browser/userscripts.json`, JSON.stringify([]))
             }
             setProgress(80);
             statusref.current!.innerText = "Cleaning up...";

@@ -261,3 +261,16 @@ main .tab-content:not(.active) {
     opacity: 1;
     animation: fade-in 0.5s ease-in-out forwards
 }
+
+button {
+    background-color: #ffffff28;
+    border-radius: 6px;
+    padding: 6px 8px;
+    border: none;
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 14px;
+    font-family: Inter;
+    cursor: var(--cursor-pointer);
+    transition: 150ms ease-in-out;
+}
