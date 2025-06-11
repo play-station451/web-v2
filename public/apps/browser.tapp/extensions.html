@@ -61,11 +61,29 @@
                       value: "f"
                     }],
                     onOk: async (val) => {
-                        // be effecient, dont chain ifs
                         switch(val) {
-                            case 'f': // single-file
+                            case 'f':
+                                window.parent.tb.dialog.FileBrowser({
+                                    title: "Select a Userscript to load",
+                                    defualtDir: "//",
+                                    onOk: async (path) => {
+                                        const fileData = await Filer.fs.promises.readFile(path, "utf8");
+                                        const scrMeta = await getMeta(fileData);
+                                        console.log(scrMeta);
+                                        userScripts.push({
+                                            name: scrMeta.name || "userscript",
+                                            version: scrMeta.version || "1.0",
+                                            author: scrMeta.author || "Unknown",
+                                            license: scrMeta.license || "Unknown",
+                                            match: scrMeta.match || "*",
+                                            file: path,
+                                            icon: scrMeta.icon || "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=",
+                                        })
+                                        await Filer.fs.promises.writeFile(`/apps/user/${await window.parent.tb.user.username()}/browser/userscripts.json`, JSON.stringify(userScripts, null, 2));
+                                    }
+                                });
                                 break;
-                            case 'd': // dir
+                            case 'd':
                                 window.parent.tb.dialog.DirectoryBrowser({
                                     title: "Select a Userscript to load",
                                     defualtDir: "//",
@@ -73,10 +91,9 @@
                                         const dir = await Filer.fs.promises.readdir(path);
                                         for (const file of dir) {
                                             if (file.endsWith(".user.js")) {
-                                                const fileData = await Filer.fs.promises.readFile(`${path}/${file}`, "utf8"); // in case its needed elsewhere
+                                                const fileData = await Filer.fs.promises.readFile(`${path}/${file}`, "utf8");
                                                 const scrMeta = await getMeta(fileData);
                                                 console.log(scrMeta);
-                                                // ok so getmeta is working correctly
                                                 userScripts.push({
                                                     name: scrMeta.name || "userscript",
                                                     version: scrMeta.version || "1.0",
@@ -84,13 +101,13 @@
                                                     license: scrMeta.license || "Unknown",
                                                     match: scrMeta.match || "*",
                                                     file: `${path}/${file}`,
-                                                    icon: scrMeta.icon || "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=", // just a 1 pixel by 1 pixel transparent png
+                                                    icon: scrMeta.icon || "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=",
                                                 })
                                                 await Filer.fs.promises.writeFile(`/apps/user/${await window.parent.tb.user.username()}/browser/userscripts.json`, JSON.stringify(userScripts, null, 2));
                                             };
                                         };
                                     }
-                                });         
+                                });
                                 break;
                             default:
                                 break;
