@@ -202,41 +202,70 @@ function newTab() {
                 urlbar.value = window.parent.$scramjet.codec.decode(tab_content.contentWindow.window.location.href.replace(/^.*\/service\//, ""))
             }
         }
+        if (!tab_content.contentDocument.getElementById('tb-cursor-controller')) {
+            const cursor_controller = document.createElement("script");
+            cursor_controller.src = "/cursor_changer.js";
+            cursor_controller.id = "tb-cursor-controller";
+            tab_content.contentDocument.head.appendChild(cursor_controller);
+        };
         if (!tab_content.contentDocument.getElementById('tb-media-controller')) {
             const media_controller = document.createElement("script")
-            const cursor_controller = document.createElement("script")
             media_controller.src = "/media_interactions.js"
             media_controller.id = "tb-media-controller"
-            cursor_controller.src = "/cursor_changer.js"
-            cursor_controller.id = "tb-cursor-controller"
             tab_content.contentDocument.head.appendChild(media_controller)
-            tab_content.contentDocument.head.appendChild(cursor_controller)
+        }
+        if (!tab_content.contentDocument.getElementById("userscript-container")) {
+            const userscript_container = document.createElement("div");
+            userscript_container.id = "userscript-container";
+            Filer.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/browser/userscripts.json`).then(async (data) => {
+                const dat = JSON.parse(data);
+                for (const script of dat) {
+                    function getPat(url, pattern) {
+                        let regexStr = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*');
+                        regexStr = '^' + regexStr + '$';
+                        return new RegExp(regexStr).test(url);
+                    }
+                    if (getPat(urlbar.value, script.match)) {
+                        const user_script = document.createElement("script");
+                        console.log(script.file);
+                        console.log("Script: %a\nScript path: %b", script.name, script.file);
+                        user_script.type = 'text/javascript';
+                        user_script.text = await Filer.promises.readFile(script.file, "utf8");
+                        user_script.type = "text/javascript";
+                        user_script.id = `userscript-${script.name}`;
+                        user_script.setAttribute("data-script-path", script.file);
+                        userscript_container.appendChild(user_script);
+                    }
+                }
+            })
+            tab_content.contentDocument.head.appendChild(userscript_container);
+            console.log("Injected userscripts into the frame");
         }
         if (!tab_content.contentDocument._hasKeydownListener) {
             tab_content.contentDocument.addEventListener("keydown", (e) => {
-            if (e.altKey && e.key.toLowerCase() === "t") {
-                newTab();
-            } else if (e.altKey && e.key.toLowerCase() === "w") {
-                closeTab(document.querySelector(".tab.active").id);
-            } else if (e.altKey && e.key.toLowerCase() === "r") {
-                const activeTabContent = document.querySelector(".tab-content.active");
-                window.parent.tb.mediaplayer.hide()
-                activeTabContent.contentWindow.location.reload();
-            } else if (e.altKey && e.key.toLowerCase() === "b") {
-                pwaIns();
-            } else if (e.altKey && e.key.toLowerCase() === "k") {
-                showTabs();
-            } else if (e.altKey && e.key.toLowerCase() === "i") {
-                if (typeof window.eruda === "undefined") {
-                eruda.init();
-                } else {
-                if (window.eruda._isInit) {
-                    window.eruda.destroy();
-                } else {
-                    window.eruda.init();
+                if (e.altKey && e.key.toLowerCase() === "t") {
+                    newTab();
+                } else if (e.altKey && e.key.toLowerCase() === "w") {
+                    closeTab(document.querySelector(".tab.active").id);
+                } else if (e.altKey && e.key.toLowerCase() === "r") {
+                    const activeTabContent = document.querySelector(".tab-content.active");
+                    window.parent.tb.mediaplayer.hide()
+                    activeTabContent.contentWindow.location.reload();
+                } else if (e.altKey && e.key.toLowerCase() === "b") {
+                    pwaIns();
+                } else if (e.altKey && e.key.toLowerCase() === "k") {
+                    showTabs();
+                } else if (e.altKey && e.key.toLowerCase() === "i") {
+                    if (typeof window.eruda === "undefined") {
+                        eruda.init();
+                    } else {
+                        if (window.eruda._isInit) {
+                            window.eruda.destroy();
+                        } else {
+                            window.eruda.init();
+                        }
+                    }
                 }
-                }
-            }
             });
             tab_content.contentDocument._hasKeydownListener = true;
         }
