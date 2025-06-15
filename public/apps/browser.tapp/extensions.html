@@ -8,10 +8,36 @@
     <script src="/assets/libs/tailwind.min.js"></script>
     <script src="/assets/libs/filer.min.js"></script>
     <script>
+        const getMeta = async (value) => {
+            const metaMatch = /\/\/\s*==UserScript==([\s\S]*?)\/\/\s*==\/UserScript==/;
+            if (!(metaMatch.test(value))) {
+                window.parent.tb.dialog.Alert({ title: "Userscript error", message: "Could not find meta info for the userscript." });
+                return;
+            };
+            const meta = value.match(/\/\/\s*==UserScript==([\s\S]*?)\/\/\s*==\/UserScript==/);
+            const metaObj = meta[1].split("\n")
+            const m = {}
+            for (let l of metaObj) {
+                const match = l.match(/^\s*\/\/\s*@(\S+)\s+(.*)$/)
+                if (match) {
+                    const [, key, value] = match;
+                    if (m[key]) {
+                        if (Array.isArray(m[key])) {
+                            m[key].push(value);
+                        } else {
+                            m[key] = [m[key], value];
+                        }
+                    } else {
+                        m[key] = value;
+                    }
+                }
+            }
+            return m
+        }
+
         const getAll = async () => {
             const ujsDiv = document.getElementById("ujs");
-            const userScripts = JSON.parse(await Filer.fs.promises.readFile(`/apps/user/${await window.parent.tb.user.username()}/browser/userscripts.json`, "utf8"));
-
+            const userScripts = JSON.parse(await Filer.fs.promises.readFile(`/apps/user/${await window.parent.tb.user.username()}/browser/userscripts.json`, "utf8"))
             if (userScripts.length === 0) {
                 ujsDiv.innerHTML = "<span class='text-gray-500'>No UserScripts found</span>";
             } else {
@@ -23,34 +49,11 @@
                     ujsDiv.appendChild(div);
                 }
             }
+        }
 
-            document.getElementById("ujs-load").addEventListener("click", () => {
-                const getMeta = async (value) => {
-                    const metaMatch = /\/\/\s*==UserScript==([\s\S]*?)\/\/\s*==\/UserScript==/;
-                    if (!(metaMatch.test(value))) {
-                        window.parent.tb.dialog.Alert({ title: "Userscript error", message: "Could not find meta info for the userscript." });
-                        return;
-                    };
-                    const meta = value.match(/\/\/\s*==UserScript==([\s\S]*?)\/\/\s*==\/UserScript==/);
-                    const metaObj = meta[1].split("\n")
-                    const m = {}
-                    for (let l of metaObj) {
-                        const match = l.match(/^\s*\/\/\s*@(\S+)\s+(.*)$/)
-                        if (match) {
-                            const [, key, value] = match;
-                            if (m[key]) {
-                                if (Array.isArray(m[key])) {
-                                    m[key].push(value);
-                                } else {
-                                    m[key] = [m[key], value];
-                                }
-                            } else {
-                                m[key] = value;
-                            }
-                        }
-                    }
-                    return m
-                }
+        document.addEventListener("DOMContentLoaded", () => {
+            getAll();
+            document.getElementById("ujs-load").addEventListener("click", async () => {
                 window.parent.tb.dialog.Select({
                     title: "Import userscripts from directory or file?",
                     options: [{
@@ -61,6 +64,7 @@
                       value: "f"
                     }],
                     onOk: async (val) => {
+                        const userScripts = JSON.parse(await Filer.fs.promises.readFile(`/apps/user/${await window.parent.tb.user.username()}/browser/userscripts.json`, "utf8"));
                         switch(val) {
                             case 'f':
                                 window.parent.tb.dialog.FileBrowser({
@@ -69,7 +73,6 @@
                                     onOk: async (path) => {
                                         const fileData = await Filer.fs.promises.readFile(path, "utf8");
                                         const scrMeta = await getMeta(fileData);
-                                        console.log(scrMeta);
                                         userScripts.push({
                                             name: scrMeta.name || "userscript",
                                             version: scrMeta.version || "1.0",
@@ -80,9 +83,9 @@
                                             icon: scrMeta.icon || "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=",
                                         })
                                         await Filer.fs.promises.writeFile(`/apps/user/${await window.parent.tb.user.username()}/browser/userscripts.json`, JSON.stringify(userScripts, null, 2));
+                                        getAll();
                                     }
                                 });
-                                getAll();
                                 break;
                             case 'd':
                                 window.parent.tb.dialog.DirectoryBrowser({
@@ -94,7 +97,6 @@
                                             if (file.endsWith(".user.js")) {
                                                 const fileData = await Filer.fs.promises.readFile(`${path}/${file}`, "utf8");
                                                 const scrMeta = await getMeta(fileData);
-                                                console.log(scrMeta);
                                                 userScripts.push({
                                                     name: scrMeta.name || "userscript",
                                                     version: scrMeta.version || "1.0",
@@ -104,20 +106,22 @@
                                                     file: `${path}/${file}`,
                                                     icon: scrMeta.icon || "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=",
                                                 })
-                                                await Filer.fs.promises.writeFile(`/apps/user/${await window.parent.tb.user.username()}/browser/userscripts.json`, JSON.stringify(userScripts, null, 2));
                                             };
                                         };
+                                        await Filer.fs.promises.writeFile(`/apps/user/${await window.parent.tb.user.username()}/browser/userscripts.json`, JSON.stringify(userScripts, null, 2))
+                                        getAll()
                                     }
                                 });
-                                getAll();
                                 break;
                             default:
                                 break;
                         }
                     }
                 })
-            })
-            document.getElementById("ujs-rm").addEventListener("click", () => {
+            });
+
+            document.getElementById("ujs-rm").addEventListener("click", async () => {
+                const userScripts = JSON.parse(await Filer.fs.promises.readFile(`/apps/user/${await window.parent.tb.user.username()}/browser/userscripts.json`, "utf8"))
                 let opts = []
                 for (const sr of userScripts) {
                     opts.push({
@@ -129,13 +133,15 @@
                     title: "Select a Userscript to remove",
                     options: opts,
                     onOk: async (val) => {
-                        
+                        const idx = userScripts.indexOf(val);
+                        if (idx !== -1) {
+                            userScripts.splice(idx, 1);
+                            await Filer.fs.promises.writeFile(`/apps/user/${await window.parent.tb.user.username()}/browser/userscripts.json`, JSON.stringify(userScripts, null, 2));
+                            getAll();
+                        }
                     }
                 })
             })
-        }
-        document.addEventListener("DOMContentLoaded", () => {
-            getAll();
         });
     </script>
 </head>
