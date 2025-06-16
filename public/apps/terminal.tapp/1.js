@@ -36,10 +36,8 @@ function executeCommand(command) {
 
   const scriptPaths = [
     `http://localhost:3001/apps/terminal.tapp/scripts/${commandName.toLowerCase()}.js`,
-    /*
-    `/fs/scripts/${commandName.toLowerCase()}.js`
-    `./scripts/${commandName.toLowerCase()}.js`
-    */
+    //`./scripts/${commandName.toLowerCase()}.js`,
+    //`/fs/scripts/${commandName.toLowerCase()}.js`
   ];
   fetchScript(scriptPaths).then(scriptContent => {
     if (scriptContent) {

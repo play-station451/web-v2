@@ -23,6 +23,10 @@ import { AnuraBareClient } from "./liquor/bcc";
 import apps from "../apps.json";
 import { hash } from "../hash.json";
 import { Lemonade } from "./lemonade";
+import { initializeWebContainer } from "./Node/runtimes/WebContainers/nodeProc";
+import { initializeNodebox } from "./Node/runtimes/Nodebox/nodeProc";
+import type { WebContainer } from "@webcontainer/api";
+import type { Nodebox } from "@codesandbox/nodebox";
 const system = new System;
 const Filer = window.Filer;
 const pw = new pwd();
@@ -729,6 +733,10 @@ export default async function Api() {
         libcurl: libcurl,
         fflate: fflate,
         fs: Filer,
+        node: {
+            webContainer: undefined as WebContainer | undefined,
+            Nodebox: undefined as Nodebox | undefined
+        },
         crypto: async (pass: string, file?: string) => {
             const newpw = pw.harden(pass)
             if (file) {
@@ -1059,4 +1067,24 @@ export default async function Api() {
         await window.tb.proxy.updateSWs();
         document.addEventListener("libcurl_load", wsld);
         sessionStorage.removeItem('win-zix');
+
+        /**
+         * Initialize the Node JS runtimes that are available as options in Terbium
+         */
+        async function initNodeRuntimes() {
+            try {
+                window.tb.node.webContainer = await initializeWebContainer();
+            } catch (error) {
+                console.error("Failed to initialize WebContainer", error);
+            }
+            try {
+                window.tb.node.Nodebox = await initializeNodebox();
+            } catch (error) {
+                console.error("Failed to initialize Nodebox", error);
+            }
+        }
+
+        initNodeRuntimes().catch(error => {
+            console.error("Failed to initialize the Node runtimes", error);
+        });
 }
