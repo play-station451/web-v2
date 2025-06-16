@@ -22,6 +22,7 @@ import { useWindowStore } from "./Store";
 import { AnuraBareClient } from "./liquor/bcc";
 import apps from "../apps.json";
 import { hash } from "../hash.json";
+import { Lemonade } from "./lemonade";
 import { initializeWebContainer } from "./Node/runtimes/WebContainers/nodeProc";
 import { initializeNodebox } from "./Node/runtimes/Nodebox/nodeProc";
 import type { WebContainer } from "@webcontainer/api";
@@ -254,6 +255,10 @@ export default async function Api() {
                     if(!control_id) throw new Error("control_id is required");
                     clearControls(control_id);
                 }
+            },
+            changeSrc(src: string) {
+                const currWin = useWindowStore.getState().currentPID
+                window.dispatchEvent(new CustomEvent("upd-src", { detail: JSON.stringify({ pid: currWin, url: src }) }))
             },
             reload() {
                 const currWin = useWindowStore.getState().currentPID
@@ -1002,6 +1007,7 @@ export default async function Api() {
         window.LocalFS = LocalFS;
         window.ExternalApp = ExternalApp;
         window.ExternalLib = ExternalLib;
+        window.electron = new Lemonade();
         const getupds = async () => {
             if (hash !== await Filer.fs.promises.readFile("/system/etc/terbium/hash.cache", "utf8")) {
                 window.tb.notification.Toast({

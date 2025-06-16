@@ -93,9 +93,10 @@ export default function Updater() {
             }
             await Filer.fs.promises.writeFile("/apps/system/settings.tapp/wisp-servers.json", await Filer.fs.promises.readFile("/system/tmp/terb-upd/wisp-servers.json"))
             await Filer.fs.promises.writeFile("/system/etc/terbium/hash.cache", hash);
+            const user = sessionStorage.getItem("currAcc") || JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8")).defaultUser
             // v2.0-Beta2 update
             if (!await fileExists("/apps/installed.json")) {
-                statusref.current!.innerText = "Installing Terbium v2.0-Beta2...";
+                statusref.current!.innerText = "Installing Terbium v2.0-Beta2 prerequisites...";
                 let insapps = [
                     {
                         name: "About",
@@ -175,8 +176,8 @@ export default function Updater() {
                             if (await fileExists(`${appDir}.tbconfig`)) {
                                 configFile = `${appDir}.tbconfig`;
                             } else {
-                                if (sessionStorage.getItem("currAcc")) {
-                                    appDir = `/apps/user/${sessionStorage.getItem("currAcc")}/${app.name}/`;
+                                if (user) {
+                                    appDir = `/apps/user/${user}/${app.name}/`;
                                 } else {
                                     appDir = `/apps/user/${JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8")).defaultUser}/${app.name}/`;
                                 }
@@ -193,13 +194,18 @@ export default function Updater() {
                         insapps.push({
                             name: appTitle,
                             config: configPath,
-                            user: sessionStorage.getItem("currAcc") || "System"
+                            user: user || "System"
                         });
                     }
                 }
                 await Filer.fs.promises.mkdir("/system/etc/anura/configs/")
                 await Filer.fs.promises.writeFile("/apps/installed.json", JSON.stringify(insapps))
                 await Filer.fs.promises.writeFile("/system/var/terbium/recent.json", JSON.stringify([]))
+            }
+            if (!await fileExists(`/apps/user/${user}/browser/favorites.json`)) {
+                await Filer.fs.promises.mkdir(`/apps/user/${user}/browser/`);
+                await Filer.fs.promises.writeFile(`/apps/user/${user}/browser/favorites.json`, JSON.stringify([]))
+                await Filer.fs.promises.writeFile(`/apps/user/${user}/browser/userscripts.json`, JSON.stringify([]))
             }
             setProgress(80);
             statusref.current!.innerText = "Cleaning up...";
