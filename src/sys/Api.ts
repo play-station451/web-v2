@@ -23,7 +23,7 @@ import { AnuraBareClient } from "./liquor/bcc";
 import apps from "../apps.json";
 import { hash } from "../hash.json";
 import { Lemonade } from "./lemonade";
-import { initializeWebContainer } from "./Node/runtimes/WebContainers/nodeProc";
+import { initializeWebContainer } from "./Node/runtimes/Webcontainers/nodeProc";
 import { initializeNodebox } from "./Node/runtimes/Nodebox/nodeProc";
 import type { WebContainer } from "@webcontainer/api";
 import type { Nodebox } from "@codesandbox/nodebox";
