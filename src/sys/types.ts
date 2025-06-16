@@ -514,4 +514,8 @@ export interface COM {
             removeHandler(ext: string): void;
         };
     };
+    node: {
+        webContainer: import("@webcontainer/api").WebContainer | undefined;
+        Nodebox: import("@codesandbox/nodebox").Nodebox | undefined;
+    };
 }
