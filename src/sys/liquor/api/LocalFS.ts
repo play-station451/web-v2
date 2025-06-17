@@ -1,4 +1,4 @@
-import { AFSProvider, AnuraFD } from "./Filesystem"
+import { AFSProvider, AnuraFD } from "./Filesystem";
 const AnuraFDSymbol = Symbol.for("AnuraFD");
 const Filer = window.Filer;
 
@@ -71,10 +71,7 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 		return path.replace(this.domain, "").replace(/^\/+/, "");
 	}
 
-	async getChildDirHandle(
-		path: string,
-		recurseCounter = 0,
-	): Promise<[FileSystemDirectoryHandle, string]> {
+	async getChildDirHandle(path: string, recurseCounter = 0): Promise<[FileSystemDirectoryHandle, string]> {
 		if (recurseCounter > 20) {
 			throw {
 				name: "ELOOP",
@@ -98,29 +95,20 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 			curr += "/" + part;
 			if ((this.stats.get(curr)?.mode & 0o170000) === 0o120000) {
 				// We ran into a path symlink, we're storing symlinks of all types as files who's content is the target.
-				const newPart = await (
-					await (await acc.getFileHandle(path)).getFile()
-				).text();
+				const newPart = await (await (await acc.getFileHandle(path)).getFile()).text();
 				if (newPart.startsWith("/")) {
 					// absolute
 					return this.getChildDirHandle(newPart, recurseCounter + 1);
 				} else {
 					// relative
-					return this.getChildDirHandle(
-						this.path.resolve(curr, newPart),
-						recurseCounter + 1,
-					);
+					return this.getChildDirHandle(this.path.resolve(curr, newPart), recurseCounter + 1);
 				}
 			}
 			acc = await acc.getDirectoryHandle(part);
 		}
 		return [acc, curr];
 	}
-	async getFileHandle(
-		path: string,
-		options?: FileSystemGetFileOptions,
-		recurseCounter = 0,
-	): Promise<[FileSystemFileHandle, string]> {
+	async getFileHandle(path: string, options?: FileSystemGetFileOptions, recurseCounter = 0): Promise<[FileSystemFileHandle, string]> {
 		if (!path.includes("/")) {
 			path = "/" + path;
 		}
@@ -135,14 +123,9 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 		if (realPath[0] === "/") {
 			realPath = realPath.slice(1);
 		}
-		if (
-			this.stats.has(realPath + "/" + fileName) &&
-			(this.stats.get(realPath + "/" + fileName).mode & 0o170000) === 0o120000
-		) {
+		if (this.stats.has(realPath + "/" + fileName) && (this.stats.get(realPath + "/" + fileName).mode & 0o170000) === 0o120000) {
 			// is symlink
-			let realPath = await (
-				await (await parentHandle.getFileHandle(fileName)).getFile()
-			).text();
+			let realPath = await (await (await parentHandle.getFileHandle(fileName)).getFile()).text();
 			if (realPath.startsWith("/")) {
 				if (realPath.startsWith(this.domain)) {
 					realPath = this.relativizePath(realPath);
@@ -156,18 +139,11 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 					for (const part in realPath.split("/").slice(1, -1)) {
 						handle = await handle.getDirectoryHandle(part);
 					}
-					return [
-						await handle.getFileHandle(this.path.basename(realPath)),
-						"foreign:" + realPath,
-					];
+					return [await handle.getFileHandle(this.path.basename(realPath)), "foreign:" + realPath];
 				}
 			} else {
 				// relative
-				return this.getFileHandle(
-					this.path.resolve(parentFolder, realPath),
-					options,
-					recurseCounter + 1,
-				);
+				return this.getFileHandle(this.path.resolve(parentFolder, realPath), options, recurseCounter + 1);
 			}
 		}
 		return [await parentHandle.getFileHandle(fileName, options), path];
@@ -185,13 +161,7 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 		window.anura.fs.installProvider(fs);
 		const textde = new TextDecoder();
 		try {
-			fs.stats = new Map(
-				JSON.parse(
-					textde.decode(
-						await fs.promises.readFile(anuraPath + "/.anura_stats"),
-					),
-				),
-			);
+			fs.stats = new Map(JSON.parse(textde.decode(await fs.promises.readFile(anuraPath + "/.anura_stats"))));
 		} catch (e: any) {
 			console.log("Error on mount, probably first mount ", e);
 		}
@@ -205,13 +175,7 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 		const fs = new LocalFS(dirHandle, anuraPath);
 		const textde = new TextDecoder();
 		try {
-			fs.stats = new Map(
-				JSON.parse(
-					textde.decode(
-						await fs.promises.readFile(anuraPath + "/.anura_stats"),
-					),
-				),
-			);
+			fs.stats = new Map(JSON.parse(textde.decode(await fs.promises.readFile(anuraPath + "/.anura_stats"))));
 		} catch (e: any) {
 			console.log("Error on mount, probably first mount ", e);
 		}
@@ -246,43 +210,31 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 		window.anura.fs.installProvider(fs);
 		return fs;
 	}
-	readdir(
-		path: string,
-		_options?: any,
-		callback?: (err: Error | null, files: string[]) => void,
-	) {
+	readdir(path: string, _options?: any, callback?: (err: Error | null, files: string[]) => void) {
 		if (typeof _options === "function") {
 			callback = _options;
 		}
 		callback ||= () => {};
 		this.promises
 			.readdir(path)
-			.then((files) => callback!(null, files))
-			.catch((e) => callback!(e, []));
+			.then(files => callback!(null, files))
+			.catch(e => callback!(e, []));
 	}
 	stat(path: string, callback?: (err: Error | null, stats: any) => void): void {
 		callback ||= () => {};
 		this.promises
 			.stat(path)
-			.then((stats) => callback!(null, stats))
-			.catch((e) => callback!(e, null));
+			.then(stats => callback!(null, stats))
+			.catch(e => callback!(e, null));
 	}
-	readFile(
-		path: string,
-		callback?: (err: Error | null, data: typeof Filer.Buffer) => void,
-	) {
+	readFile(path: string, callback?: (err: Error | null, data: typeof Filer.Buffer) => void) {
 		callback ||= () => {};
 		this.promises
 			.readFile(path)
-			.then((data) => callback!(null, data))
-			.catch((e) => callback!(e, new Filer.Buffer(0)));
+			.then(data => callback!(null, data))
+			.catch(e => callback!(e, new Filer.Buffer(0)));
 	}
-	writeFile(
-		path: string,
-		data: Uint8Array | string,
-		_options?: any,
-		callback?: (err: Error | null) => void,
-	) {
+	writeFile(path: string, data: Uint8Array | string, _options?: any, callback?: (err: Error | null) => void) {
 		if (typeof data === "string") {
 			data = new TextEncoder().encode(data);
 		}
@@ -296,11 +248,7 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 			.then(() => callback!(null))
 			.catch(callback);
 	}
-	appendFile(
-		path: string,
-		data: Uint8Array,
-		callback?: (err: Error | null) => void,
-	) {
+	appendFile(path: string, data: Uint8Array, callback?: (err: Error | null) => void) {
 		this.promises
 			.appendFile(path, data)
 			.then(() => callback!(null))
@@ -330,11 +278,7 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 			.then(() => callback!(null))
 			.catch(callback);
 	}
-	rename(
-		srcPath: string,
-		dstPath: string,
-		callback?: (err: Error | null) => void,
-	) {
+	rename(srcPath: string, dstPath: string, callback?: (err: Error | null) => void) {
 		callback ||= () => {};
 		this.promises
 			.rename(srcPath, dstPath)
@@ -365,11 +309,7 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 			const jsonStats = JSON.stringify(Array.from(this.stats.entries()));
 			await this.promises.writeFile(this.domain + "/.anura_stats", jsonStats);
 		},
-		writeFile: async (
-			path: string,
-			data: Uint8Array | string,
-			options?: any,
-		) => {
+		writeFile: async (path: string, data: Uint8Array | string, options?: any) => {
 			if (typeof data === "string") {
 				data = new TextEncoder().encode(data);
 			}
@@ -410,9 +350,7 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 		readdir: async (path: string) => {
 			let dirHandle, realPath;
 			try {
-				[dirHandle, realPath] = await this.getChildDirHandle(
-					this.relativizePath(path),
-				);
+				[dirHandle, realPath] = await this.getChildDirHandle(this.relativizePath(path));
 			} catch (e) {
 				throw {
 					name: "ENOENT",
@@ -435,10 +373,7 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 		},
 		appendFile: async (path: string, data: Uint8Array) => {
 			const existingData = await this.promises.readFile(path);
-			await this.promises.writeFile(
-				path,
-				new Uint8Array([...existingData, ...data]),
-			);
+			await this.promises.writeFile(path, new Uint8Array([...existingData, ...data]));
 		},
 		unlink: async (path: string) => {
 			let parentHandle = this.dirHandle;
@@ -459,9 +394,7 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 			if (path.includes("/")) {
 				const parts = path.split("/");
 				const finalDir = parts.pop();
-				[parentHandle, realParentPath] = await this.getChildDirHandle(
-					parts.join("/"),
-				);
+				[parentHandle, realParentPath] = await this.getChildDirHandle(parts.join("/"));
 				path = finalDir!;
 			}
 			if (realParentPath.startsWith("/")) {
@@ -599,10 +532,9 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 					// @ts-ignore
 					path = (await this.getChildDirHandle(path))[1];
 				} else {
-					const pathDir = (
+					const pathDir =
 						// @ts-ignore
-						await this.getChildDirHandle(this.path.dirname(path))
-					)[1];
+						(await this.getChildDirHandle(this.path.dirname(path)))[1];
 					// @ts-ignore
 					path = pathDir + "/" + this.path.basename(path);
 				}
@@ -635,9 +567,7 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 			if (type === "DIRECTORY") {
 				path = (await this.getChildDirHandle(path))[1];
 			} else {
-				const pathDir = (
-					await this.getChildDirHandle(this.path.dirname(path))
-				)[1];
+				const pathDir = (await this.getChildDirHandle(this.path.dirname(path)))[1];
 				path = pathDir + "/" + this.path.basename(path);
 			}
 			if (path.startsWith("/")) {
@@ -757,11 +687,7 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 					.catch(reject);
 			});
 		},
-		open: async (
-			path: string,
-			_flags: "r" | "r+" | "w" | "w+" | "a" | "a+",
-			_mode?: any,
-		) => {
+		open: async (path: string, _flags: "r" | "r+" | "w" | "w+" | "a" | "a+", _mode?: any) => {
 			path = this.relativizePath(path);
 			const stats = this.stats.get(path);
 
@@ -779,9 +705,7 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 			path = this.relativizePath(path);
 			const fileName = this.path.basename(path);
 			// eslint-disable-next-line prefer-const
-			let [parentHandle, realParent] = await this.getChildDirHandle(
-				this.path.dirname(path),
-			);
+			let [parentHandle, realParent] = await this.getChildDirHandle(this.path.dirname(path));
 			if (realParent.startsWith("/")) {
 				realParent = realParent.slice(1);
 			}
@@ -808,9 +732,7 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 			}
 
 			// Return the target path
-			return await (
-				await (await parentHandle.getFileHandle(fileName)).getFile()
-			).text();
+			return await (await (await parentHandle.getFileHandle(fileName)).getFile()).text();
 		},
 		symlink: async (target: string, path: string) => {
 			// await this.promises.stat(path);
@@ -823,12 +745,8 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 			const fileName = this.path.basename(path);
 
 			// eslint-disable-next-line prefer-const
-			let [parentHandle, realParent] = await this.getChildDirHandle(
-				this.path.dirname(path),
-			);
-			const fileHandleWritable = await (
-				await parentHandle.getFileHandle(fileName, { create: true })
-			).createWritable();
+			let [parentHandle, realParent] = await this.getChildDirHandle(this.path.dirname(path));
+			const fileHandleWritable = await (await parentHandle.getFileHandle(fileName, { create: true })).createWritable();
 			fileHandleWritable.write(target);
 			fileHandleWritable.close();
 
@@ -846,11 +764,7 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 			await this.promises.saveStats();
 			return;
 		},
-		utimes: async (
-			path: string,
-			atime: Date | number,
-			mtime: Date | number,
-		) => {
+		utimes: async (path: string, atime: Date | number, mtime: Date | number) => {
 			const type = (await this.promises.lstat(path)).type;
 			// Ensure path is relative
 			path = this.relativizePath(path);
@@ -862,9 +776,7 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 			if (type === "DIRECTORY") {
 				path = (await this.getChildDirHandle(path))[1];
 			} else {
-				const pathDir = (
-					await this.getChildDirHandle(this.path.dirname(path))
-				)[1];
+				const pathDir = (await this.getChildDirHandle(this.path.dirname(path)))[1];
 				path = pathDir + "/" + this.path.basename(path);
 			}
 			if (path.startsWith("/")) {
@@ -887,11 +799,7 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 		},
 	};
 
-	ftruncate(
-		fd: AnuraFD,
-		len: number,
-		callback?: (err: Error | null, fd: AnuraFD) => void,
-	) {
+	ftruncate(fd: AnuraFD, len: number, callback?: (err: Error | null, fd: AnuraFD) => void) {
 		callback ||= () => {};
 		const handle = this.fds[fd.fd];
 		if (!handle) {
@@ -911,7 +819,7 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 		this.promises
 			.truncate(path, len)
 			.then(() => callback!(null, fd))
-			.catch((err) => {
+			.catch(err => {
 				callback(err, fd);
 			});
 	}
@@ -934,7 +842,7 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 		}
 
 		if (handle.kind === "file") {
-			(handle as FileSystemFileHandle).getFile().then((file) => {
+			(handle as FileSystemFileHandle).getFile().then(file => {
 				callback(null, new LocalFSStats({ name: file.name, size: file.size }));
 			});
 		} else {
@@ -951,22 +859,15 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 		}
 	}
 
-	lstat(
-		path: string,
-		callback?: (err: Error | null, stats: any) => void,
-	): void {
+	lstat(path: string, callback?: (err: Error | null, stats: any) => void): void {
 		callback ||= () => {};
 		this.promises
 			.lstat(path)
-			.then((stats) => callback!(null, stats))
-			.catch((e) => callback!(e, null));
+			.then(stats => callback!(null, stats))
+			.catch(e => callback!(e, null));
 	}
 
-	link(
-		existingPath: string,
-		newPath: string,
-		callback?: (err: Error | null) => void,
-	) {
+	link(existingPath: string, newPath: string, callback?: (err: Error | null) => void) {
 		callback ||= () => {};
 		this.promises
 			.link(existingPath, newPath)
@@ -974,12 +875,7 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 			.catch(callback);
 	}
 
-	symlink(
-		target: string,
-		path: string,
-		type: any,
-		callback?: (err: Error | null) => void,
-	) {
+	symlink(target: string, path: string, type: any, callback?: (err: Error | null) => void) {
 		callback ||= () => {};
 		this.promises
 			.symlink(target, path)
@@ -991,7 +887,7 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 		callback ||= () => {};
 		this.promises
 			.readlink(path)
-			.then((linkString) => callback(null, linkString))
+			.then(linkString => callback(null, linkString))
 			.catch(callback);
 	}
 
@@ -1004,27 +900,18 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 			.catch(callback);
 	}
 
-	mkdtemp(
-		prefix: string,
-		options: any,
-		callback?: (err: Error | null, path: string) => void,
-	): void {
+	mkdtemp(prefix: string, options: any, callback?: (err: Error | null, path: string) => void): void {
 		callback ||= () => {};
 
 		this.promises
 			.mkdtemp(prefix)
-			.then((folder) => callback(null, folder))
-			.catch((err) => {
+			.then(folder => callback(null, folder))
+			.catch(err => {
 				callback(err, null!);
 			});
 	}
 
-	fchown(
-		fd: AnuraFD,
-		uid: number,
-		gid: number,
-		callback?: (err: Error | null) => void,
-	) {
+	fchown(fd: AnuraFD, uid: number, gid: number, callback?: (err: Error | null) => void) {
 		callback ||= () => {};
 
 		const handle = this.fds[fd.fd];
@@ -1090,14 +977,7 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 		callback(null);
 	}
 
-	write(
-		fd: AnuraFD,
-		buffer: Uint8Array,
-		offset: number,
-		length: number,
-		position: number | null,
-		callback?: (err: Error | null, nbytes: number) => void,
-	) {
+	write(fd: AnuraFD, buffer: Uint8Array, offset: number, length: number, position: number | null, callback?: (err: Error | null, nbytes: number) => void) {
 		callback ||= () => {};
 		const handle = this.fds[fd.fd];
 		if (position !== null) {
@@ -1132,7 +1012,7 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 			return;
 		}
 		const bufferSlice = buffer.slice(offset, offset + length);
-		(handle as FileSystemFileHandle).createWritable().then((writer) => {
+		(handle as FileSystemFileHandle).createWritable().then(writer => {
 			writer.seek(position || 0);
 			writer.write(bufferSlice);
 			writer.close();
@@ -1141,18 +1021,7 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 		});
 	}
 
-	read(
-		fd: AnuraFD,
-		buffer: Uint8Array,
-		offset: number,
-		length: number,
-		position: number | null,
-		callback?: (
-			err: Error | null,
-			bytesRead: number,
-			buffer: Uint8Array,
-		) => void,
-	) {
+	read(fd: AnuraFD, buffer: Uint8Array, offset: number, length: number, position: number | null, callback?: (err: Error | null, bytesRead: number, buffer: Uint8Array) => void) {
 		callback ||= () => {};
 		const handle = this.fds[fd.fd];
 		if (handle === undefined) {
@@ -1186,28 +1055,21 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 		// Resolve symbolic link, if necessary
 
 		const fileHandle = handle as FileSystemFileHandle;
-		fileHandle.getFile().then((file) => {
+		fileHandle.getFile().then(file => {
 			const reader = new FileReader();
 			reader.onload = () => {
 				const data = new Uint8Array(reader.result as ArrayBuffer);
 				buffer.set(data.slice(offset, offset + length));
 				callback(null, data.length, buffer);
 			};
-			reader.onerror = (e) => {
+			reader.onerror = e => {
 				callback(new Error("Failed to read file"), 0, null!);
 			};
-			reader.readAsArrayBuffer(
-				file.slice(position || 0, (position || 0) + length),
-			);
+			reader.readAsArrayBuffer(file.slice(position || 0, (position || 0) + length));
 		});
 	}
 
-	utimes(
-		path: string,
-		atime: Date | number,
-		mtime: Date | number,
-		callback?: (err: Error | null) => void,
-	) {
+	utimes(path: string, atime: Date | number, mtime: Date | number, callback?: (err: Error | null) => void) {
 		callback ||= () => {};
 		this.promises
 			.utimes(path, atime, mtime)
@@ -1215,12 +1077,7 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 			.catch(callback);
 	}
 
-	futimes(
-		fd: AnuraFD,
-		atime: Date,
-		mtime: Date,
-		callback?: (err: Error | null) => void,
-	) {
+	futimes(fd: AnuraFD, atime: Date, mtime: Date, callback?: (err: Error | null) => void) {
 		callback ||= () => {};
 		const handle = this.fds[fd.fd];
 		if (!handle) {
@@ -1238,12 +1095,7 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 		this.utimes(path, atime, mtime, callback);
 	}
 
-	chown(
-		path: string,
-		uid: number,
-		gid: number,
-		callback?: (err: Error | null) => void,
-	) {
+	chown(path: string, uid: number, gid: number, callback?: (err: Error | null) => void) {
 		callback ||= () => {};
 
 		this.promises
@@ -1269,23 +1121,18 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 		callback(null);
 	}
 
-	open(
-		path: string,
-		flags: "r" | "r+" | "w" | "w+" | "a" | "a+",
-		mode?: any,
-		callback?: ((err: Error | null, fd: AnuraFD) => void) | undefined,
-	): void {
+	open(path: string, flags: "r" | "r+" | "w" | "w+" | "a" | "a+", mode?: any, callback?: ((err: Error | null, fd: AnuraFD) => void) | undefined): void {
 		if (typeof mode === "function") {
 			callback = mode;
 		}
 		callback ||= () => {};
 		this.promises
 			.open(path, flags, mode)
-			.then((fd) => {
+			.then(fd => {
 				// @ts-ignore
 				callback!(null, fd);
 			})
 			// @ts-ignore
-			.catch((e) => callback!(e, { fd: -1, [AnuraFDSymbol]: this.domain }));
+			.catch(e => callback!(e, { fd: -1, [AnuraFDSymbol]: this.domain }));
 	}
 }

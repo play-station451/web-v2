@@ -1,5 +1,5 @@
 const style = document.createElement("style");
-console.log('Cursor Engine Injected')
+console.log("Cursor Engine Injected");
 style.textContent = `
     :root {
         --cursor-normal: url("/cursors/dark/normal.svg") 6 0, default !important; 

@@ -1,14 +1,4 @@
-const pathTypeCommands = [
-    "cd",
-    "ls",
-    "rm",
-    "mkdir",
-    "touch",
-    "cat",
-    "mv",
-    "cp",
-    "rmdir"
-];
+const pathTypeCommands = ["cd", "ls", "rm", "mkdir", "touch", "cat", "mv", "cp", "rmdir"];
 
 // window.addEventListener("keydown", async (e) => {
 //     if (e.key === "Tab") {
@@ -49,7 +39,7 @@ const pathTypeCommands = [
 //                 const lastUnfilledDir = readingPathParts.pop();
 //             } else {
 //                 const lastUnfilledDir = readingPath
-            
+
 //                 console.log(lastUnfilledDir);
 //             }
 //         }
@@ -57,34 +47,35 @@ const pathTypeCommands = [
 // });
 
 async function listDir(path) {
-    return new Promise((resolve) => {
-        sh.ls(path, (err, files) => {
-            if (err) {
-                console.error(`Error listing directory: ${err}`);
-                resolve([]);
-            } else {
-                resolve(files);
-            }
-        });
-    });
+	return new Promise(resolve => {
+		sh.ls(path, (err, files) => {
+			if (err) {
+				console.error(`Error listing directory: ${err}`);
+				resolve([]);
+			} else {
+				resolve(files);
+			}
+		});
+	});
 }
 
 async function autoComplete(readingPath, unfilledDir) {
-    console.log(readingPath); return 
-    const currentDir = readingPath || '/';
-    try {
-        const files = await listDir(currentDir);
-        files.forEach(file => console.log(file.name));
-        const matchingDirs = files.filter(file => file.name.startsWith(unfilledDir));
+	console.log(readingPath);
+	return;
+	const currentDir = readingPath || "/";
+	try {
+		const files = await listDir(currentDir);
+		files.forEach(file => console.log(file.name));
+		const matchingDirs = files.filter(file => file.name.startsWith(unfilledDir));
 
-        if (matchingDirs.length === 1) {
-            const completedPath = `${readingPath}/${matchingDirs[0].name}`;
-            return completedPath;
-        } else {
-            return '';
-        }
-    } catch (error) {
-        console.error(`Error during auto-completion: ${error}`);
-        return '';
-    }
+		if (matchingDirs.length === 1) {
+			const completedPath = `${readingPath}/${matchingDirs[0].name}`;
+			return completedPath;
+		} else {
+			return "";
+		}
+	} catch (error) {
+		console.error(`Error during auto-completion: ${error}`);
+		return "";
+	}
 }

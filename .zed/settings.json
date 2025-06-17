@@ -1,3 +1,10 @@
 {
-  "format_on_save": "off"
+    "format_on_save": "on",
+    "lsp": {
+        "biome": {
+            "settings": {
+                "configuration_path": "./biome.json"
+            }
+        }
+    }
 }

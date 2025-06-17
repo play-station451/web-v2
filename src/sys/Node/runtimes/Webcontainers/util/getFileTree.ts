@@ -5,53 +5,47 @@
  */
 
 import getFileTreeGeneric from "../../util/getFileTree";
-import type {
-    FileSystemTree,
-    DirectoryNode,
-    FileNode,
-} from "@webcontainer/api";
+import type { FileSystemTree, DirectoryNode, FileNode } from "@webcontainer/api";
 
 /**
  * Converts a flat file tree (path -> contents) to WebContainer's FileSystemTree format
  * @param flatTree - Flat tree with full paths as keys and file contents as values
  * @returns FileSystemTree object compatible with WebContainers
  */
-function convertToWebContainerTree(
-    flatTree: Record<string, string>,
-): FileSystemTree {
-    const tree: FileSystemTree = {};
+function convertToWebContainerTree(flatTree: Record<string, string>): FileSystemTree {
+	const tree: FileSystemTree = {};
 
-    for (const [path, contents] of Object.entries(flatTree)) {
-        const pathParts = path.replace(/^\//, "").split("/").filter(Boolean);
+	for (const [path, contents] of Object.entries(flatTree)) {
+		const pathParts = path.replace(/^\//, "").split("/").filter(Boolean);
 
-        if (pathParts.length === 0) continue;
+		if (pathParts.length === 0) continue;
 
-        let currentLevel = tree;
+		let currentLevel = tree;
 
-        for (let i = 0; i < pathParts.length - 1; i++) {
-            const dirName = pathParts[i];
+		for (let i = 0; i < pathParts.length - 1; i++) {
+			const dirName = pathParts[i];
 
-            if (!currentLevel[dirName]) {
-                // Create a new directory node
-                currentLevel[dirName] = {
-                    directory: {},
-                } as DirectoryNode;
-            }
+			if (!currentLevel[dirName]) {
+				// Create a new directory node
+				currentLevel[dirName] = {
+					directory: {},
+				} as DirectoryNode;
+			}
 
-            // Advance to the next level
-            currentLevel = (currentLevel[dirName] as DirectoryNode).directory;
-        }
+			// Advance to the next level
+			currentLevel = (currentLevel[dirName] as DirectoryNode).directory;
+		}
 
-        // Attach the file contents to the final level
-        const fileName = pathParts[pathParts.length - 1];
-        currentLevel[fileName] = {
-            file: {
-                contents,
-            },
-        } as FileNode;
-    }
+		// Attach the file contents to the final level
+		const fileName = pathParts[pathParts.length - 1];
+		currentLevel[fileName] = {
+			file: {
+				contents,
+			},
+		} as FileNode;
+	}
 
-    return tree;
+	return tree;
 }
 
 /**
@@ -59,31 +53,29 @@ function convertToWebContainerTree(
  * @param path The path to build the tree from
  * @returns FileSystemTree An object representing the file tree for WebContainers
  */
-export default async function getFileTree(
-    path = "/",
-): Promise<FileSystemTree> {
-    // Get the flat file tree from the generic function
-    const flatTree = await getFileTreeGeneric(path);
+export default async function getFileTree(path = "/"): Promise<FileSystemTree> {
+	// Get the flat file tree from the generic function
+	const flatTree = await getFileTreeGeneric(path);
 
-    // Convert to the WebContainers format
-    const webContainerTree = convertToWebContainerTree(flatTree);
+	// Convert to the WebContainers format
+	const webContainerTree = convertToWebContainerTree(flatTree);
 
-    if (path !== "/" && path !== "") {
-        const pathParts = path.replace(/^\//, "").split("/").filter(Boolean);
-        let subtree = webContainerTree;
+	if (path !== "/" && path !== "") {
+		const pathParts = path.replace(/^\//, "").split("/").filter(Boolean);
+		let subtree = webContainerTree;
 
-        // Navigate to the requested path
-        for (const part of pathParts) {
-            if (subtree[part] && "directory" in subtree[part]) {
-                // Navigate
-                subtree = (subtree[part] as DirectoryNode).directory;
-            } else {
-                return {};
-            }
-        }
+		// Navigate to the requested path
+		for (const part of pathParts) {
+			if (subtree[part] && "directory" in subtree[part]) {
+				// Navigate
+				subtree = (subtree[part] as DirectoryNode).directory;
+			} else {
+				return {};
+			}
+		}
 
-        return subtree;
-    }
+		return subtree;
+	}
 
-    return webContainerTree;
+	return webContainerTree;
 }

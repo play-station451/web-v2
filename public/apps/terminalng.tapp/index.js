@@ -23,9 +23,12 @@ const tb = window.tb || window.parent.tb || {};
  * @returns The r;g;b string for use in accent
  */
 function htorgb(hex) {
-	hex = hex.replace(/^#/, '');
+	hex = hex.replace(/^#/, "");
 	if (hex.length === 3) {
-		hex = hex.split('').map(x => x + x).join('');
+		hex = hex
+			.split("")
+			.map(x => x + x)
+			.join("");
 	}
 	if (hex.length !== 6) return null;
 	const num = parseInt(hex, 16);
@@ -62,14 +65,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 	const username = await tb.user.username();
 	const usersettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${username}/settings.json`, "utf8"));
 	term.write(`\r\n\x1b[38;2;${htorgb(usersettings.accent)}m${username}@${JSON.parse(await Filer.fs.promises.readFile("//system/etc/terbium/settings.json"))["host-name"]}\x1b[39m `);
-	term.onData(async (char) => {
+	term.onData(async char => {
 		accCommand += char;
 
-		console.log(char)
+		console.log(char);
 		if (char === "\r") {
-			term.writeln("")
+			term.writeln("");
 			term.write(`\r\n\x1b[38;2;${htorgb(usersettings.accent)}m${username}@${JSON.parse(await Filer.fs.promises.readFile("//system/etc/terbium/settings.json"))["host-name"]}\x1b[39m `);
-			
+
 			const currentAcc = accCommand.split(" ");
 			const [cmd, ...rawArgs] = currentAcc;
 			const argv = parser(rawArgs);
@@ -83,10 +86,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 		accCommand = "";
 	});
 	term.focus();
-})
+});
 
-window.addEventListener('resize', () => {
-    fitAddon.fit();
+window.addEventListener("resize", () => {
+	fitAddon.fit();
 });
 
 /**
@@ -158,8 +161,7 @@ async function getAppInfo(justNames = true) {
 		return null;
 	}
 
-	if (justNames)
-		return appInfo.map(app => app.name);
+	if (justNames) return appInfo.map(app => app.name);
 	return appInfo;
 }
 

@@ -1,122 +1,124 @@
 @keyframes slideIn {
-    0% {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0);
-    }
+	0% {
+		opacity: 0;
+		transform: translateY(-20px);
+	}
+	100% {
+		opacity: 1;
+		transform: translateY(0);
+	}
 }
 
 @keyframes slideOut {
-    0% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    100% {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
+	0% {
+		opacity: 1;
+		transform: translateY(0);
+	}
+	100% {
+		opacity: 0;
+		transform: translateY(-20px);
+	}
 }
 
 .wifi-list {
-    overflow-y: auto;
-    overflow-x: hidden;
-    max-height: 230px;
-    display: none;
+	overflow-y: auto;
+	overflow-x: hidden;
+	max-height: 230px;
+	display: none;
 }
 
 .wifi-list.open {
-    display: block;
-    position: fixed;
-    top: 60px;
-    right: 6px;
-    width: 400px;
-    height: 230px;
-    font-family: Inter;
-    background-color: #20202066;
-    box-shadow: 0px 0px 6px 0px #00000052, inset 0 0 0 0.5px #ffffff38;
-    transition: 150ms ease-in-out;
-    -webkit-backdrop-filter: blur(100px);
-    backdrop-filter: blur(100px);
-    padding: 10px;
-    border-radius: 12px;
-    color: white;
-    z-index: 9999;
-    animation: slideIn 150ms ease-in-out forwards;
+	display: block;
+	position: fixed;
+	top: 60px;
+	right: 6px;
+	width: 400px;
+	height: 230px;
+	font-family: Inter;
+	background-color: #20202066;
+	box-shadow:
+		0px 0px 6px 0px #00000052,
+		inset 0 0 0 0.5px #ffffff38;
+	transition: 150ms ease-in-out;
+	-webkit-backdrop-filter: blur(100px);
+	backdrop-filter: blur(100px);
+	padding: 10px;
+	border-radius: 12px;
+	color: white;
+	z-index: 9999;
+	animation: slideIn 150ms ease-in-out forwards;
 }
 
 .wifi-list.open .btn.select {
-    position: static;
-    margin-top: 22px;
-    margin-left: auto;
-    width: 75px;
-    height: 28px;
-    background-color: #53f6748d;
-    font-family: Inter;
-    font-size: 10px;
-    font-weight: 800;
-    line-height: 10px;
-    padding: 8px 8px;
-    border-radius: 8px;
-    border: 2px solid #ffffff28;
-    transition: 150ms ease-in-out;
+	position: static;
+	margin-top: 22px;
+	margin-left: auto;
+	width: 75px;
+	height: 28px;
+	background-color: #53f6748d;
+	font-family: Inter;
+	font-size: 10px;
+	font-weight: 800;
+	line-height: 10px;
+	padding: 8px 8px;
+	border-radius: 8px;
+	border: 2px solid #ffffff28;
+	transition: 150ms ease-in-out;
 }
-  
+
 .wifi-list.open .btn {
-    position: static;
-    background-color: #ffffff48;
-    font-family: Inter;
-    font-size: 10px;
-    font-weight: 800;
-    line-height: 10px;
-    padding: 8px 8px;
-    margin-top: 22px;
-    margin-left: auto;
-    width: 75px;
-    height: 28px;
-    border-radius: 8px;
-    border: 2px solid #ffffff28;
-    transition: 150ms ease-in-out;
+	position: static;
+	background-color: #ffffff48;
+	font-family: Inter;
+	font-size: 10px;
+	font-weight: 800;
+	line-height: 10px;
+	padding: 8px 8px;
+	margin-top: 22px;
+	margin-left: auto;
+	width: 75px;
+	height: 28px;
+	border-radius: 8px;
+	border: 2px solid #ffffff28;
+	transition: 150ms ease-in-out;
 }
 
 .wifi-list.open .btn.net {
-    background-color: #ffffff48;
-    font-family: Inter;
-    font-size: 10px;
-    font-weight: 800;
-    line-height: 10px;
-    padding: 8px 8px;
-    margin-right: 37%;
-    width: 100px;
-    height: 28px;
-    border-radius: 8px;
-    border: 2px solid #ffffff28;
-    transition: 150ms ease-in-out;
+	background-color: #ffffff48;
+	font-family: Inter;
+	font-size: 10px;
+	font-weight: 800;
+	line-height: 10px;
+	padding: 8px 8px;
+	margin-right: 37%;
+	width: 100px;
+	height: 28px;
+	border-radius: 8px;
+	border: 2px solid #ffffff28;
+	transition: 150ms ease-in-out;
 }
 
 .wifi-list::-webkit-scrollbar {
-    position: relative;
-    width: 8px;
-    height: calc(100% - 16px);
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-    padding: 8px;
-    padding-right: 0;
-    overflow: auto;
-    scrollbar-width: thin;
-    scrollbar-color: #ffffff30 transparent;
+	position: relative;
+	width: 8px;
+	height: calc(100% - 16px);
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 8px;
+	padding: 8px;
+	padding-right: 0;
+	overflow: auto;
+	scrollbar-width: thin;
+	scrollbar-color: #ffffff30 transparent;
 }
-  
+
 .wifi-list::-webkit-scrollbar-track {
-    background-color: transparent;
+	background-color: transparent;
 }
-  
+
 .wifi-list::-webkit-scrollbar-thumb {
-    background-color: #ffffff30;
-    border-radius: 8px;
-    border: 2px solid transparent;
+	background-color: #ffffff30;
+	border-radius: 8px;
+	border: 2px solid transparent;
 }

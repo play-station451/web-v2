@@ -123,68 +123,30 @@ export type {
  * @param command The command to run, with space-separated arguments.
  * @param callback called with the output when process terminates.
  */
-export function exec(
-	command: string,
-	callback?: (
-		error: NodeChildProcess.ExecException | null,
-		stdout: string,
-		stderr: string,
-	) => void,
-): NodeChildProcess.ChildProcess;
+export function exec(command: string, callback?: (error: NodeChildProcess.ExecException | null, stdout: string, stderr: string) => void): NodeChildProcess.ChildProcess;
 export function exec(
 	command: string,
 	options: {
 		encoding: "buffer" | null;
 	} & NodeChildProcess.ExecOptions,
-	callback?: (
-		error: NodeChildProcess.ExecException | null,
-		stdout: Buffer,
-		stderr: Buffer,
-	) => void,
+	callback?: (error: NodeChildProcess.ExecException | null, stdout: Buffer, stderr: Buffer) => void,
 ): NodeChildProcess.ChildProcess;
 export function exec(
 	command: string,
 	options: {
 		encoding: BufferEncoding;
 	} & NodeChildProcess.ExecOptions,
-	callback?: (
-		error: NodeChildProcess.ExecException | null,
-		stdout: string,
-		stderr: string,
-	) => void,
+	callback?: (error: NodeChildProcess.ExecException | null, stdout: string, stderr: string) => void,
 ): NodeChildProcess.ChildProcess;
 export function exec(
 	command: string,
 	options: {
 		encoding: BufferEncoding;
 	} & NodeChildProcess.ExecOptions,
-	callback?: (
-		error: NodeChildProcess.ExecException | null,
-		stdout: string | Buffer,
-		stderr: string | Buffer,
-	) => void,
+	callback?: (error: NodeChildProcess.ExecException | null, stdout: string | Buffer, stderr: string | Buffer) => void,
 ): NodeChildProcess.ChildProcess;
-export function exec(
-	command: string,
-	options: NodeChildProcess.ExecOptions,
-	callback?: (
-		error: NodeChildProcess.ExecException | null,
-		stdout: string,
-		stderr: string,
-	) => void,
-): NodeChildProcess.ChildProcess;
-export function exec(
-	command: string,
-	options:
-		| (NodeObjectEncodingOptions & NodeChildProcess.ExecOptions)
-		| undefined
-		| null,
-	callback?: (
-		error: NodeChildProcess.ExecException | null,
-		stdout: string | Buffer,
-		stderr: string | Buffer,
-	) => void,
-): NodeChildProcess.ChildProcess;
+export function exec(command: string, options: NodeChildProcess.ExecOptions, callback?: (error: NodeChildProcess.ExecException | null, stdout: string, stderr: string) => void): NodeChildProcess.ChildProcess;
+export function exec(command: string, options: (NodeObjectEncodingOptions & NodeChildProcess.ExecOptions) | undefined | null, callback?: (error: NodeChildProcess.ExecException | null, stdout: string | Buffer, stderr: string | Buffer) => void): NodeChildProcess.ChildProcess;
 export function exec(
 	_command: string,
 	// biome-ignore lint/suspicious/noExplicitAny: I'll figure this out later
@@ -195,148 +157,25 @@ export function exec(
 }
 
 export function execFile(file: string): NodeChildProcess.ChildProcess;
-export function execFile(
-	file: string,
-	options:
-		| (NodeObjectEncodingOptions & NodeChildProcess.ExecFileOptions)
-		| undefined
-		| null,
-): NodeChildProcess.ChildProcess;
-export function execFile(
-	file: string,
-	args?: readonly string[] | null,
-): NodeChildProcess.ChildProcess;
-export function execFile(
-	file: string,
-	args: readonly string[] | undefined | null,
-	options:
-		| (NodeObjectEncodingOptions & NodeChildProcess.ExecFileOptions)
-		| undefined
-		| null,
-): NodeChildProcess.ChildProcess;
-export function execFile(
-	file: string,
-	callback: (
-		error: NodeChildProcess.ExecFileException | null,
-		stdout: string,
-		stderr: string,
-	) => void,
-): NodeChildProcess.ChildProcess;
+export function execFile(file: string, options: (NodeObjectEncodingOptions & NodeChildProcess.ExecFileOptions) | undefined | null): NodeChildProcess.ChildProcess;
+export function execFile(file: string, args?: readonly string[] | null): NodeChildProcess.ChildProcess;
+export function execFile(file: string, args: readonly string[] | undefined | null, options: (NodeObjectEncodingOptions & NodeChildProcess.ExecFileOptions) | undefined | null): NodeChildProcess.ChildProcess;
+export function execFile(file: string, callback: (error: NodeChildProcess.ExecFileException | null, stdout: string, stderr: string) => void): NodeChildProcess.ChildProcess;
+export function execFile(file: string, args: readonly string[] | undefined | null, callback: (error: NodeChildProcess.ExecFileException | null, stdout: string, stderr: string) => void): NodeChildProcess.ChildProcess;
+export function execFile(file: string, options: NodeChildProcess.ExecFileOptionsWithBufferEncoding, callback: (error: NodeChildProcess.ExecFileException | null, stdout: Buffer, stderr: Buffer) => void): NodeChildProcess.ChildProcess;
+export function execFile(file: string, args: readonly string[] | undefined | null, options: NodeChildProcess.ExecFileOptionsWithBufferEncoding, callback: (error: NodeChildProcess.ExecFileException | null, stdout: Buffer, stderr: Buffer) => void): NodeChildProcess.ChildProcess;
+export function execFile(file: string, options: NodeChildProcess.ExecFileOptionsWithStringEncoding, callback: (error: NodeChildProcess.ExecFileException | null, stdout: string, stderr: string) => void): NodeChildProcess.ChildProcess;
+export function execFile(file: string, args: readonly string[] | undefined | null, options: NodeChildProcess.ExecFileOptionsWithStringEncoding, callback: (error: NodeChildProcess.ExecFileException | null, stdout: string, stderr: string) => void): NodeChildProcess.ChildProcess;
+export function execFile(file: string, options: NodeChildProcess.ExecFileOptionsWithOtherEncoding, callback: (error: NodeChildProcess.ExecFileException | null, stdout: string | Buffer, stderr: string | Buffer) => void): NodeChildProcess.ChildProcess;
+export function execFile(file: string, args: readonly string[] | undefined | null, options: NodeChildProcess.ExecFileOptionsWithOtherEncoding, callback: (error: NodeChildProcess.ExecFileException | null, stdout: string | Buffer, stderr: string | Buffer) => void): NodeChildProcess.ChildProcess;
+export function execFile(file: string, options: NodeChildProcess.ExecFileOptions, callback: (error: NodeChildProcess.ExecFileException | null, stdout: string, stderr: string) => void): NodeChildProcess.ChildProcess;
+export function execFile(file: string, args: readonly string[] | undefined | null, options: NodeChildProcess.ExecFileOptions, callback: (error: NodeChildProcess.ExecFileException | null, stdout: string, stderr: string) => void): NodeChildProcess.ChildProcess;
+export function execFile(file: string, options: (NodeObjectEncodingOptions & NodeChildProcess.ExecFileOptions) | undefined | null, callback: ((error: NodeChildProcess.ExecFileException | null, stdout: string | Buffer, stderr: string | Buffer) => void) | undefined | null): NodeChildProcess.ChildProcess;
 export function execFile(
 	file: string,
 	args: readonly string[] | undefined | null,
-	callback: (
-		error: NodeChildProcess.ExecFileException | null,
-		stdout: string,
-		stderr: string,
-	) => void,
-): NodeChildProcess.ChildProcess;
-export function execFile(
-	file: string,
-	options: NodeChildProcess.ExecFileOptionsWithBufferEncoding,
-	callback: (
-		error: NodeChildProcess.ExecFileException | null,
-		stdout: Buffer,
-		stderr: Buffer,
-	) => void,
-): NodeChildProcess.ChildProcess;
-export function execFile(
-	file: string,
-	args: readonly string[] | undefined | null,
-	options: NodeChildProcess.ExecFileOptionsWithBufferEncoding,
-	callback: (
-		error: NodeChildProcess.ExecFileException | null,
-		stdout: Buffer,
-		stderr: Buffer,
-	) => void,
-): NodeChildProcess.ChildProcess;
-export function execFile(
-	file: string,
-	options: NodeChildProcess.ExecFileOptionsWithStringEncoding,
-	callback: (
-		error: NodeChildProcess.ExecFileException | null,
-		stdout: string,
-		stderr: string,
-	) => void,
-): NodeChildProcess.ChildProcess;
-export function execFile(
-	file: string,
-	args: readonly string[] | undefined | null,
-	options: NodeChildProcess.ExecFileOptionsWithStringEncoding,
-	callback: (
-		error: NodeChildProcess.ExecFileException | null,
-		stdout: string,
-		stderr: string,
-	) => void,
-): NodeChildProcess.ChildProcess;
-export function execFile(
-	file: string,
-	options: NodeChildProcess.ExecFileOptionsWithOtherEncoding,
-	callback: (
-		error: NodeChildProcess.ExecFileException | null,
-		stdout: string | Buffer,
-		stderr: string | Buffer,
-	) => void,
-): NodeChildProcess.ChildProcess;
-export function execFile(
-	file: string,
-	args: readonly string[] | undefined | null,
-	options: NodeChildProcess.ExecFileOptionsWithOtherEncoding,
-	callback: (
-		error: NodeChildProcess.ExecFileException | null,
-		stdout: string | Buffer,
-		stderr: string | Buffer,
-	) => void,
-): NodeChildProcess.ChildProcess;
-export function execFile(
-	file: string,
-	options: NodeChildProcess.ExecFileOptions,
-	callback: (
-		error: NodeChildProcess.ExecFileException | null,
-		stdout: string,
-		stderr: string,
-	) => void,
-): NodeChildProcess.ChildProcess;
-export function execFile(
-	file: string,
-	args: readonly string[] | undefined | null,
-	options: NodeChildProcess.ExecFileOptions,
-	callback: (
-		error: NodeChildProcess.ExecFileException | null,
-		stdout: string,
-		stderr: string,
-	) => void,
-): NodeChildProcess.ChildProcess;
-export function execFile(
-	file: string,
-	options:
-		| (NodeObjectEncodingOptions & NodeChildProcess.ExecFileOptions)
-		| undefined
-		| null,
-	callback:
-		| ((
-				error: NodeChildProcess.ExecFileException | null,
-				stdout: string | Buffer,
-				stderr: string | Buffer,
-		  ) => void)
-		| undefined
-		| null,
-): NodeChildProcess.ChildProcess;
-export function execFile(
-	file: string,
-	args: readonly string[] | undefined | null,
-	options:
-		| (NodeObjectEncodingOptions & NodeChildProcess.ExecFileOptions)
-		| undefined
-		| null,
-	callback:
-		| ((
-				error: NodeChildProcess.ExecFileException | null,
-				stdout: string | Buffer,
-				stderr: string | Buffer,
-		  ) => void)
-		| undefined
-		| null,
+	options: (NodeObjectEncodingOptions & NodeChildProcess.ExecFileOptions) | undefined | null,
+	callback: ((error: NodeChildProcess.ExecFileException | null, stdout: string | Buffer, stderr: string | Buffer) => void) | undefined | null,
 ): NodeChildProcess.ChildProcess;
 export function execFile(
 	_file: string,
@@ -348,260 +187,60 @@ export function execFile(
 }
 
 // spawn function with all Node.js overloads
-export function spawn(
-	command: string,
-	options?: NodeChildProcess.SpawnOptionsWithoutStdio,
-): NodeChildProcess.ChildProcessWithoutNullStreams;
-export function spawn(
-	command: string,
-	options: NodeChildProcess.SpawnOptionsWithStdioTuple<
-		NodeChildProcess.StdioPipe,
-		NodeChildProcess.StdioPipe,
-		NodeChildProcess.StdioPipe
-	>,
-): NodeChildProcess.ChildProcessByStdio<Writable, Readable, Readable>;
-export function spawn(
-	command: string,
-	options: NodeChildProcess.SpawnOptionsWithStdioTuple<
-		NodeChildProcess.StdioPipe,
-		NodeChildProcess.StdioPipe,
-		NodeChildProcess.StdioNull
-	>,
-): NodeChildProcess.ChildProcessByStdio<Writable, Readable, null>;
-export function spawn(
-	command: string,
-	options: NodeChildProcess.SpawnOptionsWithStdioTuple<
-		NodeChildProcess.StdioPipe,
-		NodeChildProcess.StdioNull,
-		NodeChildProcess.StdioPipe
-	>,
-): NodeChildProcess.ChildProcessByStdio<Writable, null, Readable>;
-export function spawn(
-	command: string,
-	options: NodeChildProcess.SpawnOptionsWithStdioTuple<
-		NodeChildProcess.StdioNull,
-		NodeChildProcess.StdioPipe,
-		NodeChildProcess.StdioPipe
-	>,
-): NodeChildProcess.ChildProcessByStdio<null, Readable, Readable>;
-export function spawn(
-	command: string,
-	options: NodeChildProcess.SpawnOptionsWithStdioTuple<
-		NodeChildProcess.StdioPipe,
-		NodeChildProcess.StdioNull,
-		NodeChildProcess.StdioNull
-	>,
-): NodeChildProcess.ChildProcessByStdio<Writable, null, null>;
-export function spawn(
-	command: string,
-	options: NodeChildProcess.SpawnOptionsWithStdioTuple<
-		NodeChildProcess.StdioNull,
-		NodeChildProcess.StdioPipe,
-		NodeChildProcess.StdioNull
-	>,
-): NodeChildProcess.ChildProcessByStdio<null, Readable, null>;
-export function spawn(
-	command: string,
-	options: NodeChildProcess.SpawnOptionsWithStdioTuple<
-		NodeChildProcess.StdioNull,
-		NodeChildProcess.StdioNull,
-		NodeChildProcess.StdioPipe
-	>,
-): NodeChildProcess.ChildProcessByStdio<null, null, Readable>;
-export function spawn(
-	command: string,
-	options: NodeChildProcess.SpawnOptionsWithStdioTuple<
-		NodeChildProcess.StdioNull,
-		NodeChildProcess.StdioNull,
-		NodeChildProcess.StdioNull
-	>,
-): NodeChildProcess.ChildProcessByStdio<null, null, null>;
-export function spawn(
-	command: string,
-	options: NodeChildProcess.SpawnOptions,
-): NodeChildProcess.ChildProcess;
-export function spawn(
-	command: string,
-	args?: readonly string[],
-	options?: NodeChildProcess.SpawnOptionsWithoutStdio,
-): NodeChildProcess.ChildProcessWithoutNullStreams;
-export function spawn(
-	command: string,
-	args: readonly string[],
-	options: NodeChildProcess.SpawnOptionsWithStdioTuple<
-		NodeChildProcess.StdioPipe,
-		NodeChildProcess.StdioPipe,
-		NodeChildProcess.StdioPipe
-	>,
-): NodeChildProcess.ChildProcessByStdio<Writable, Readable, Readable>;
-export function spawn(
-	command: string,
-	args: readonly string[],
-	options: NodeChildProcess.SpawnOptionsWithStdioTuple<
-		NodeChildProcess.StdioPipe,
-		NodeChildProcess.StdioPipe,
-		NodeChildProcess.StdioNull
-	>,
-): NodeChildProcess.ChildProcessByStdio<Writable, Readable, null>;
-export function spawn(
-	command: string,
-	args: readonly string[],
-	options: NodeChildProcess.SpawnOptionsWithStdioTuple<
-		NodeChildProcess.StdioPipe,
-		NodeChildProcess.StdioNull,
-		NodeChildProcess.StdioPipe
-	>,
-): NodeChildProcess.ChildProcessByStdio<Writable, null, Readable>;
-export function spawn(
-	command: string,
-	args: readonly string[],
-	options: NodeChildProcess.SpawnOptionsWithStdioTuple<
-		NodeChildProcess.StdioNull,
-		NodeChildProcess.StdioPipe,
-		NodeChildProcess.StdioPipe
-	>,
-): NodeChildProcess.ChildProcessByStdio<null, Readable, Readable>;
-export function spawn(
-	command: string,
-	args: readonly string[],
-	options: NodeChildProcess.SpawnOptionsWithStdioTuple<
-		NodeChildProcess.StdioPipe,
-		NodeChildProcess.StdioNull,
-		NodeChildProcess.StdioNull
-	>,
-): NodeChildProcess.ChildProcessByStdio<Writable, null, null>;
-export function spawn(
-	command: string,
-	args: readonly string[],
-	options: NodeChildProcess.SpawnOptionsWithStdioTuple<
-		NodeChildProcess.StdioNull,
-		NodeChildProcess.StdioPipe,
-		NodeChildProcess.StdioNull
-	>,
-): NodeChildProcess.ChildProcessByStdio<null, Readable, null>;
-export function spawn(
-	command: string,
-	args: readonly string[],
-	options: NodeChildProcess.SpawnOptionsWithStdioTuple<
-		NodeChildProcess.StdioNull,
-		NodeChildProcess.StdioNull,
-		NodeChildProcess.StdioPipe
-	>,
-): NodeChildProcess.ChildProcessByStdio<null, null, Readable>;
-export function spawn(
-	command: string,
-	args: readonly string[],
-	options: NodeChildProcess.SpawnOptionsWithStdioTuple<
-		NodeChildProcess.StdioNull,
-		NodeChildProcess.StdioNull,
-		NodeChildProcess.StdioNull
-	>,
-): NodeChildProcess.ChildProcessByStdio<null, null, null>;
-export function spawn(
-	command: string,
-	args: readonly string[],
-	options: NodeChildProcess.SpawnOptions,
-): NodeChildProcess.ChildProcess;
+export function spawn(command: string, options?: NodeChildProcess.SpawnOptionsWithoutStdio): NodeChildProcess.ChildProcessWithoutNullStreams;
+export function spawn(command: string, options: NodeChildProcess.SpawnOptionsWithStdioTuple<NodeChildProcess.StdioPipe, NodeChildProcess.StdioPipe, NodeChildProcess.StdioPipe>): NodeChildProcess.ChildProcessByStdio<Writable, Readable, Readable>;
+export function spawn(command: string, options: NodeChildProcess.SpawnOptionsWithStdioTuple<NodeChildProcess.StdioPipe, NodeChildProcess.StdioPipe, NodeChildProcess.StdioNull>): NodeChildProcess.ChildProcessByStdio<Writable, Readable, null>;
+export function spawn(command: string, options: NodeChildProcess.SpawnOptionsWithStdioTuple<NodeChildProcess.StdioPipe, NodeChildProcess.StdioNull, NodeChildProcess.StdioPipe>): NodeChildProcess.ChildProcessByStdio<Writable, null, Readable>;
+export function spawn(command: string, options: NodeChildProcess.SpawnOptionsWithStdioTuple<NodeChildProcess.StdioNull, NodeChildProcess.StdioPipe, NodeChildProcess.StdioPipe>): NodeChildProcess.ChildProcessByStdio<null, Readable, Readable>;
+export function spawn(command: string, options: NodeChildProcess.SpawnOptionsWithStdioTuple<NodeChildProcess.StdioPipe, NodeChildProcess.StdioNull, NodeChildProcess.StdioNull>): NodeChildProcess.ChildProcessByStdio<Writable, null, null>;
+export function spawn(command: string, options: NodeChildProcess.SpawnOptionsWithStdioTuple<NodeChildProcess.StdioNull, NodeChildProcess.StdioPipe, NodeChildProcess.StdioNull>): NodeChildProcess.ChildProcessByStdio<null, Readable, null>;
+export function spawn(command: string, options: NodeChildProcess.SpawnOptionsWithStdioTuple<NodeChildProcess.StdioNull, NodeChildProcess.StdioNull, NodeChildProcess.StdioPipe>): NodeChildProcess.ChildProcessByStdio<null, null, Readable>;
+export function spawn(command: string, options: NodeChildProcess.SpawnOptionsWithStdioTuple<NodeChildProcess.StdioNull, NodeChildProcess.StdioNull, NodeChildProcess.StdioNull>): NodeChildProcess.ChildProcessByStdio<null, null, null>;
+export function spawn(command: string, options: NodeChildProcess.SpawnOptions): NodeChildProcess.ChildProcess;
+export function spawn(command: string, args?: readonly string[], options?: NodeChildProcess.SpawnOptionsWithoutStdio): NodeChildProcess.ChildProcessWithoutNullStreams;
+export function spawn(command: string, args: readonly string[], options: NodeChildProcess.SpawnOptionsWithStdioTuple<NodeChildProcess.StdioPipe, NodeChildProcess.StdioPipe, NodeChildProcess.StdioPipe>): NodeChildProcess.ChildProcessByStdio<Writable, Readable, Readable>;
+export function spawn(command: string, args: readonly string[], options: NodeChildProcess.SpawnOptionsWithStdioTuple<NodeChildProcess.StdioPipe, NodeChildProcess.StdioPipe, NodeChildProcess.StdioNull>): NodeChildProcess.ChildProcessByStdio<Writable, Readable, null>;
+export function spawn(command: string, args: readonly string[], options: NodeChildProcess.SpawnOptionsWithStdioTuple<NodeChildProcess.StdioPipe, NodeChildProcess.StdioNull, NodeChildProcess.StdioPipe>): NodeChildProcess.ChildProcessByStdio<Writable, null, Readable>;
+export function spawn(command: string, args: readonly string[], options: NodeChildProcess.SpawnOptionsWithStdioTuple<NodeChildProcess.StdioNull, NodeChildProcess.StdioPipe, NodeChildProcess.StdioPipe>): NodeChildProcess.ChildProcessByStdio<null, Readable, Readable>;
+export function spawn(command: string, args: readonly string[], options: NodeChildProcess.SpawnOptionsWithStdioTuple<NodeChildProcess.StdioPipe, NodeChildProcess.StdioNull, NodeChildProcess.StdioNull>): NodeChildProcess.ChildProcessByStdio<Writable, null, null>;
+export function spawn(command: string, args: readonly string[], options: NodeChildProcess.SpawnOptionsWithStdioTuple<NodeChildProcess.StdioNull, NodeChildProcess.StdioPipe, NodeChildProcess.StdioNull>): NodeChildProcess.ChildProcessByStdio<null, Readable, null>;
+export function spawn(command: string, args: readonly string[], options: NodeChildProcess.SpawnOptionsWithStdioTuple<NodeChildProcess.StdioNull, NodeChildProcess.StdioNull, NodeChildProcess.StdioPipe>): NodeChildProcess.ChildProcessByStdio<null, null, Readable>;
+export function spawn(command: string, args: readonly string[], options: NodeChildProcess.SpawnOptionsWithStdioTuple<NodeChildProcess.StdioNull, NodeChildProcess.StdioNull, NodeChildProcess.StdioNull>): NodeChildProcess.ChildProcessByStdio<null, null, null>;
+export function spawn(command: string, args: readonly string[], options: NodeChildProcess.SpawnOptions): NodeChildProcess.ChildProcess;
 
-export function fork(
-	modulePath: string | URL,
-	options?: NodeChildProcess.ForkOptions,
-): NodeChildProcess.ChildProcess;
-export function fork(
-	modulePath: string | URL,
-	args?: readonly string[],
-	options?: NodeChildProcess.ForkOptions,
-): NodeChildProcess.ChildProcess;
+export function fork(modulePath: string | URL, options?: NodeChildProcess.ForkOptions): NodeChildProcess.ChildProcess;
+export function fork(modulePath: string | URL, args?: readonly string[], options?: NodeChildProcess.ForkOptions): NodeChildProcess.ChildProcess;
 
 // execSync function with Node.js signatures
 export function execSync(command: string): Buffer;
-export function execSync(
-	command: string,
-	options: NodeChildProcess.ExecSyncOptionsWithStringEncoding,
-): string;
-export function execSync(
-	command: string,
-	options: NodeChildProcess.ExecSyncOptionsWithBufferEncoding,
-): Buffer;
-export function execSync(
-	command: string,
-	options?: NodeChildProcess.ExecSyncOptions,
-): string | Buffer;
-export function execSync(
-	command: string,
-	options?: NodeChildProcess.ExecSyncOptions,
-): string | Buffer {
+export function execSync(command: string, options: NodeChildProcess.ExecSyncOptionsWithStringEncoding): string;
+export function execSync(command: string, options: NodeChildProcess.ExecSyncOptionsWithBufferEncoding): Buffer;
+export function execSync(command: string, options?: NodeChildProcess.ExecSyncOptions): string | Buffer;
+export function execSync(command: string, options?: NodeChildProcess.ExecSyncOptions): string | Buffer {
 	// TODO: Implement the actual execSync functionality
 	throw new Error("execSync is not yet implemented");
 }
 
 // execFileSync function with Node.js signatures
 export function execFileSync(file: string): Buffer;
-export function execFileSync(
-	file: string,
-	options: NodeChildProcess.ExecFileSyncOptionsWithStringEncoding,
-): string;
-export function execFileSync(
-	file: string,
-	options: NodeChildProcess.ExecFileSyncOptionsWithBufferEncoding,
-): Buffer;
-export function execFileSync(
-	file: string,
-	options?: NodeChildProcess.ExecFileSyncOptions,
-): string | Buffer;
+export function execFileSync(file: string, options: NodeChildProcess.ExecFileSyncOptionsWithStringEncoding): string;
+export function execFileSync(file: string, options: NodeChildProcess.ExecFileSyncOptionsWithBufferEncoding): Buffer;
+export function execFileSync(file: string, options?: NodeChildProcess.ExecFileSyncOptions): string | Buffer;
 export function execFileSync(file: string, args: readonly string[]): Buffer;
-export function execFileSync(
-	file: string,
-	args: readonly string[],
-	options: NodeChildProcess.ExecFileSyncOptionsWithStringEncoding,
-): string;
-export function execFileSync(
-	file: string,
-	args: readonly string[],
-	options: NodeChildProcess.ExecFileSyncOptionsWithBufferEncoding,
-): Buffer;
-export function execFileSync(
-	file: string,
-	args?: readonly string[],
-	options?: NodeChildProcess.ExecFileSyncOptions,
-): string | Buffer;
+export function execFileSync(file: string, args: readonly string[], options: NodeChildProcess.ExecFileSyncOptionsWithStringEncoding): string;
+export function execFileSync(file: string, args: readonly string[], options: NodeChildProcess.ExecFileSyncOptionsWithBufferEncoding): Buffer;
+export function execFileSync(file: string, args?: readonly string[], options?: NodeChildProcess.ExecFileSyncOptions): string | Buffer;
 export function execFileSync(file: string, ...args: any[]): string | Buffer {
 	// TODO: Implement the actual execFileSync functionality
 	throw new Error("execFileSync is not yet implemented");
 }
 
 // spawnSync function with Node.js signatures
-export function spawnSync(
-	command: string,
-): NodeChildProcess.SpawnSyncReturns<Buffer>;
-export function spawnSync(
-	command: string,
-	options: NodeChildProcess.SpawnSyncOptionsWithStringEncoding,
-): NodeChildProcess.SpawnSyncReturns<string>;
-export function spawnSync(
-	command: string,
-	options: NodeChildProcess.SpawnSyncOptionsWithBufferEncoding,
-): NodeChildProcess.SpawnSyncReturns<Buffer>;
-export function spawnSync(
-	command: string,
-	options?: NodeChildProcess.SpawnSyncOptions,
-): NodeChildProcess.SpawnSyncReturns<string | Buffer>;
-export function spawnSync(
-	command: string,
-	args: readonly string[],
-): NodeChildProcess.SpawnSyncReturns<Buffer>;
-export function spawnSync(
-	command: string,
-	args: readonly string[],
-	options: NodeChildProcess.SpawnSyncOptionsWithStringEncoding,
-): NodeChildProcess.SpawnSyncReturns<string>;
-export function spawnSync(
-	command: string,
-	args: readonly string[],
-	options: NodeChildProcess.SpawnSyncOptionsWithBufferEncoding,
-): NodeChildProcess.SpawnSyncReturns<Buffer>;
-export function spawnSync(
-	command: string,
-	args?: readonly string[],
-	options?: NodeChildProcess.SpawnSyncOptions,
-): NodeChildProcess.SpawnSyncReturns<string | Buffer> {}
+export function spawnSync(command: string): NodeChildProcess.SpawnSyncReturns<Buffer>;
+export function spawnSync(command: string, options: NodeChildProcess.SpawnSyncOptionsWithStringEncoding): NodeChildProcess.SpawnSyncReturns<string>;
+export function spawnSync(command: string, options: NodeChildProcess.SpawnSyncOptionsWithBufferEncoding): NodeChildProcess.SpawnSyncReturns<Buffer>;
+export function spawnSync(command: string, options?: NodeChildProcess.SpawnSyncOptions): NodeChildProcess.SpawnSyncReturns<string | Buffer>;
+export function spawnSync(command: string, args: readonly string[]): NodeChildProcess.SpawnSyncReturns<Buffer>;
+export function spawnSync(command: string, args: readonly string[], options: NodeChildProcess.SpawnSyncOptionsWithStringEncoding): NodeChildProcess.SpawnSyncReturns<string>;
+export function spawnSync(command: string, args: readonly string[], options: NodeChildProcess.SpawnSyncOptionsWithBufferEncoding): NodeChildProcess.SpawnSyncReturns<Buffer>;
+export function spawnSync(command: string, args?: readonly string[], options?: NodeChildProcess.SpawnSyncOptions): NodeChildProcess.SpawnSyncReturns<string | Buffer> {}

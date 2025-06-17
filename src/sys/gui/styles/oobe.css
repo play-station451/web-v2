@@ -1,71 +1,71 @@
 .selector {
-    position: relative;
+	position: relative;
 }
 
 .selector .title {
-    display: flex;
-    gap: 10px;
-    justify-content: space-between;
-    align-items: center;
-    background-color: #ffffff28;
-    color: #c2bebe;
-    border-radius: 8px;
-    padding: 10px 10px 10px 10px;
-    cursor: var(--cursor-pointer);
-    font-size: 18px;
-    font-weight: 600;
+	display: flex;
+	gap: 10px;
+	justify-content: space-between;
+	align-items: center;
+	background-color: #ffffff28;
+	color: #c2bebe;
+	border-radius: 8px;
+	padding: 10px 10px 10px 10px;
+	cursor: var(--cursor-pointer);
+	font-size: 18px;
+	font-weight: 600;
 }
 
 .options {
-    position: absolute;
-    top: calc(100% + 10px);
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    background-color: #ffffff28;
-    color: #ffffff;
-    font-size: 18px;
-    padding: 6px;
-    font-weight: 600;
-    border-radius: 8px;
-    opacity: 0;
-    pointer-events: none;
-    transition: 150ms ease-in-out;
+	position: absolute;
+	top: calc(100% + 10px);
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	background-color: #ffffff28;
+	color: #ffffff;
+	font-size: 18px;
+	padding: 6px;
+	font-weight: 600;
+	border-radius: 8px;
+	opacity: 0;
+	pointer-events: none;
+	transition: 150ms ease-in-out;
 }
 
 .options.open {
-    opacity: 1;
-    pointer-events: auto;
+	opacity: 1;
+	pointer-events: auto;
 }
 
 .option {
-    padding: 8px 8px 6px 10px;
-    background-color: transparent;
-    border-radius: 8px;
-    color: #c2bebe;
-    cursor: var(--cursor-pointer);
+	padding: 8px 8px 6px 10px;
+	background-color: transparent;
+	border-radius: 8px;
+	color: #c2bebe;
+	cursor: var(--cursor-pointer);
 }
 
 .option:hover {
-    background-color: #ffffff28;
+	background-color: #ffffff28;
 }
 
 .welcome {
-    color: #ffffffa7;
+	color: #ffffffa7;
 }
 
 .pag {
-    box-shadow: inset 0 0 8px -2px transparent;
+	box-shadow: inset 0 0 8px -2px transparent;
 }
 
 .pag:not(:disabled):hover {
-    box-shadow: inset 0 0 8px -2px #00000075;
-    background-color: #ffffff10;
-    color: #ffffffcd;
+	box-shadow: inset 0 0 8px -2px #00000075;
+	background-color: #ffffff10;
+	color: #ffffffcd;
 }
 
 .pag:disabled {
-    background-color: transparent;
-    border: 1px solid transparent;
-    color: #ffffff21;
+	background-color: transparent;
+	border: 1px solid transparent;
+	color: #ffffff21;
 }

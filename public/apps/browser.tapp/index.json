@@ -1,8 +1,8 @@
 {
-    "name": "Browser",
-    "config": {
-        "title": "Browser",
-        "icon": "/apps/browser.tapp/icon.svg",
-        "src": "/apps/browser.tapp/index.html"
-    }
+	"name": "Browser",
+	"config": {
+		"title": "Browser",
+		"icon": "/apps/browser.tapp/icon.svg",
+		"src": "/apps/browser.tapp/index.html"
+	}
 }

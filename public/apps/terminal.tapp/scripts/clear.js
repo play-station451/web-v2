@@ -1,5 +1,5 @@
 function clear() {
-    window.postMessage("clear", '*')
+	window.postMessage("clear", "*");
 }
 
-clear()
+clear();

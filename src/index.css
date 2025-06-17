@@ -1,16 +1,15 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 @theme {
-  --shadow-tb-border-shadow:
-    0px 0px 6px 0px #00000052, inset 0 0 0 0.5px #ffffff38;
-  --shadow-tb-border: inset 0 0 0 0.5px #ffffff38;
-  --shadow-window-shadow: 0px 0px 10px 1px #00000052;
+	--shadow-tb-border-shadow: 0px 0px 6px 0px #00000052, inset 0 0 0 0.5px #ffffff38;
+	--shadow-tb-border: inset 0 0 0 0.5px #ffffff38;
+	--shadow-window-shadow: 0px 0px 10px 1px #00000052;
 
-  --cursor-text: var(--cursor-text);
-  --cursor-pointer: var(--cursor-pointer);
-  --cursor-default: var(--cursor-normal);
-  --cursor-crosshair: var(--cursor-crosshair);
-  --cursor-wait: var(--cursor-wait);
+	--cursor-text: var(--cursor-text);
+	--cursor-pointer: var(--cursor-pointer);
+	--cursor-default: var(--cursor-normal);
+	--cursor-crosshair: var(--cursor-crosshair);
+	--cursor-wait: var(--cursor-wait);
 }
 
 /*
@@ -22,13 +21,13 @@
   color utility to any element that depends on these defaults.
 */
 @layer base {
-  *,
-  ::after,
-  ::before,
-  ::backdrop,
-  ::file-selector-button {
-    border-color: var(--color-gray-200, currentColor);
-  }
+	*,
+	::after,
+	::before,
+	::backdrop,
+	::file-selector-button {
+		border-color: var(--color-gray-200, currentColor);
+	}
 }
 
 /*
@@ -40,44 +39,45 @@
   color utility to any element that depends on these defaults.
 */
 @layer base {
-  *,
-  ::after,
-  ::before,
-  ::backdrop,
-  ::file-selector-button {
-    border-color: var(--color-gray-200, currentColor);
-  }
+	*,
+	::after,
+	::before,
+	::backdrop,
+	::file-selector-button {
+		border-color: var(--color-gray-200, currentColor);
+	}
 }
 
 @font-face {
-  font-family: Inter;
-  src: url("/fonts/Inter.ttf") format("truetype");
+	font-family: Inter;
+	src: url("/fonts/Inter.ttf") format("truetype");
 }
 
 :root {
-  font-family: Inter;
+	font-family: Inter;
 
-  color-scheme: light dark;
-  color: #ffffffde;
-  background-color: #000000;
-  --cursor-normal: url("/cursors/dark/normal.svg") 6 0, default;
-  --cursor-pointer: url("/cursors/dark/pointer.svg") 6 0, pointer;
-  --cursor-text: url("/cursors/dark/text.svg") 10 0, text;
-  --cursor-crosshair: url("/cursors/dark/crosshair.svg") 0 0, crosshair;
-  --cursor-wait: url("/cursors/dark/wait.svg") 0 0, wait;
+	color-scheme: light dark;
+	color: #ffffffde;
+	background-color: #000000;
+	--cursor-normal: url("/cursors/dark/normal.svg") 6 0, default;
+	--cursor-pointer: url("/cursors/dark/pointer.svg") 6 0, pointer;
+	--cursor-text: url("/cursors/dark/text.svg") 10 0, text;
+	--cursor-crosshair: url("/cursors/dark/crosshair.svg") 0 0, crosshair;
+	--cursor-wait: url("/cursors/dark/wait.svg") 0 0, wait;
 }
 
-html, body {
-  height: 100%;
-  margin: 0;
-  cursor: var(--cursor-normal);
+html,
+body {
+	height: 100%;
+	margin: 0;
+	cursor: var(--cursor-normal);
 }
 
 iframe {
-  background: transparent !important;
+	background: transparent !important;
 }
 
 .grainy {
-  background: repeating-conic-gradient(#0000 0.000045%, #000 0.0005%);
-  mix-blend-mode: overlay;
+	background: repeating-conic-gradient(#0000 0.000045%, #000 0.0005%);
+	mix-blend-mode: overlay;
 }
