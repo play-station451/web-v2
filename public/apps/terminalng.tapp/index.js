@@ -102,35 +102,27 @@ async function handleCommand(name, args) {
 	 * The URLs to try to fetch the scripts from
 	 * @type {string[]}
 	 */
-	const scriptPaths = [
-		`/apps/terminal.tapp/scripts/${name.toLowerCase()}.js`,
-		// Bypass the local FS for debugging
-		//  `/fs/scripts/${commandName.toLowerCase()}.js`
-	];
-	for (const scriptPath of scriptPaths) {
-		const appInfo = await getAppInfo();
-		if (appInfo === null) {
-			displayError("Failed to fetch app info, cannot execute command");
-			return;
-		}
-		// A sanity check to ensure the command exists and is defined properly
-		if (!appInfo.some(app => app.name.toLowerCase() === name.toLowerCase())) {
-			displayError(`Command '${name}' not found! Type 'help' for a list of commands.`);
-			return;
-		}
-		/**
-		 * @type {Response}
-		 */
-		let scriptRes;
-		try {
-			scriptRes = await fetch(scriptPath);
-		} catch (error) {
-			displayError(`Failed to fetch script: ${error.message}`);
-			// Try the next script path
-			continue;
-		}
-		new Function("args", await scriptRes.body())(args);
+	const scriptPath = `/fs/apps/terminal.tapp/scripts/${name.toLowerCase()}.js`;
+	const appInfo = await getAppInfo();
+	if (appInfo === null) {
+		displayError("Failed to fetch app info, cannot execute command");
+		return;
 	}
+	// A sanity check to ensure the command exists and is defined properly
+	if (!appInfo.some(app => app.name.toLowerCase() === name.toLowerCase())) {
+		displayError(`Command '${name}' not found! Type 'help' for a list of commands.`);
+		return;
+	}
+	/**
+	 * @type {Response}
+	 */
+	let scriptRes;
+	try {
+		scriptRes = await fetch(scriptPath);
+	} catch (error) {
+		displayError(`Failed to fetch script: ${error.message}`);
+	}
+	new Function("args", await scriptRes.body())(args);
 }
 
 /**
@@ -144,7 +136,8 @@ async function getAppInfo(justNames = true) {
 	 */
 	let appInfoRes;
 	try {
-		appInfoRes = await fetch(`/fs/apps/user/${await tb.user.username()}/terminalng/scripts/info.json`);
+		// Temp for testing
+		appInfoRes = await fetch(`/fs/apps/user/${await tb.user.username()}/terminal/info.json`);
 	} catch (error) {
 		displayError(`Failed to fetch info.json, required for getting app info: ${error.message}`);
 		return null;
@@ -155,7 +148,7 @@ async function getAppInfo(justNames = true) {
 	 */
 	let appInfo;
 	try {
-		appInfoRes = await appInfoRes.json();
+         appInfo = await appInfoRes.json();
 	} catch (error) {
 		displayError(`Failed to parse info.json: ${error.message}`);
 		return null;
