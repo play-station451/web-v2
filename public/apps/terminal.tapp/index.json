@@ -1,7 +1,7 @@
 {
     "name": "Terminal",
     "config": {
-        "title": "Terminal",
+        "title": "Terminal Legacy",
         "icon": "/fs/apps/system/terminal.tapp/icon.svg",
         "src": "/fs/apps/system/terminal.tapp/index.html",
         "size": {

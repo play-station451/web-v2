@@ -517,7 +517,6 @@ export interface COM {
         };
     };
     node: {
-        webContainer: import("@webcontainer/api").WebContainer | undefined;
-        Nodebox: import("@codesandbox/nodebox").Nodebox | undefined;
+        webContainer: import("@webcontainer/api").WebContainer | {};
     };
 }

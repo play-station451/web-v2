@@ -100,7 +100,7 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
             }
         }
         prox()
-        Object.assign(srcRef.current?.contentWindow as any, {
+        Object.assign(srcRef.current?.contentWindow as typeof window, {
             tb: window.parent.tb,
             anura: window.parent.anura,
             AliceWM: window.parent.AliceWM,
@@ -265,7 +265,7 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
         if (config.snapable !== false) {
             if (!windowRef.current) return
             const windowWidth = windowRef.current.offsetWidth;
-            const SNAP_THRESHOLD = 7;
+            const SNAP_THRESHOLD = 7; 
             if (newX <= SNAP_THRESHOLD) {
                 setX(0);
                 setSnapRegion("left");

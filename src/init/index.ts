@@ -67,7 +67,7 @@ export async function init() {
         let startApps = {
             "system_apps": [
                 {
-                    title: "Terminal",
+                    title: "Legacy Terminal",
                     icon: "/fs/apps/system/terminal.tapp/icon.svg",
                     src: "/fs/apps/system/terminal.tapp/index.html",
                     size: {
@@ -148,7 +148,16 @@ export async function init() {
                     title: "Task Manager",
                     icon: "/fs/apps/system/task manager.tapp/icon.svg",
                     src: "/fs/apps/system/task manager.tapp/index.html"
-                }
+                },
+                {
+                    title: "Terminal",
+                    icon: "/fs/apps/system/terminalng.tapp/icon.svg",
+                    src: "/fs/apps/system/terminalng.tapp/index.html",
+                    size: {
+                        width: 400,
+                        height: 400
+                    },
+                },
             ],
             "pinned_apps": []
         }
