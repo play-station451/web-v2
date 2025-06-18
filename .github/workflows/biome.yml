@@ -18,26 +18,35 @@ jobs:
         with:
           token: "${{ secrets.GITHUB_TOKEN }}"
 
-      - name: "Setup Node.js"
-        uses: "actions/setup-node@v4"
-        with:
-          node-version: "22"
-
-      - name: Install dependencies
-        run: npm i
-
       - name: "Setup Biome"
         uses: "biomejs/setup-biome@v2"
         with:
           version: "latest"
 
-      - name: "Fix issues with Biome Lint that are writable"
-        run: "biome check --write ."
-
       - name: "Format with Biome"
         run: "biome format --write ."
 
-      - name: "Check for changes"
+      - name: "Run Biome CI check (to be reported later)"
+        id: "biome-check"
+        run: |
+          # Don't exit on error
+          set +e
+          biome ci . 2>&1 | tee biome-output.log
+          BIOME_EXIT_CODE=${PIPESTATUS[0]}
+          
+          if [ $BIOME_EXIT_CODE -eq 0 ]; then
+            echo "success=true" >> $GITHUB_OUTPUT
+          else
+            echo "success=false" >> $GITHUB_OUTPUT
+            # Store the output for later use
+            {
+              echo 'lint-output<<EOF'
+              cat biome-output.log
+              echo 'EOF'
+            } >> $GITHUB_OUTPUT
+          fi
+
+      - name: "Check for Git changes"
         id: "verify-changed-files"
         run: |
           if [ -n "$(git status --porcelain)" ]; then
@@ -46,18 +55,21 @@ jobs:
             echo "changed=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: "Commit changes"
+      - name: "Commit Git changes"
         if: steps.verify-changed-files.outputs.changed == 'true' && github.event_name == 'push'
         run: |
           git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
             commit -am "chore: auto-fix formatting and linting with Biome"
 
-      - name: "Push changes"
+      - name: "Push Git changes"
         if: steps.verify-changed-files.outputs.changed == 'true' && github.event_name == 'push'
         uses: "ad-m/github-push-action@master"
         with:
           github_token: "${{ secrets.GITHUB_TOKEN }}"
           branch: "${{ github.ref_name }}"
 
-      - name: "Biome CI check"
-        run: "biome ci ."
+      - name: "Fail if Biome CI check failed"
+        if: steps.biome-check.outputs.success == 'false'
+        run: |
+          echo "${{ steps.biome-check.outputs.lint-output }}"
+          exit 1
