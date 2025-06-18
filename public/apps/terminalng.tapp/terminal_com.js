@@ -9,7 +9,7 @@ tb_island.addControl({
 	appname: "Terminal",
 	id: "terminal-help",
 	click: async () => {
-		term.write("help")
-		await handleCommand("help")
+		term.write("help");
+		await handleCommand("help");
 	},
 });

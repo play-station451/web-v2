@@ -24,15 +24,18 @@ const tb = window.tb || window.parent.tb || {};
 function htorgb(hex) {
 	hex = hex.replace("#", "");
 	if (hex.length === 3) {
-		hex = hex.split("").map(h => h + h).join("");
+		hex = hex
+			.split("")
+			.map(h => h + h)
+			.join("");
 	}
 	if (hex.length !== 6) return null;
 	const bigint = parseInt(hex, 16);
 	return {
 		r: (bigint >> 16) & 255,
 		g: (bigint >> 8) & 255,
-		b: bigint & 255
-	}
+		b: bigint & 255,
+	};
 }
 
 /**
@@ -54,13 +57,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 	window.term = term; // Expose the terminal to the global scope for debugging
 	const username = await tb.user.username();
 	const usersettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${username}/settings.json`, "utf8"));
-	const accent = await htorgb(usersettings.accent)
+	const accent = await htorgb(usersettings.accent);
 	term.write(`\r\n\x1b[38;2;${accent.r};${accent.g};${accent.b}m${username}@${JSON.parse(await Filer.fs.promises.readFile("//system/etc/terbium/settings.json"))["host-name"]}\x1b[39m `);
 	term.onData(async char => {
 		if (char === "\x7f") {
 			if (accCommand.length > 0) {
 				accCommand = accCommand.slice(0, -1);
-				term.write('\b \b');
+				term.write("\b \b");
 			}
 			return;
 		}
@@ -88,13 +91,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 function resizeTerm() {
-    const cols = Math.floor(window.innerWidth / term._core._renderService.dimensions.actualCellWidth);
-    const rows = Math.floor(window.innerHeight / term._core._renderService.dimensions.actualCellHeight);
-    term.resize(cols, rows);
+	const cols = Math.floor(window.innerWidth / term._core._renderService.dimensions.actualCellWidth);
+	const rows = Math.floor(window.innerHeight / term._core._renderService.dimensions.actualCellHeight);
+	term.resize(cols, rows);
 }
 
 setTimeout(resizeTerm, 50);
-window.addEventListener('resize', resizeTerm);
+window.addEventListener("resize", resizeTerm);
 
 /**
  *
@@ -221,6 +224,6 @@ function displayError(message) {
  */
 async function createNewCommandInput() {
 	const usersettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await tb.user.username()}/settings.json`, "utf8"));
-	const accent = await htorgb(usersettings.accent)
+	const accent = await htorgb(usersettings.accent);
 	term.write(`\r\n\x1b[38;2;${accent.r};${accent.g};${accent.b}m${await tb.user.username()}@${JSON.parse(await Filer.fs.promises.readFile("//system/etc/terbium/settings.json"))["host-name"]}\x1b[39m `);
 }

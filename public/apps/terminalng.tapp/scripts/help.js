@@ -4,9 +4,9 @@ async function help(args) {
 		const scriptList = JSON.parse(await Filer.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/terminal/info.json`, "utf8"));
 		const script = scriptList.find(script => script.name === scriptName);
 		if (script) {
-			displayOutput(`${script.name}: ${script.usage ? `${script.usage}` : ""}`)
+			displayOutput(`${script.name}: ${script.usage ? `${script.usage}` : ""}`);
 		} else {
-			displayError(`help: ${scriptName}: No such script`)
+			displayError(`help: ${scriptName}: No such script`);
 		}
 		createNewCommandInput();
 	} else {
