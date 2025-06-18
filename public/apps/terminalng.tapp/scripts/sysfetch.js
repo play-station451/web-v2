@@ -1,4 +1,6 @@
 async function sysfetch(args) {
+	console.log(args)
+	args = Array.isArray(args) ? args : [];
 	if (args.includes("-v")) {
 		displayOutput("Sysfetch v1.0.0");
 		createNewCommandInput();

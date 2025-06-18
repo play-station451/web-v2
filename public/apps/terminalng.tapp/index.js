@@ -1,4 +1,3 @@
-import { FitAddon } from "xterm-addon-fit";
 import parser from "yargs-parser";
 
 /**
@@ -23,63 +22,63 @@ const tb = window.tb || window.parent.tb || {};
  * @returns The r;g;b string for use in accent
  */
 function htorgb(hex) {
-	hex = hex.replace(/^#/, "");
+	hex = hex.replace("#", "");
 	if (hex.length === 3) {
-		hex = hex
-			.split("")
-			.map(x => x + x)
-			.join("");
+		hex = hex.split("").map(h => h + h).join("");
 	}
 	if (hex.length !== 6) return null;
-	const num = parseInt(hex, 16);
-	const red = (num >> 16) & 255;
-	const green = (num >> 8) & 255;
-	const blue = num & 255;
-	return `${red};${green};${blue};`;
+	const bigint = parseInt(hex, 16);
+	return {
+		r: (bigint >> 16) & 255,
+		g: (bigint >> 8) & 255,
+		b: bigint & 255
+	}
 }
 
 /**
  * The command that has been captured from the start of the other command prompt ending and after the newline carriage
  */
 let accCommand = "";
-/**
- * Whether a new command is currently being captured by `accCommand`
- */
-let currentlyAccCommand = false;
 
 const term = new Terminal();
-const fitAddon = new FitAddon();
 document.addEventListener("DOMContentLoaded", async () => {
-	term.loadAddon(fitAddon);
 	term.open(document.getElementById("term"));
 	term.writeln(`TerbiumOS [Version: ${tb.system.version()}]`);
 	term.writeln(`Type 'help' for a list of commands.`);
 	term.setOption("theme", {
 		background: "#000000",
-		foreground: "#ffffff",
 		cursor: "#ffffff",
 		selection: "#444444",
-		cursorBlink: true,
-		fontFamily: "Inter",
 	});
+	term.setOption("cursorBlink", true);
+	window.term = term; // Expose the terminal to the global scope for debugging
 	const username = await tb.user.username();
 	const usersettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${username}/settings.json`, "utf8"));
-	term.write(`\r\n\x1b[38;2;${htorgb(usersettings.accent)}m${username}@${JSON.parse(await Filer.fs.promises.readFile("//system/etc/terbium/settings.json"))["host-name"]}\x1b[39m `);
+	const accent = await htorgb(usersettings.accent)
+	term.write(`\r\n\x1b[38;2;${accent.r};${accent.g};${accent.b}m${username}@${JSON.parse(await Filer.fs.promises.readFile("//system/etc/terbium/settings.json"))["host-name"]}\x1b[39m `);
 	term.onData(async char => {
-		accCommand += char;
-
-		console.log(char);
+		if (char === "\x7f") {
+			if (accCommand.length > 0) {
+				accCommand = accCommand.slice(0, -1);
+				term.write('\b \b');
+			}
+			return;
+		}
 		if (char === "\r") {
 			term.writeln("");
-			term.write(`\r\n\x1b[38;2;${htorgb(usersettings.accent)}m${username}@${JSON.parse(await Filer.fs.promises.readFile("//system/etc/terbium/settings.json"))["host-name"]}\x1b[39m `);
-
-			const currentAcc = accCommand.split(" ");
-			const [cmd, ...rawArgs] = currentAcc;
-			const argv = parser(rawArgs);
-			handleCommand(cmd, argv);
+			const input = accCommand.trim();
+			if (input.length > 0) {
+				const [cmd, ...rawArgs] = input.split(" ");
+				const argv = parser(rawArgs);
+				await handleCommand(cmd, argv);
+			}
 			accCommand = "";
+			return;
 		}
-		term.write(char);
+		if (char >= " " && char <= "~") {
+			accCommand += char;
+			term.write(char);
+		}
 	});
 	term.onLineFeed(() => {
 		// Reset because are on a newline carriage
@@ -88,9 +87,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 	term.focus();
 });
 
-window.addEventListener("resize", () => {
-	fitAddon.fit();
-});
+function resizeTerm() {
+    const cols = Math.floor(window.innerWidth / term._core._renderService.dimensions.actualCellWidth);
+    const rows = Math.floor(window.innerHeight / term._core._renderService.dimensions.actualCellHeight);
+    term.resize(cols, rows);
+}
+
+setTimeout(resizeTerm, 50);
+window.addEventListener('resize', resizeTerm);
 
 /**
  *
@@ -102,15 +106,17 @@ async function handleCommand(name, args) {
 	 * The URLs to try to fetch the scripts from
 	 * @type {string[]}
 	 */
-	const scriptPath = `/fs/apps/terminal.tapp/scripts/${name.toLowerCase()}.js`;
+	const scriptPath = `/fs/apps/system/terminalng.tapp/scripts/${name.toLowerCase()}.js`;
 	const appInfo = await getAppInfo();
 	if (appInfo === null) {
 		displayError("Failed to fetch app info, cannot execute command");
+		createNewCommandInput();
 		return;
 	}
 	// A sanity check to ensure the command exists and is defined properly
 	if (!appInfo.some(app => app.name.toLowerCase() === name.toLowerCase())) {
 		displayError(`Command '${name}' not found! Type 'help' for a list of commands.`);
+		createNewCommandInput();
 		return;
 	}
 	/**
@@ -122,7 +128,15 @@ async function handleCommand(name, args) {
 	} catch (error) {
 		displayError(`Failed to fetch script: ${error.message}`);
 	}
-	new Function("args", await scriptRes.body())(args);
+	try {
+		const script = await scriptRes.text();
+		const fn = new Function("args", "displayOutput", "createNewCommandInput", "displayError", script);
+		fn(args, displayOutput, createNewCommandInput, displayError);
+	} catch (e) {
+		displayError(`Failed to execute command '${name}': ${e.message}`);
+		createNewCommandInput();
+		return;
+	}
 }
 
 /**
@@ -140,6 +154,7 @@ async function getAppInfo(justNames = true) {
 		appInfoRes = await fetch(`/fs/apps/user/${await tb.user.username()}/terminal/info.json`);
 	} catch (error) {
 		displayError(`Failed to fetch info.json, required for getting app info: ${error.message}`);
+		createNewCommandInput();
 		return null;
 	}
 
@@ -148,13 +163,14 @@ async function getAppInfo(justNames = true) {
 	 */
 	let appInfo;
 	try {
-         appInfo = await appInfoRes.json();
+		appInfo = await appInfoRes.json();
 	} catch (error) {
 		displayError(`Failed to parse info.json: ${error.message}`);
+		createNewCommandInput();
 		return null;
 	}
 
-	if (justNames) return appInfo.map(app => app.name);
+	//if (justNames) return appInfo.map(app => app.name);
 	return appInfo;
 }
 
@@ -162,8 +178,34 @@ async function getAppInfo(justNames = true) {
  * Displays a styled message to the terminal
  * @param {string} message
  */
-function displayOutput(message, ...styles) {
-	term.writeln(`\x1b[${styles.join(";")}m${message}\x1b[0m`);
+async function displayOutput(message, ...styles) {
+	if (message.includes("%c")) {
+		let parts = message.split(/(%c)/);
+		let styled = "";
+		let styleIndex = 0;
+		for (let i = 0; i < parts.length; i++) {
+			if (parts[i] === "%c") {
+				let text = parts[++i] || "";
+				let style = styles[styleIndex++] || "";
+				let colorMatch = style.match(/color:\s*(#[0-9a-fA-F]{3,6})/);
+				if (colorMatch) {
+					let rgb = await htorgb(colorMatch[1]);
+					if (rgb) {
+						styled += `\x1b[38;2;${rgb.r};${rgb.g};${rgb.b}m${text}\x1b[0m`;
+					} else {
+						styled += text;
+					}
+				} else {
+					styled += text;
+				}
+			} else {
+				styled += parts[i];
+			}
+		}
+		term.writeln(styled);
+	} else {
+		term.writeln(message);
+	}
 }
 
 /**
@@ -178,5 +220,7 @@ function displayError(message) {
  * Creates new command line
  */
 async function createNewCommandInput() {
-	term.write(`\r\n\x1b[38;2;${htorgb(usersettings.accent)}m${username}@${JSON.parse(await Filer.fs.promises.readFile("//system/etc/terbium/settings.json"))["host-name"]}\x1b[39m `);
+	const usersettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await tb.user.username()}/settings.json`, "utf8"));
+	const accent = await htorgb(usersettings.accent)
+	term.write(`\r\n\x1b[38;2;${accent.r};${accent.g};${accent.b}m${await tb.user.username()}@${JSON.parse(await Filer.fs.promises.readFile("//system/etc/terbium/settings.json"))["host-name"]}\x1b[39m `);
 }

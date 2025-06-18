@@ -6,10 +6,10 @@ const tb_dialog = tb.dialog;
 
 tb_island.addControl({
 	text: "Help",
-	appname: "TerminalNG",
-	id: "terminal-ng",
-	click: () => {
-		inputElement.value = "help";
-		executeCommand("help");
+	appname: "Terminal",
+	id: "terminal-help",
+	click: async () => {
+		term.write("help")
+		await handleCommand("help")
 	},
 });
