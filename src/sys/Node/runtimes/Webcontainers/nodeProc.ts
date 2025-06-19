@@ -12,7 +12,18 @@ export async function initializeWebContainer(): Promise<WebContainer> {
 	const fileTree = await getFileTree();
 	await webContainer.mount(fileTree);
 
-	console.log("WebContainer has been initialized!");
+	if (!window.tb.node.servers) {
+		window.tb.node.servers = new Map<number, string>();
+	}
+
+	webContainer.on("server-ready", (port, url) => {
+		window.tb.node.servers.set(port, url);
+		console.info(
+			`[Node.js Subsystem] Server ready on port ${port}: ${url}`,
+		);
+	});
+
+	console.info("[Node.js Subsystem] WebContainer has been initialized!");
 
 	return webContainer;
 }

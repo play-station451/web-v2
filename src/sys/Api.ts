@@ -748,6 +748,7 @@ export default async function Api() {
 		fs: Filer,
 		node: {
 			webContainer: {},
+			servers: new Map<number, string>(),
 		},
 		crypto: async (pass: string, file?: string) => {
 			const newpw = pw.harden(pass);

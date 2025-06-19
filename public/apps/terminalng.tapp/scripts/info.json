@@ -85,6 +85,7 @@
 		"description": "Run JavaScript with Node.js runtime",
 		"usage": "node [options] [script.js] [arguments]",
 		"options": {
+			"-j, --jsh": "Launch the WebContainer JavaScript shell (jsh) instead of Node.js. When this flag is used, no other arguments are passed to the shell.",
 			"-c, --check": "Check the script's syntax without executing it. Exits with an error code if script is invalid.",
 			"-e, --eval string": "Evaluate string as JavaScript.",
 			"-h, --help": "Print command-line options. The output of this option is less detailed than this document.",

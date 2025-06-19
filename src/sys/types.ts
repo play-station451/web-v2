@@ -520,5 +520,6 @@ export interface COM {
 	};
 	node: {
 		webContainer: import("@webcontainer/api").WebContainer | {};
+		servers: Map<number, string>;
 	};
 }

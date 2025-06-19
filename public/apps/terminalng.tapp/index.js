@@ -18,15 +18,15 @@ const tb = window.tb || window.parent.tb || {};
 
 /**
  * Converts a hex color to an RGB string
- * @param {*} hex The hex color to convert
- * @returns The r;g;b string for use in accent
+ * @param {string} hex The hex color to convert
+ * @returns {{r: number, g: number, b: number} | null} The RGB object for use in accent, or null if invalid
  */
 function htorgb(hex) {
 	hex = hex.replace("#", "");
 	if (hex.length === 3) {
 		hex = hex
 			.split("")
-			.map(h => h + h)
+			.map((h) => h + h)
 			.join("");
 	}
 	if (hex.length !== 6) return null;
@@ -39,9 +39,25 @@ function htorgb(hex) {
 }
 
 /**
- * The command that has been captured from the start of the other command prompt ending and after the newline carriage
+ * Command that has been captured from the start of the other command prompt ending and after the newline carriage
  */
 let accCommand = "";
+
+/**
+ * Flag to control whether the terminal should process commands
+ */
+let isProcessingCommands = true;
+tb.setCommandProcessing = (status) => {
+	isProcessingCommands = status;
+};
+
+/**
+ * Last few commands that have been executed
+ */
+let commandHistory = [];
+let historyIndex = -1;
+const HISTORY_LIMIT = 1000;
+const HISTORY_FILE = ".bash_history";
 
 const term = new Terminal();
 document.addEventListener("DOMContentLoaded", async () => {
@@ -54,12 +70,46 @@ document.addEventListener("DOMContentLoaded", async () => {
 		selection: "#444444",
 	});
 	term.setOption("cursorBlink", true);
-	window.term = term; // Expose the terminal to the global scope for debugging
-	const username = await tb.user.username();
-	const usersettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${username}/settings.json`, "utf8"));
-	const accent = await htorgb(usersettings.accent);
-	term.write(`\r\n\x1b[38;2;${accent.r};${accent.g};${accent.b}m${username}@${JSON.parse(await Filer.fs.promises.readFile("//system/etc/terbium/settings.json"))["host-name"]}\x1b[39m `);
-	term.onData(async char => {
+
+	// Load command history
+	await loadHistory();
+
+	term.write("\r\n");
+	await writePowerline();
+	term.onData(async (char) => {
+		if (!isProcessingCommands) return;
+
+		// Handle arrow keys for history navigation
+		// Up arrow
+		if (char === "\x1b[A") {
+			if (historyIndex > 0 && commandHistory.length > 0) {
+				// Clear current line
+				term.write("\r\x1b[K");
+				await writePowerline();
+
+				historyIndex--;
+				accCommand = commandHistory[historyIndex];
+				term.write(accCommand);
+			}
+			return;
+		}
+		// Down arrow
+		if (char === "\x1b[B") {
+			// Clear current line
+			term.write("\r\x1b[K");
+			await writePowerline();
+
+			if (historyIndex < commandHistory.length - 1) {
+				historyIndex++;
+				accCommand = commandHistory[historyIndex];
+				term.write(accCommand);
+			} else {
+				historyIndex = commandHistory.length;
+				accCommand = "";
+			}
+			return;
+		}
+		// Left arrow
 		if (char === "\x7f") {
 			if (accCommand.length > 0) {
 				accCommand = accCommand.slice(0, -1);
@@ -71,8 +121,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 			term.writeln("");
 			const input = accCommand.trim();
 			if (input.length > 0) {
+				// Save to history
+				await saveToHistory(input);
+
 				const [cmd, ...rawArgs] = input.split(" ");
 				const argv = parser(rawArgs);
+				argv._raw = rawArgs.join(" ");
 				await handleCommand(cmd, argv);
 			}
 			accCommand = "";
@@ -84,32 +138,49 @@ document.addEventListener("DOMContentLoaded", async () => {
 		}
 	});
 	term.onLineFeed(() => {
-		// Reset because are on a newline carriage
+		// Reset because of a newline carriage
 		accCommand = "";
+		historyIndex = commandHistory.length;
 	});
 	term.focus();
 });
 
+/**
+ * Resizes the terminal to fit the window
+ * @returns {void}
+ */
 function resizeTerm() {
-	const cols = Math.floor(window.innerWidth / term._core._renderService.dimensions.actualCellWidth);
-	const rows = Math.floor(window.innerHeight / term._core._renderService.dimensions.actualCellHeight);
+	const cols = Math.floor(
+		window.innerWidth /
+			term._core._renderService.dimensions.actualCellWidth,
+	);
+	const rows = Math.floor(
+		window.innerHeight /
+			term._core._renderService.dimensions.actualCellHeight,
+	);
 	term.resize(cols, rows);
 }
-
 setTimeout(resizeTerm, 50);
 window.addEventListener("resize", resizeTerm);
 
 /**
- *
+ * The command handler, which executes the commands in `scripts/`
  * @param {string} name The command name
  * @param {argv} args The command's respective args (from yargs-parser)
+ * @returns {Promise<void>}
  */
 async function handleCommand(name, args) {
 	/**
 	 * The URLs to try to fetch the scripts from
 	 * @type {string[]}
 	 */
-	const scriptPath = `/fs/apps/system/terminalng.tapp/scripts/${name.toLowerCase()}.js`;
+	const debug = location.host.includes("localhost");
+	const scriptPath = debug
+		? `/apps/terminalng.tapp/scripts/${name.toLowerCase()}.js`
+		: `/fs/apps/system/terminalng.tapp/scripts/${name.toLowerCase()}.js`;
+	/**
+	 * @type {appInfo}
+	 */
 	const appInfo = await getAppInfo();
 	if (appInfo === null) {
 		displayError("Failed to fetch app info, cannot execute command");
@@ -117,8 +188,10 @@ async function handleCommand(name, args) {
 		return;
 	}
 	// A sanity check to ensure the command exists and is defined properly
-	if (!appInfo.some(app => app.name.toLowerCase() === name.toLowerCase())) {
-		displayError(`Command '${name}' not found! Type 'help' for a list of commands.`);
+	if (!appInfo.includes(name)) {
+		displayError(
+			`Command '${name}' not found! Type 'help' for a list of commands.`,
+		);
 		createNewCommandInput();
 		return;
 	}
@@ -133,10 +206,17 @@ async function handleCommand(name, args) {
 	}
 	try {
 		const script = await scriptRes.text();
-		const fn = new Function("args", "displayOutput", "createNewCommandInput", "displayError", script);
-		fn(args, displayOutput, createNewCommandInput, displayError);
-	} catch (e) {
-		displayError(`Failed to execute command '${name}': ${e.message}`);
+		const fn = new Function(
+			"args",
+			"displayOutput",
+			"createNewCommandInput",
+			"displayError",
+			"term",
+			script,
+		);
+		fn(args, displayOutput, createNewCommandInput, displayError, term);
+	} catch (error) {
+		displayError(`Failed to execute command '${name}': ${error.message}`);
 		createNewCommandInput();
 		return;
 	}
@@ -154,9 +234,13 @@ async function getAppInfo(justNames = true) {
 	let appInfoRes;
 	try {
 		// Temp for testing
-		appInfoRes = await fetch(`/fs/apps/user/${await tb.user.username()}/terminal/info.json`);
+		appInfoRes = await fetch(
+			`/fs/apps/user/${await tb.user.username()}/terminal/info.json`,
+		);
 	} catch (error) {
-		displayError(`Failed to fetch info.json, required for getting app info: ${error.message}`);
+		displayError(
+			`Failed to fetch info.json, required for getting app info: ${error.message}`,
+		);
 		createNewCommandInput();
 		return null;
 	}
@@ -173,26 +257,28 @@ async function getAppInfo(justNames = true) {
 		return null;
 	}
 
-	//if (justNames) return appInfo.map(app => app.name);
+	if (justNames) return appInfo.map((app) => app.name);
 	return appInfo;
 }
 
 /**
  * Displays a styled message to the terminal
- * @param {string} message
+ * @param {string} message The message to display, can include %c for styling
+ * @param {...string} styles CSS style strings for each %c in the message
+ * @returns {Promise<void>}
  */
 async function displayOutput(message, ...styles) {
 	if (message.includes("%c")) {
-		let parts = message.split(/(%c)/);
+		const parts = message.split(/(%c)/);
 		let styled = "";
 		let styleIndex = 0;
 		for (let i = 0; i < parts.length; i++) {
 			if (parts[i] === "%c") {
-				let text = parts[++i] || "";
-				let style = styles[styleIndex++] || "";
-				let colorMatch = style.match(/color:\s*(#[0-9a-fA-F]{3,6})/);
+				const text = parts[++i] || "";
+				const style = styles[styleIndex++] || "";
+				const colorMatch = style.match(/color:\s*(#[0-9a-fA-F]{3,6})/);
 				if (colorMatch) {
-					let rgb = await htorgb(colorMatch[1]);
+					const rgb = await htorgb(colorMatch[1]);
 					if (rgb) {
 						styled += `\x1b[38;2;${rgb.r};${rgb.g};${rgb.b}m${text}\x1b[0m`;
 					} else {
@@ -210,6 +296,37 @@ async function displayOutput(message, ...styles) {
 		term.writeln(message);
 	}
 }
+/**
+ * Writes the powerline prompt to the terminal
+ * @returns {Promise<void>}
+ */
+async function writePowerline() {
+	const username = await tb.user.username();
+	const userSettings = JSON.parse(
+		await Filer.fs.promises.readFile(
+			`/home/${username}/settings.json`,
+			"utf8",
+		),
+	);
+	const accent = await htorgb(userSettings.accent);
+	const hostname = JSON.parse(
+		await Filer.fs.promises.readFile("//system/etc/terbium/settings.json"),
+	)["host-name"];
+
+	term.write(
+		`\x1b[38;2;${accent.r};${accent.g};${accent.b}m${username}@${hostname}\x1b[39m `,
+	);
+}
+/**
+ * Creates new command line with a styled prompt
+ * @returns {Promise<void>}
+ */
+async function createNewCommandInput() {
+	term.write("\r\n");
+	await writePowerline();
+	// Reset history index for new command being prompted
+	historyIndex = commandHistory.length;
+}
 
 /**
  * Logs an error message to terminal
@@ -219,11 +336,42 @@ function displayError(message) {
 	term.writeln(`\x1b[31mERR: ${message}\x1b[0m`);
 }
 
+
 /**
- * Creates new command line
+ * Load the current history from the bash history file
+ * @returns {Promise<void>}
  */
-async function createNewCommandInput() {
-	const usersettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await tb.user.username()}/settings.json`, "utf8"));
-	const accent = await htorgb(usersettings.accent);
-	term.write(`\r\n\x1b[38;2;${accent.r};${accent.g};${accent.b}m${await tb.user.username()}@${JSON.parse(await Filer.fs.promises.readFile("//system/etc/terbium/settings.json"))["host-name"]}\x1b[39m `);
+async function loadHistory() {
+	try {
+		const username = await tb.user.username();
+		const historyPath = `/home/${username}/${HISTORY_FILE}`;
+		const data = await Filer.fs.promises.readFile(historyPath, "utf8");
+		commandHistory = data.split("\n").filter((cmd) => cmd.trim() !== "");
+	} catch {}
+	historyIndex = commandHistory.length;
+}
+/**
+ * Saves a command to the bash history file
+ * @param {string} command The command to save to history
+ * @returns {Promise<void>}
+ */
+async function saveToHistory(command) {
+	if (!command.trim()) return;
+
+	commandHistory.push(command);
+	if (commandHistory.length > HISTORY_LIMIT) {
+		commandHistory.shift();
+	}
+	historyIndex = commandHistory.length;
+
+	try {
+		const username = await tb.user.username();
+		const historyPath = `/home/${username}/${HISTORY_FILE}`;
+		await Filer.fs.promises.writeFile(
+			historyPath,
+			commandHistory.join("\n"),
+		);
+	} catch (error) {
+		console.error("Failed to save history", error);
+	}
 }
