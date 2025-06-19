@@ -1,6 +1,6 @@
 const ver = "1.0.0";
 
-const cmdData = {
+var cmdData = {
 	help: {
 		desc: "Shows information about a given subcommand",
 		usage: "tb help <subcommand> ...",
@@ -44,6 +44,25 @@ const cmdData = {
 				desc: "Display the currently installed Terbium version.",
 				usage: "tb system version",
 				alias: "ver",
+			},
+			exportfs: {
+				desc: "Export the terbium filesystem.",
+				usage: "tb system exportfs"
+			}
+		},
+	},
+	application: {
+		desc: "Parent command for running/modifying apps.",
+		usage: "tb application [subcmd] <args>",
+		alias: "app",
+		subcmds: {
+			run: {
+				desc: "Runs the app located at the specified package ID",
+				usage: "tb application run [pkgid]",
+				alias: "open",
+				args: {
+					pkgid: "The package ID of the app to open",
+				},
 			},
 		},
 	},
@@ -165,8 +184,40 @@ async function tb(args) {
 					displayOutput(`TerbiumOS version ${window.parent.tb.system.version()}`);
 					createNewCommandInput();
 					break;
+				case "exportfs":
+					displayOutput("! WARNING !")
+					displayOutput("Using this command may cause the tab to freeze momentarily.");
+					displayOutput("DO NOT close this tab until the file finishes downloading.");
+					window.parent.tb.system.exportfs();
+					break;
 				default:
 					error(`tb: system: unknown subcommand: ${args._[1]}`);
+			}
+			break;
+		case "application":
+		case "app":
+			switch (args._[1]) {
+				case undefined:
+				case null:
+					error("tb: application: expected an argument at pos 1, got nothing");
+					break;
+				case "run":
+				case "open":
+					if (args._[2] === undefined) {
+						error("tb: application: run: expected an argument at pos 2, got nothing");
+					} else {
+						if (args._[3]) {
+							await tb.system.openApp(args._[2], { rest: args._[3] });
+							createNewCommandInput();
+						}
+						else {
+							await tb.system.openApp(args._[2]);
+							createNewCommandInput();
+						}
+					}
+					break;
+				default:
+					error(`tb: application: unknown subcommand: ${args._[1]}`);
 			}
 			break;
 		default:
