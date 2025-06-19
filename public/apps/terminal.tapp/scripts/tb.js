@@ -5,8 +5,8 @@ const cmdData = {
 		desc: "Shows information about a given subcommand",
 		usage: "tb help <subcommand> ...",
 		args: {
-			"subcommand": "The subcommand to look up. I.e. tb help system version"
-		}
+			subcommand: "The subcommand to look up. I.e. tb help system version",
+		},
 	},
 	restart: {
 		desc: "Restarts TerbiumOS",
@@ -89,7 +89,7 @@ async function tb(args) {
 				}
 			} else {
 				delete info.v;
-				displayOutput("Any commands listed as \"parent\" commands have subcommands. Use `tb help <cmd>` to view it's commands.");
+				displayOutput('Any commands listed as "parent" commands have subcommands. Use `tb help <cmd>` to view it\'s commands.');
 				displayOutput("List of available commands:\n");
 				const cmdKeys = Object.keys(cmdData);
 				for (let i = 0; i < cmdKeys.length; i++) {
