@@ -208,7 +208,7 @@ async function handleCommand(name, args) {
 	}
 }
 
-window.addEventListener("updPath", (e) => {
+window.addEventListener("updPath", e => {
 	path = e.detail;
 });
 

@@ -7,24 +7,30 @@ function cd(args) {
 		if (pathParts.length > 1) {
 			pathParts.pop();
 			let newPath = "/" + pathParts.join("/") + "/";
-			window.dispatchEvent(new CustomEvent("updPath", {
-				detail: newPath
-			}))
+			window.dispatchEvent(
+				new CustomEvent("updPath", {
+					detail: newPath,
+				}),
+			);
 		} else {
-			window.dispatchEvent(new CustomEvent("updPath", {
-				detail: "//"
-			}))
+			window.dispatchEvent(
+				new CustomEvent("updPath", {
+					detail: "//",
+				}),
+			);
 		}
 		createNewCommandInput();
 	} else {
 		Filer.fs.exists(`${path}/${args._raw}`, exists => {
 			if (!exists) {
-				displayError(`cd: ${path}/${args._raw}: No such file or directory`)
+				displayError(`cd: ${path}/${args._raw}: No such file or directory`);
 				createNewCommandInput();
 			} else {
-				window.dispatchEvent(new CustomEvent("updPath", {
-					detail: `${path}/${args._raw}`
-				}))
+				window.dispatchEvent(
+					new CustomEvent("updPath", {
+						detail: `${path}/${args._raw}`,
+					}),
+				);
 				createNewCommandInput();
 			}
 		});

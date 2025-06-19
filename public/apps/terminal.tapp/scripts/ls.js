@@ -7,7 +7,7 @@ function ls(args) {
 					createNewCommandInput();
 				} else {
 					entries.forEach(entry => {
-						displayOutput(entry.name)
+						displayOutput(entry.name);
 					});
 					createNewCommandInput();
 				}
@@ -32,7 +32,7 @@ function ls(args) {
 				createNewCommandInput();
 			} else {
 				entries.forEach(entry => {
-					displayOutput(entry.name)
+					displayOutput(entry.name);
 				});
 				createNewCommandInput();
 			}

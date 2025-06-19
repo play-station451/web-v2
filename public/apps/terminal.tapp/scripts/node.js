@@ -69,7 +69,8 @@ async function node(args, term) {
 
 	const writer = shell.input.getWriter();
 
-	const inputHandler = term.onData(async data => { // bro you borked the entire window system (check gc)
+	const inputHandler = term.onData(async data => {
+		// bro you borked the entire window system (check gc)
 		await writer.write(data);
 	});
 
