@@ -26,7 +26,7 @@ function htorgb(hex) {
 	if (hex.length === 3) {
 		hex = hex
 			.split("")
-			.map((h) => h + h)
+			.map(h => h + h)
 			.join("");
 	}
 	if (hex.length !== 6) return null;
@@ -47,7 +47,7 @@ let accCommand = "";
  * Flag to control whether the terminal should process commands
  */
 let isProcessingCommands = true;
-tb.setCommandProcessing = (status) => {
+tb.setCommandProcessing = status => {
 	isProcessingCommands = status;
 };
 
@@ -76,7 +76,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 	term.write("\r\n");
 	await writePowerline();
-	term.onData(async (char) => {
+	term.onData(async char => {
 		if (!isProcessingCommands) return;
 
 		// Handle arrow keys for history navigation
@@ -150,14 +150,8 @@ document.addEventListener("DOMContentLoaded", async () => {
  * @returns {void}
  */
 function resizeTerm() {
-	const cols = Math.floor(
-		window.innerWidth /
-			term._core._renderService.dimensions.actualCellWidth,
-	);
-	const rows = Math.floor(
-		window.innerHeight /
-			term._core._renderService.dimensions.actualCellHeight,
-	);
+	const cols = Math.floor(window.innerWidth / term._core._renderService.dimensions.actualCellWidth);
+	const rows = Math.floor(window.innerHeight / term._core._renderService.dimensions.actualCellHeight);
 	term.resize(cols, rows);
 }
 setTimeout(resizeTerm, 50);
@@ -175,9 +169,7 @@ async function handleCommand(name, args) {
 	 * @type {string[]}
 	 */
 	const debug = location.host.includes("localhost");
-	const scriptPath = debug
-		? `/apps/terminalng.tapp/scripts/${name.toLowerCase()}.js`
-		: `/fs/apps/system/terminalng.tapp/scripts/${name.toLowerCase()}.js`;
+	const scriptPath = debug ? `/apps/terminalng.tapp/scripts/${name.toLowerCase()}.js` : `/fs/apps/system/terminalng.tapp/scripts/${name.toLowerCase()}.js`;
 	/**
 	 * @type {appInfo}
 	 */
@@ -189,9 +181,7 @@ async function handleCommand(name, args) {
 	}
 	// A sanity check to ensure the command exists and is defined properly
 	if (!appInfo.includes(name)) {
-		displayError(
-			`Command '${name}' not found! Type 'help' for a list of commands.`,
-		);
+		displayError(`Command '${name}' not found! Type 'help' for a list of commands.`);
 		createNewCommandInput();
 		return;
 	}
@@ -206,14 +196,7 @@ async function handleCommand(name, args) {
 	}
 	try {
 		const script = await scriptRes.text();
-		const fn = new Function(
-			"args",
-			"displayOutput",
-			"createNewCommandInput",
-			"displayError",
-			"term",
-			script,
-		);
+		const fn = new Function("args", "displayOutput", "createNewCommandInput", "displayError", "term", script);
 		fn(args, displayOutput, createNewCommandInput, displayError, term);
 	} catch (error) {
 		displayError(`Failed to execute command '${name}': ${error.message}`);
@@ -234,13 +217,9 @@ async function getAppInfo(justNames = true) {
 	let appInfoRes;
 	try {
 		// Temp for testing
-		appInfoRes = await fetch(
-			`/fs/apps/user/${await tb.user.username()}/terminal/info.json`,
-		);
+		appInfoRes = await fetch(`/fs/apps/user/${await tb.user.username()}/terminal/info.json`);
 	} catch (error) {
-		displayError(
-			`Failed to fetch info.json, required for getting app info: ${error.message}`,
-		);
+		displayError(`Failed to fetch info.json, required for getting app info: ${error.message}`);
 		createNewCommandInput();
 		return null;
 	}
@@ -257,7 +236,7 @@ async function getAppInfo(justNames = true) {
 		return null;
 	}
 
-	if (justNames) return appInfo.map((app) => app.name);
+	if (justNames) return appInfo.map(app => app.name);
 	return appInfo;
 }
 
@@ -302,20 +281,11 @@ async function displayOutput(message, ...styles) {
  */
 async function writePowerline() {
 	const username = await tb.user.username();
-	const userSettings = JSON.parse(
-		await Filer.fs.promises.readFile(
-			`/home/${username}/settings.json`,
-			"utf8",
-		),
-	);
+	const userSettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${username}/settings.json`, "utf8"));
 	const accent = await htorgb(userSettings.accent);
-	const hostname = JSON.parse(
-		await Filer.fs.promises.readFile("//system/etc/terbium/settings.json"),
-	)["host-name"];
+	const hostname = JSON.parse(await Filer.fs.promises.readFile("//system/etc/terbium/settings.json"))["host-name"];
 
-	term.write(
-		`\x1b[38;2;${accent.r};${accent.g};${accent.b}m${username}@${hostname}\x1b[39m `,
-	);
+	term.write(`\x1b[38;2;${accent.r};${accent.g};${accent.b}m${username}@${hostname}\x1b[39m `);
 }
 /**
  * Creates new command line with a styled prompt
@@ -336,7 +306,6 @@ function displayError(message) {
 	term.writeln(`\x1b[31mERR: ${message}\x1b[0m`);
 }
 
-
 /**
  * Load the current history from the bash history file
  * @returns {Promise<void>}
@@ -346,7 +315,7 @@ async function loadHistory() {
 		const username = await tb.user.username();
 		const historyPath = `/home/${username}/${HISTORY_FILE}`;
 		const data = await Filer.fs.promises.readFile(historyPath, "utf8");
-		commandHistory = data.split("\n").filter((cmd) => cmd.trim() !== "");
+		commandHistory = data.split("\n").filter(cmd => cmd.trim() !== "");
 	} catch {}
 	historyIndex = commandHistory.length;
 }
@@ -367,10 +336,7 @@ async function saveToHistory(command) {
 	try {
 		const username = await tb.user.username();
 		const historyPath = `/home/${username}/${HISTORY_FILE}`;
-		await Filer.fs.promises.writeFile(
-			historyPath,
-			commandHistory.join("\n"),
-		);
+		await Filer.fs.promises.writeFile(historyPath, commandHistory.join("\n"));
 	} catch (error) {
 		console.error("Failed to save history", error);
 	}

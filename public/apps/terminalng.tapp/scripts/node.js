@@ -27,14 +27,7 @@ async function node(args, term) {
 	} else {
 		displayOutput("Starting Node.js...");
 		command = "node";
-		const {
-			_: positionalArguments,
-			$0: commandName,
-			j: shortJshFlag,
-			jsh: longJshFlag,
-			_raw: rawArgumentString,
-			...remainingFlags
-		} = args;
+		const { _: positionalArguments, $0: commandName, j: shortJshFlag, jsh: longJshFlag, _raw: rawArgumentString, ...remainingFlags } = args;
 		const positionalArgs = positionalArguments || [];
 		commandArgs = [...positionalArgs];
 
@@ -76,7 +69,7 @@ async function node(args, term) {
 
 	const writer = shell.input.getWriter();
 
-	const inputHandler = term.onData(async (data) => {
+	const inputHandler = term.onData(async data => {
 		await writer.write(data);
 	});
 

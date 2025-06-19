@@ -18,9 +18,7 @@ export async function initializeWebContainer(): Promise<WebContainer> {
 
 	webContainer.on("server-ready", (port, url) => {
 		window.tb.node.servers.set(port, url);
-		console.info(
-			`[Node.js Subsystem] Server ready on port ${port}: ${url}`,
-		);
+		console.info(`[Node.js Subsystem] Server ready on port ${port}: ${url}`);
 	});
 
 	console.info("[Node.js Subsystem] WebContainer has been initialized!");

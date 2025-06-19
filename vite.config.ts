@@ -36,11 +36,7 @@ export default defineConfig({
 		{
 			name: "vite-wisp-server",
 			configureServer(server) {
-				server.httpServer?.on("upgrade", (req, socket, head) =>
-					req.url?.startsWith("/wisp")
-						? wisp.routeRequest(req, socket, head)
-						: undefined,
-				);
+				server.httpServer?.on("upgrade", (req, socket, head) => (req.url?.startsWith("/wisp") ? wisp.routeRequest(req, socket, head) : undefined));
 			},
 		},
 	],

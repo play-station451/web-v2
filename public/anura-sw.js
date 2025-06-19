@@ -46,7 +46,7 @@ async function currentFs() {
 
 	const CONN_TIMEOUT = 1000;
 	const winner = await Promise.race([
-		new Promise((resolve) =>
+		new Promise(resolve =>
 			setTimeout(() => {
 				resolve({
 					fs: opfs || filerfs,
@@ -104,13 +104,7 @@ async function handleDavRequest({ request, url }) {
 	const path = decodeURIComponent(url.pathname.replace(/^\/dav/, "") || "/");
 
 	const getBuffer = async () => new Uint8Array(await request.arrayBuffer());
-	const getDestPath = () =>
-		decodeURIComponent(
-			new URL(request.headers.get("Destination"), url).pathname.replace(
-				/^\/dav/,
-				"",
-			),
-		);
+	const getDestPath = () => decodeURIComponent(new URL(request.headers.get("Destination"), url).pathname.replace(/^\/dav/, ""));
 
 	try {
 		switch (method) {
@@ -132,12 +126,8 @@ async function handleDavRequest({ request, url }) {
 
 					const renderEntry = async (entryPath, stat) => {
 						const isDir = stat.type === "DIRECTORY";
-						const contentLength = isDir
-							? ""
-							: `<a:getcontentlength b:dt="int">${stat.size}</a:getcontentlength>`;
-						const contentType = isDir
-							? ""
-							: `<a:getcontenttype>${mime.default.getType(entryPath) || "application/octet-stream"}</a:getcontenttype>`;
+						const contentLength = isDir ? "" : `<a:getcontentlength b:dt="int">${stat.size}</a:getcontentlength>`;
+						const contentType = isDir ? "" : `<a:getcontenttype>${mime.default.getType(entryPath) || "application/octet-stream"}</a:getcontenttype>`;
 						const creationDate = new Date(stat.ctime).toISOString();
 						const lastModified = new Date(stat.mtime).toUTCString();
 						const resourcetype = isDir ? "<a:collection/>" : "";
@@ -160,17 +150,12 @@ async function handleDavRequest({ request, url }) {
 					};
 
 					if (isDirectory) {
-						responses = await renderEntry(
-							href.endsWith("/") ? href : href + "/",
-							stats,
-						);
+						responses = await renderEntry(href.endsWith("/") ? href : href + "/", stats);
 
 						const files = await fs.readdir(path);
 						const fileResponses = await Promise.all(
-							files.map(async (file) => {
-								const fullPath = path.endsWith("/")
-									? path + file
-									: `${path}/${file}`;
+							files.map(async file => {
+								const fullPath = path.endsWith("/") ? path + file : `${path}/${file}`;
 								const stat = await fs.stat(fullPath);
 								const entryHref = `${href.endsWith("/") ? href : href + "/"}${file}`;
 								return renderEntry(entryHref, stat);
@@ -226,17 +211,12 @@ async function handleDavRequest({ request, url }) {
 			case "HEAD": {
 				try {
 					const data = await fs.readFile(path);
-					return new Response(
-						method === "HEAD" ? null : new Blob([data]),
-						{
-							headers: {
-								"Content-Type":
-									mime.default.getType(path) ||
-									"application/octet-stream",
-							},
-							status: 200,
+					return new Response(method === "HEAD" ? null : new Blob([data]), {
+						headers: {
+							"Content-Type": mime.default.getType(path) || "application/octet-stream",
 						},
-					);
+						status: 200,
+					});
 				} catch {
 					return new Response(null, { status: 404 });
 				}
@@ -287,16 +267,13 @@ async function handleDavRequest({ request, url }) {
 
 			case "LOCK":
 			case "UNLOCK": {
-				return new Response(
-					`<?xml version="1.0"?><d:prop xmlns:d="DAV:"><d:lockdiscovery/></d:prop>`,
-					{
-						status: 200,
-						headers: {
-							"Content-Type": "application/xml",
-							"Lock-Token": `<opaquelocktoken:fake-lock-${Date.now()}>`,
-						},
+				return new Response(`<?xml version="1.0"?><d:prop xmlns:d="DAV:"><d:lockdiscovery/></d:prop>`, {
+					status: 200,
+					headers: {
+						"Content-Type": "application/xml",
+						"Lock-Token": `<opaquelocktoken:fake-lock-${Date.now()}>`,
 					},
-				);
+				});
 			}
 
 			case "POST":
@@ -315,7 +292,7 @@ async function handleDavRequest({ request, url }) {
 for (const method of supportedWebDAVMethods) {
 	workbox.routing.registerRoute(
 		/\/dav/,
-		async (event) => {
+		async event => {
 			return await handleDavRequest(event);
 		},
 		method,
@@ -330,7 +307,7 @@ var cacheenabled = false;
 const callbacks = {};
 const filepickerCallbacks = {};
 
-addEventListener("message", (event) => {
+addEventListener("message", event => {
 	if (event.data.anura_target === "anura.x86.proxy") {
 		let callback = callbacks[event.data.id];
 		callback(event.data.value);
@@ -368,13 +345,8 @@ workbox.routing.registerRoute(
 	/\/showFilePicker/,
 	async ({ url }) => {
 		let id = crypto.randomUUID();
-		let clients = (await self.clients.matchAll()).filter(
-			(v) => new URL(v.url).pathname === "/",
-		);
-		if (clients.length < 1)
-			return new Response(
-				"no clients were available to take your request",
-			);
+		let clients = (await self.clients.matchAll()).filter(v => new URL(v.url).pathname === "/");
+		if (clients.length < 1) return new Response("no clients were available to take your request");
 		let client = clients[0];
 
 		let regex = url.searchParams.get("regex") || ".*";
@@ -387,7 +359,7 @@ workbox.routing.registerRoute(
 			type,
 		});
 
-		const resp = await new Promise((resolve) => {
+		const resp = await new Promise(resolve => {
 			filepickerCallbacks[id] = resolve;
 		});
 
@@ -432,11 +404,7 @@ async function serveFile(path, fsOverride, shOverride) {
 		const stats = await fs.promises.stat(path);
 		if (stats.type === "DIRECTORY") {
 			// Can't do withFileTypes because it is unserializable
-			let entries = await Promise.all(
-				(await fs.promises.readdir(path)).map(
-					async (e) => await fs.promises.stat(`${path}/${e}`),
-				),
-			);
+			let entries = await Promise.all((await fs.promises.readdir(path)).map(async e => await fs.promises.stat(`${path}/${e}`)));
 			function page() {
 				return `<!DOCTYPE html>
 					<html>
@@ -472,12 +440,11 @@ async function serveFile(path, fsOverride, shOverride) {
 									<tbody>
 										${entries
 											.map(
-												(entry) => `
+												entry => `
 												<tr class="dark:hover:bg-[#ffffff15] hover:bg-[#00000020] duration-150 ease-in-out select-none cursor-(--cursor-pointer)" ondblclick="window.location.href='/fs${path}/${entry.name}'">
 													<th class="flex text-left py-1.5 pl-2 pr-[100px] gap-2 select-none">
 														${
-															entry.type ===
-															"DIRECTORY"
+															entry.type === "DIRECTORY"
 																? `
 																<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 dark:text-[#ffffff48] text-[#00000068]">
 																	<path d="M19.5 21a3 3 0 0 0 3-3v-4.5a3 3 0 0 0-3-3h-15a3 3 0 0 0-3 3V18a3 3 0 0 0 3 3h15ZM1.5 10.146V6a3 3 0 0 1 3-3h5.379a2.25 2.25 0 0 1 1.59.659l2.122 2.121c.14.141.331.22.53.22H19.5a3 3 0 0 1 3 3v1.146A4.483 4.483 0 0 0 19.5 9h-15a4.483 4.483 0 0 0-3 1.146Z" />
@@ -494,20 +461,13 @@ async function serveFile(path, fsOverride, shOverride) {
 													</th>
 													<td class="pl-2 pr-3.5 select-none">${entry.type}</td>
 													<td class="pl-2 pr-3.5 select-none">${
-														entry.type ===
-														"DIRECTORY"
+														entry.type === "DIRECTORY"
 															? "<span class='dark:text-[#ffffff50] text-[#00000070]'>-</span>"
-															: entry.size >
-																  1024 *
-																		1024 *
-																		1024
+															: entry.size > 1024 * 1024 * 1024
 																? `${(entry.size / (1024 * 1024 * 1024)).toFixed(2)} GB`
-																: entry.size >
-																	  1024 *
-																			1024
+																: entry.size > 1024 * 1024
 																	? `${(entry.size / (1024 * 1024)).toFixed(2)} MB`
-																	: entry.size >
-																		  1024
+																	: entry.size > 1024
 																		? `${(entry.size / 1024).toFixed(2)} KB`
 																		: `${entry.size} bytes`
 													}</td>
@@ -550,16 +510,13 @@ async function serveFile(path, fsOverride, shOverride) {
 			},
 		});
 	} catch (e) {
-		return new Response(
-			JSON.stringify({ error: e.message, code: e.code, status: 404 }),
-			{
-				status: 404,
-				headers: {
-					"Content-Type": "application/json",
-					...corsheaders,
-				},
+		return new Response(JSON.stringify({ error: e.message, code: e.code, status: 404 }), {
+			status: 404,
+			headers: {
+				"Content-Type": "application/json",
+				...corsheaders,
 			},
-		);
+		});
 	}
 }
 
@@ -645,9 +602,7 @@ workbox.routing.registerRoute(
 	fsRegex,
 	async ({ url, request }) => {
 		let path = url.pathname.match(fsRegex)[1];
-		let action =
-			request.headers.get("x-fs-action") ||
-			url.searchParams.get("action");
+		let action = request.headers.get("x-fs-action") || url.searchParams.get("action");
 		if (!action) {
 			return new Response(
 				JSON.stringify({
@@ -673,80 +628,64 @@ workbox.routing.registerRoute(
 	"POST",
 );
 
-workbox.routing.registerRoute(
-	/^(?!.*(\/config.json|\/MILESTONE|\/x86images\/|\/service\/))/,
-	async ({ url }) => {
-		if (cacheenabled === undefined) {
-			console.debug("retrieving cache value");
-			let result = await idbKeyval.get("cacheenabled");
-			if (result !== undefined || result !== null) {
-				cacheenabled = result;
-			}
+workbox.routing.registerRoute(/^(?!.*(\/config.json|\/MILESTONE|\/x86images\/|\/service\/))/, async ({ url }) => {
+	if (cacheenabled === undefined) {
+		console.debug("retrieving cache value");
+		let result = await idbKeyval.get("cacheenabled");
+		if (result !== undefined || result !== null) {
+			cacheenabled = result;
 		}
-		if (
-			(!cacheenabled && url.pathname === "/" && !navigator.onLine) ||
-			(!cacheenabled &&
-				url.pathname === "/index.html" &&
-				!navigator.onLine)
-		) {
-			return new Response(offlineError(), {
-				status: 500,
-				headers: { "content-type": "text/html" },
-			});
-		}
-		if (!cacheenabled) {
-			const fetchResponse = await fetch(url);
-			return new Response(await fetchResponse.arrayBuffer(), {
-				headers: {
-					...Object.fromEntries(fetchResponse.headers.entries()),
-					...corsheaders,
-				},
-			});
+	}
+	if ((!cacheenabled && url.pathname === "/" && !navigator.onLine) || (!cacheenabled && url.pathname === "/index.html" && !navigator.onLine)) {
+		return new Response(offlineError(), {
+			status: 500,
+			headers: { "content-type": "text/html" },
+		});
+	}
+	if (!cacheenabled) {
+		const fetchResponse = await fetch(url);
+		return new Response(await fetchResponse.arrayBuffer(), {
+			headers: {
+				...Object.fromEntries(fetchResponse.headers.entries()),
+				...corsheaders,
+			},
+		});
 
-			return fetchResponse;
-		}
-		if (url.pathname === "/") {
-			url.pathname = "/index.html";
-		}
-		if (url.password)
-			return new Response(
-				"<script>window.location.href = window.location.href</script>",
-				{ headers: { "content-type": "text/html" } },
-			);
-		const basepath = "/anura_files";
-		let path = decodeURI(url.pathname);
+		return fetchResponse;
+	}
+	if (url.pathname === "/") {
+		url.pathname = "/index.html";
+	}
+	if (url.password) return new Response("<script>window.location.href = window.location.href</script>", { headers: { "content-type": "text/html" } });
+	const basepath = "/anura_files";
+	let path = decodeURI(url.pathname);
 
-		// Force Filer to be used in cache routes, as it does not require waiting for anura to be connected
-		const fs = opfs || filerfs;
-		const sh = opfssh || filersh;
+	// Force Filer to be used in cache routes, as it does not require waiting for anura to be connected
+	const fs = opfs || filerfs;
+	const sh = opfssh || filersh;
 
-		// Terbium already has its own way for caching files to the file system so doing it again is just a waste of space
-		/*
+	// Terbium already has its own way for caching files to the file system so doing it again is just a waste of space
+	/*
 		const response = await serveFile(`${basepath}${path}`, fs, sh);
 
 		if (response.ok) {
 			return response;
 		} else {
 		*/
-		try {
-			const fetchResponse = await fetch(url);
-			// Promise so that we can return the response before we cache it, for faster response times
-			return new Promise(async (resolve) => {
-				const corsResponse = new Response(
-					await fetchResponse.clone().arrayBuffer(),
-					{
-						headers: {
-							...Object.fromEntries(
-								fetchResponse.headers.entries(),
-							),
-							...corsheaders,
-						},
-					},
-				);
+	try {
+		const fetchResponse = await fetch(url);
+		// Promise so that we can return the response before we cache it, for faster response times
+		return new Promise(async resolve => {
+			const corsResponse = new Response(await fetchResponse.clone().arrayBuffer(), {
+				headers: {
+					...Object.fromEntries(fetchResponse.headers.entries()),
+					...corsheaders,
+				},
+			});
 
-				resolve(corsResponse);
+			resolve(corsResponse);
 
-				/*
+			/*
 					if (fetchResponse.ok) {
 						const buffer = await fetchResponse.clone().arrayBuffer();
 						await sh.promises.mkdirp(
@@ -761,26 +700,25 @@ workbox.routing.registerRoute(
 							Buffer.from(buffer),
 						);
 					}*/
-			}).catch((e) => {
-				console.error("I hate this bug: ", e);
-			});
-		} catch (e) {
-			return new Response(
-				JSON.stringify({
-					error: e.message,
-					status: 500,
-				}),
-				{
-					status: 500,
-					headers: {
-						"Content-Type": "application/json",
-						...corsheaders,
-					},
+		}).catch(e => {
+			console.error("I hate this bug: ", e);
+		});
+	} catch (e) {
+		return new Response(
+			JSON.stringify({
+				error: e.message,
+				status: 500,
+			}),
+			{
+				status: 500,
+				headers: {
+					"Content-Type": "application/json",
+					...corsheaders,
 				},
-			);
-		}
-	},
-);
+			},
+		);
+	}
+});
 
 importScripts("/uv/uv.bundle.js");
 importScripts("/uv/uv.config.js");
@@ -792,14 +730,13 @@ const uv = new UVServiceWorker();
 
 const methods = ["GET", "POST", "HEAD", "PUT", "DELETE", "OPTIONS", "PATCH"];
 
-methods.forEach((method) => {
+methods.forEach(method => {
 	workbox.routing.registerRoute(
 		/\/uv\/service\//,
-		async (event) => {
+		async event => {
 			console.debug("Got UV req");
-			uv.on("request", (event) => {
-				event.data.headers["user-agent"] =
-					"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Terbium Browser/2.0.0";
+			uv.on("request", event => {
+				event.data.headers["user-agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Terbium Browser/2.0.0";
 			});
 			return await uv.fetch(event);
 		},
@@ -808,15 +745,12 @@ methods.forEach((method) => {
 });
 
 // Route w-corp-staticblitz.com and subdomains through BareMux, so that the Node.js subsystem doesn't get blocked by filters
-methods.forEach((method) => {
+methods.forEach(method => {
 	workbox.routing.registerRoute(
 		({ url }) => {
-			return (
-				url.hostname === "w-corp-staticblitz.com" ||
-				url.hostname.endsWith(".w-corp-staticblitz.com")
-			);
+			return url.hostname === "w-corp-staticblitz.com" || url.hostname.endsWith(".w-corp-staticblitz.com");
 		},
-		async (event) => {
+		async event => {
 			try {
 				// Clone the request
 				const bareRequest = new Request(event.url.href, {
@@ -833,10 +767,7 @@ methods.forEach((method) => {
 
 				return await bareClient.fetch(bareRequest);
 			} catch (error) {
-				console.error(
-					"BareMux *.w-corp-staticblitz.com proxy fetch failed",
-					error,
-				);
+				console.error("BareMux *.w-corp-staticblitz.com proxy fetch failed", error);
 				return new Response("Failed to fetch through BareMux", {
 					status: 500,
 				});
@@ -848,7 +779,7 @@ methods.forEach((method) => {
 
 scramjet.loadConfig();
 
-methods.forEach((method) => {
+methods.forEach(method => {
 	workbox.routing.registerRoute(
 		/\/service\//,
 		async ({ event }) => {
