@@ -47,8 +47,8 @@ var cmdData = {
 			},
 			exportfs: {
 				desc: "Export the terbium filesystem.",
-				usage: "tb system exportfs"
-			}
+				usage: "tb system exportfs",
+			},
 		},
 	},
 	application: {
@@ -185,7 +185,7 @@ async function tb(args) {
 					createNewCommandInput();
 					break;
 				case "exportfs":
-					displayOutput("! WARNING !")
+					displayOutput("! WARNING !");
 					displayOutput("Using this command may cause the tab to freeze momentarily.");
 					displayOutput("DO NOT close this tab until the file finishes downloading.");
 					window.parent.tb.system.exportfs();
@@ -209,8 +209,7 @@ async function tb(args) {
 						if (args._[3]) {
 							await tb.system.openApp(args._[2], { rest: args._[3] });
 							createNewCommandInput();
-						}
-						else {
+						} else {
 							await tb.system.openApp(args._[2]);
 							createNewCommandInput();
 						}
