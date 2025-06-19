@@ -1,6 +1,13 @@
 const ver = "1.0.0";
 
 const cmdData = {
+	help: {
+		desc: "Shows information about a given subcommand",
+		usage: "tb help <subcommand> ...",
+		args: {
+			"subcommand": "The subcommand to look up. I.e. tb help system version"
+		}
+	},
 	restart: {
 		desc: "Restarts TerbiumOS",
 		usage: "tb restart <args>",
@@ -10,7 +17,7 @@ const cmdData = {
 		},
 	},
 	process: {
-		desc: "Commands related to Terbium processes",
+		desc: "Parent command for listing terbium processes.",
 		usage: "tb process [subcmd] <args>",
 		alias: "proc",
 		subcmds: {
@@ -29,7 +36,7 @@ const cmdData = {
 		},
 	},
 	system: {
-		desc: "Commands related to the active Terbium system",
+		desc: "Parent command for details about the terbium system.",
 		usage: "tb system [subcmd] <args>",
 		alias: "sys",
 		subcmds: {
@@ -66,7 +73,7 @@ async function tb(args) {
 			if (typeof info.v === "undefined") {
 				displayOutput(`Description: ${info.desc}\n`);
 				displayOutput(`USAGE: ${info.usage}`);
-				displayOutput(`ALIAS(ES): ${info.alias}\n`);
+				if (info.alias) displayOutput(`ALIAS(ES): ${info.alias}\n`);
 				if (info.subcmds) {
 					displayOutput("SUBCOMMANDS:");
 					const subkeys = Object.keys(info.subcmds);
@@ -82,6 +89,7 @@ async function tb(args) {
 				}
 			} else {
 				delete info.v;
+				displayOutput("Any commands listed as \"parent\" commands have subcommands. Use `tb help <cmd>` to view it's commands.");
 				displayOutput("List of available commands:\n");
 				const cmdKeys = Object.keys(cmdData);
 				for (let i = 0; i < cmdKeys.length; i++) {
