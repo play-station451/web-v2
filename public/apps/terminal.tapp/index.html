@@ -1,24 +1,26 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Terbium Terminal</title>
-    <link rel="stylesheet" href="./terminal.css">
-    <script src="/assets/libs/filer.min.js"></script>
-    <script type="module">
-      import http from '/assets/libs/http.min.js'
-      import git from 'https://cdn.jsdelivr.net/npm/isomorphic-git@1.30.1/+esm';
-      window.gitfetch = git
-      window.http = http
-    </script>
-    <script src="./terminal_com.js"></script>
-  </head>
-  <body>
-    <div id="terminal">
-      <div id="output"></div>
-    </div>
-    <script src="./index.js"></script>
-    <script src="path-fill.js"></script>
-  </body>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@4.19.0/css/xterm.css" />
+        <link rel="stylesheet" href="./terminal.css" />
+        <title>terminal</title>
+    </head>
+    <body>
+        <script src="/assets/libs/filer.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/xterm@4.19.0/lib/xterm.js"></script>
+        <script src="https://cdn.jsdelivr.net/gh/lit/dist@3/all/lit-all.min.js" type="module"></script>
+        <script type="importmap">
+            {
+                "imports": {
+                    "yargs-parser": "https://unpkg.com/yargs-parser@22.0.0/browser.js"
+                }
+            }
+        </script>
+        <script src="./index.js" type="module"></script>
+        <script src="./terminal_com.js"></script>
+        <div id="term">
+        </div>
+    </body>
 </html>

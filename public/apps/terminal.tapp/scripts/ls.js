@@ -1,55 +1,38 @@
 function ls(args) {
-	let currentPath = terminal.getAttribute("path");
-	if (currentPath.startsWith("~")) currentPath = currentPath.replace("~", `/home/${window.parent.sessionStorage.getItem("currAcc")}`);
-	if (args) {
+	if (args._raw) {
 		try {
-			sh.ls(currentPath + args, (err, entries) => {
+			tb.sh.ls(path + args._raw, (err, entries) => {
 				if (err) {
-					const errorText = document.createElement("div");
-					errorText.textContent = `ls: ${err.message}`;
-					errorText.className = "error-text";
-					outputElement.appendChild(errorText);
+					displayError(`ls: ${err.message}`);
 					createNewCommandInput();
 				} else {
 					entries.forEach(entry => {
-						const entryText = document.createElement("div");
-						entryText.textContent = entry.name;
-						outputElement.appendChild(entryText);
+						displayOutput(entry.name)
 					});
 					createNewCommandInput();
 				}
 			});
 		} catch {
-			sh.ls(args, (err, entries) => {
+			tb.sh.ls(args._raw, (err, entries) => {
 				if (err) {
-					const errorText = document.createElement("div");
-					errorText.textContent = `ls: ${err.message}`;
-					errorText.className = "error-text";
-					outputElement.appendChild(errorText);
+					displayError(`ls: ${err.message}`);
 					createNewCommandInput();
 				} else {
 					entries.forEach(entry => {
-						const entryText = document.createElement("div");
-						entryText.textContent = entry.name;
-						outputElement.appendChild(entryText);
+						displayOutput(entry.name);
 					});
 					createNewCommandInput();
 				}
 			});
 		}
 	} else {
-		sh.ls(currentPath, (err, entries) => {
+		tb.sh.ls(path, (err, entries) => {
 			if (err) {
-				const errorText = document.createElement("div");
-				errorText.textContent = `ls: ${err.message}`;
-				errorText.className = "error-text";
-				outputElement.appendChild(errorText);
+				displayOutput(`ls: ${err.message}`);
 				createNewCommandInput();
 			} else {
 				entries.forEach(entry => {
-					const entryText = document.createElement("div");
-					entryText.textContent = entry.name;
-					outputElement.appendChild(entryText);
+					displayOutput(entry.name)
 				});
 				createNewCommandInput();
 			}

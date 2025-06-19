@@ -1,7 +1,5 @@
 async function sysfetch(args) {
-	console.log(args);
-	args = Array.isArray(args) ? args : [];
-	if (args.includes("-v")) {
+	if (args._raw.includes("-v")) {
 		displayOutput("Sysfetch v1.0.0");
 		createNewCommandInput();
 	} else {
@@ -10,10 +8,10 @@ async function sysfetch(args) {
 		if (settings["accent"]) {
 			accent = settings["accent"];
 		}
-		displayOutput("(%^33)" + "    %cSystem Information", "color: #3cc3f0; font-weight: bold; text-decoration: underline;");
-		displayOutput("%c@@@@@@@@@@@@@@~ B@@@@@@@@#G?." + "     %cOS%c: TerbiumOS v2.0.0", `color: ${accent}`, `color: ${accent}`, "color: #b6b6b6");
-		displayOutput("%cB###&@@@@&####^ #@@@&PPPB@@@G." + "    %cKernel%c: Ayla v1.0.0", `color: ${accent}`, `color: ${accent}`, "color: #b6b6b6");
-		displayOutput("%c    ~@@@@J     .#@@@P   ~&@@@^" + "    %cDE%c: Alexa", `color: ${accent}`, `color: ${accent}`, "color: #b6b6b6");
+		displayOutput("                                 %cSystem Information", "color: #3cc3f0; font-weight: bold; text-decoration: underline;");
+		displayOutput(`%c@@@@@@@@@@@@@@~ B@@@@@@@@#G?.     OS: %cTerbiumOS v2.0.0`, `color: ${accent}`, "color: #b6b6b6");
+		displayOutput("%cB###&@@@@&####^ #@@@&PPPB@@@G.    Kernel: %cAyla v1.0.0", `color: ${accent}`, "color: #b6b6b6");
+		displayOutput("%c    ~@@@@J     .#@@@P   ~&@@@^    DE: %cAlexa", `color: ${accent}`, "color: #b6b6b6");
 		displayOutput("%c    ^@@@@?     .#@@@@###&@@&7  ", `color: ${accent}`);
 		displayOutput("%c    ^@@@@?     .#@@@#555P&@@B7" + "   %cHardware Information (estimated)", `color: ${accent}`, "color: #3cc3f0; font-weight: bold; text-decoration: underline;");
 		await displayCPUInfo();
@@ -67,9 +65,9 @@ async function displayGPUInfo() {
 		let regex = /ANGLE \(.+?,\s*(.+?) \(/;
 		let match = rndr.match(regex);
 		let gpuName = match ? match[1] : "";
-		displayOutput("(%^34)" + `%cGPU%c: ${gpuName}`, `color: ${accent}`, "color: #b6b6b6");
+		displayOutput(`				  %cGPU%c: ${gpuName}`, `color: ${accent}`, "color: #b6b6b6");
 	} else {
-		displayOutput("(%^34)" + "%cGPU%c: Information not available", `color: ${accent}`, "color: #b6b6b6");
+		displayOutput("				  %cGPU%c: Information not available", `color: ${accent}`, "color: #b6b6b6");
 	}
 	return true;
 }

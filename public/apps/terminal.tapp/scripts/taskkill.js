@@ -1,5 +1,5 @@
 function taskkill(args) {
-	if (args.includes("list")) {
+	if (args._raw.includes("list")) {
 		const windows = tb.process.list();
 		Object.values(windows).forEach(window => {
 			displayOutput(`${window.name}, ${window.pid}`);
@@ -7,8 +7,8 @@ function taskkill(args) {
 		createNewCommandInput();
 	} else {
 		try {
-			window.tb.process.kill(args[0]);
-			displayOutput(`Successfully killed task with pid: ${args[0]}`);
+			window.tb.process.kill(args._raw);
+			displayOutput(`Successfully killed task with pid: ${args._raw}`);
 		} catch {
 			displayError("Not task found with that PID");
 		}

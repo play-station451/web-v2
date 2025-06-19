@@ -14,10 +14,11 @@ body {
 	background-color: #000000b9;
 }
 
-#terminal {
-	padding: 16px;
+#term {
+	padding: 2.5px;
 	flex-grow: 1;
-	overflow: hidden;
+	overflow-x: hidden;
+	overflow-y: hidden;
 	display: flex;
 	flex-direction: column;
 }

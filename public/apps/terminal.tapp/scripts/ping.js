@@ -1,6 +1,6 @@
 async function ping(args) {
 	const numPings = 5;
-	let url = args[0];
+	let url = args._raw;
 	let totalResponseTime = 0;
 	let packetsReceived = 0;
 
