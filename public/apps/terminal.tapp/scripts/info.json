@@ -225,6 +225,6 @@
 	{
 		"name": "tb",
 		"description": "Command for debugging terbium and interacting directly with it's API's",
-		"usage": "tb <args>"
+		"usage": "tb [subcmd] [subcmd] ... <args>"
 	}
 ]
