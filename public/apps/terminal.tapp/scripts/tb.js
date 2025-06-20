@@ -64,6 +64,7 @@ var cmdData = {
 				args: {
 					app: "The name of the app to open. Replace any spaces with an underscore ( _ ). Not case sensitive.",
 					"-l/--legacy": "Toggle if the old `com.tb.appname` format should be used or not.",
+					"-j/--json-file": "Process the app argument as a path to an app's configuration file.",
 				},
 			},
 		},
@@ -264,13 +265,19 @@ async function tb(args) {
 									createNewCommandInput();
 								}
 							} else {
-								const trueApp = (args._[2].split("_")).join(" ");
-								const apps = JSON.parse(await Filer.fs.promises.readFile("/apps/installed.json", "utf8"));
-								const app = apps.find(obj => obj.name.toLowerCase() == trueApp.toLowerCase());
-								if (app == undefined) {
-									error(`tb > application > run > could not find an app named "${trueApp}"`);
-								} else {
-									const appConfig = JSON.parse(await Filer.fs.promises.readFile(app.config)).config;
+								// biome-ignore lint/correctness/noInnerDeclarations: variable isnt needed at the root, keep it at the current scope
+								var resolvedAppConfigFile = "";
+								if (args.j || args.jsonFile) resolvedAppConfigFile = args._[2];
+								else {
+									const trueApp = (args._[2].split("_")).join(" ");
+									const apps = JSON.parse(await Filer.fs.promises.readFile("/apps/installed.json", "utf8"));
+									const app = apps.find(obj => obj.name.toLowerCase() === trueApp.toLowerCase());
+									if (app === undefined) resolvedAppConfigFile = undefined;
+									else resolvedAppConfigFile = app.config
+								}
+								if (resolvedAppConfigFile === undefined) error("tb > application > run > could not find that app");
+								else {
+									const appConfig = JSON.parse(await Filer.fs.promises.readFile(resolvedAppConfigFile)).config;
 									window.parent.tb.window.create(appConfig);
 									createNewCommandInput();
 								}

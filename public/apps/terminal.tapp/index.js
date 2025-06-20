@@ -62,7 +62,7 @@ let commandHistory = [];
 let historyIndex = -1;
 let path = `/home/${sessionStorage.getItem("currAcc")}/`;
 const HISTORY_LIMIT = 1000;
-const HISTORY_FILE = ".bash_history";
+const HISTORY_FILE = ".tb_history";
 
 const term = new Terminal();
 document.addEventListener("DOMContentLoaded", async () => {
