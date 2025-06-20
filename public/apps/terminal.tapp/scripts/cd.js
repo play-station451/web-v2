@@ -1,39 +1,55 @@
 function cd(args) {
-	if (args._raw === "../") {
-		if (path.endsWith("/")) {
-			path = path.slice(0, -1);
+	let destination = args._[0];
+	const raw_destination = destination;
+
+	if (!destination || destination === "~") {
+		const homePath = `/home/${sessionStorage.getItem("currAcc")}/`;
+		window.dispatchEvent(new CustomEvent("updPath", { detail: homePath }));
+		createNewCommandInput();
+		return;
+	}
+
+	if (destination.startsWith("~/")) {
+		destination = destination.replace("~", `/home/${sessionStorage.getItem("currAcc")}`);
+	}
+
+	let newPath;
+	if (destination.startsWith("/")) {
+		newPath = destination;
+	} else {
+		newPath = path + destination;
+	}
+
+	const resolvedParts = [];
+	for (const part of newPath.split("/").filter(p => p)) {
+		if (part === "..") {
+			resolvedParts.pop();
+		} else if (part !== ".") {
+			resolvedParts.push(part);
 		}
-		let pathParts = path.split("/").filter(Boolean);
-		if (pathParts.length > 1) {
-			pathParts.pop();
-			let newPath = "/" + pathParts.join("/") + "/";
-			window.dispatchEvent(
-				new CustomEvent("updPath", {
-					detail: newPath,
-				}),
-			);
+	}
+
+	let finalPath = "/" + resolvedParts.join("/") + "/";
+	if (finalPath === "//") {
+		finalPath = "/";
+	}
+
+	const checkPath = finalPath.length > 2 ? finalPath.slice(0, -1) : finalPath;
+	Filer.fs.stat(checkPath, (err, stats) => {
+		if (err) {
+			displayError(`cd: ${raw_destination}: No such file or directory`);
+			createNewCommandInput();
+		} else if (!stats.isDirectory()) {
+			displayError(`cd: ${raw_destination}: Not a directory`);
+			createNewCommandInput();
 		} else {
 			window.dispatchEvent(
 				new CustomEvent("updPath", {
-					detail: "//",
+					detail: finalPath,
 				}),
 			);
+			createNewCommandInput();
 		}
-		createNewCommandInput();
-	} else {
-		Filer.fs.exists(`${path}/${args._raw}`, exists => {
-			if (!exists) {
-				displayError(`cd: ${path}/${args._raw}: No such file or directory`);
-				createNewCommandInput();
-			} else {
-				window.dispatchEvent(
-					new CustomEvent("updPath", {
-						detail: `${path}/${args._raw}`,
-					}),
-				);
-				createNewCommandInput();
-			}
-		});
-	}
+	});
 }
 cd(args);
