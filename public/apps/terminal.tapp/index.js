@@ -203,8 +203,8 @@ async function handleCommand(name, args) {
 	}
 	try {
 		const script = await scriptRes.text();
-		const fn = new Function("args", "displayOutput", "createNewCommandInput", "displayError", "term", "path", script);
-		fn(args, displayOutput, createNewCommandInput, displayError, term, path);
+		const fn = new Function("args", "displayOutput", "createNewCommandInput", "displayError", "term", "path", "terbium", script);
+		fn(args, displayOutput, createNewCommandInput, displayError, term, path, window.parent.tb);
 	} catch (error) {
 		displayError(`Failed to execute command '${name}': ${error.message}`);
 		createNewCommandInput();

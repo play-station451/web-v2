@@ -31,7 +31,7 @@ var cmdData = {
 				},
 			},
 			list: {
-				desc: "Lists all active processes",
+				desc: "[ ! BROKEN ! ] Lists all active processes",
 				usage: "tb process list",
 			},
 		},
@@ -218,8 +218,9 @@ async function tb(args) {
 					for (let i = 0; i < proclist.length; i++) {
 						displayOutput(`"${typeof proclist[i].name === "string" ? proclist[i].name : proclist[i].name.text}" [PID: ${proclistIDs[i]}]`);
 					}
-					createNewCommandInput();*/
-					error("tb > process > Listing active processes is currently broken due to an unknown bug.")
+					createNewCommandInput();
+					*/
+					error("tb > process > list > This command is currently broken. If you need to see a list of process ID's, please use task manager for now");
 					break;
 				}
 				default:
@@ -239,12 +240,12 @@ async function tb(args) {
 					createNewCommandInput();
 					break;
 				case "exportfs":
-					window.parent.tb.setCommandProcessing(false);
+					window.parent.tb.setCommandProcessing(true);
 					displayOutput("! WARNING !");
 					displayOutput("Using this command may cause the tab to freeze momentarily.");
 					displayOutput("DO NOT close this tab until the file finishes downloading.");
 					await window.parent.tb.system.exportfs();
-					window.parent.tb.setCommandProcessing(true);
+					window.parent.tb.setCommandProcessing(false);
 					displayOutput("Success!");
 					createNewCommandInput();
 					break;
