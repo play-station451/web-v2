@@ -22,6 +22,7 @@ export async function initializeWebContainer(): Promise<WebContainer> {
 	});
 
 	console.info("[Node.js Subsystem] WebContainer has been initialized!");
+	window.tb.node.isReady = true;
 
 	return webContainer;
 }

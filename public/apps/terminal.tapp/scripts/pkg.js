@@ -15,8 +15,8 @@ async function installApp(appName, param) {
 				createNewCommandInput();
 			} else {
 				displayOutput(`${app.name} is already installed. Do you want to reinstall? [y/N]`);
-				inputElement.blur();
-				inputElement.disabled = true;
+				term.focus();
+				// TODO
 				window.addEventListener("keydown", async function keydownListener(e) {
 					if (e.key === "y") {
 						await installTAPP(app);

@@ -20,6 +20,13 @@ async function node(args, term) {
 	let command;
 	let commandArgs;
 
+	if (tb.node.isReady === false) {
+		displayOutput(`\r\nWebContainer has not booted yet. Please wait a few seconds and try again.`);
+		createNewCommandInput();
+		tb.setCommandProcessing(true);
+		return;
+	}
+
 	if (isJshMode) {
 		displayOutput("Starting WebContainer JavaScript shell...");
 		command = "jsh";
@@ -70,7 +77,6 @@ async function node(args, term) {
 	const writer = shell.input.getWriter();
 
 	const inputHandler = term.onData(async data => {
-		// bro you borked the entire window system (check gc)
 		await writer.write(data);
 	});
 

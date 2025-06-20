@@ -1,4 +1,6 @@
 import parser from "yargs-parser";
+import http from "iso-http";
+import git from "git";
 
 /**
  * @typedef {import("yargs-parser").Arguments} argv
@@ -15,6 +17,9 @@ import parser from "yargs-parser";
 
 // This is just to resove the terbium system api's
 const tb = window.tb || window.parent.tb || {};
+
+window.http = http
+window.gitfetch = git
 
 /**
  * Converts a hex color to an RGB string
@@ -50,7 +55,6 @@ let isProcessingCommands = true;
 tb.setCommandProcessing = status => {
 	isProcessingCommands = status;
 };
-
 /**
  * Last few commands that have been executed
  */

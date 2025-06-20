@@ -3,9 +3,9 @@ const ver = "1.0.0";
 var cmdData = {
 	help: {
 		desc: "Shows information about a given subcommand",
-		usage: "tb help <subcommand> ...",
+		usage: "tb help <subcmd> ...",
 		args: {
-			subcommand: "The subcommand to look up. I.e. tb help system version",
+			subcmd: "The subcommand to look up. I.e. tb help system version",
 		},
 	},
 	restart: {
@@ -13,12 +13,13 @@ var cmdData = {
 		usage: "tb restart <args>",
 		alias: "reboot",
 		args: {
-			"-f/--force": "Clears the session cache upon reboot",
+			"-f/--force": "Clears the session cache upon reboot and reboots to bootloader",
+			"-s/--skip-prompt": "Skips the confirm reboot prompt",
 		},
 	},
 	process: {
 		desc: "Parent command for listing terbium processes.",
-		usage: "tb process [subcmd] <args>",
+		usage: "tb process [subcmd] ... <args>",
 		alias: "proc",
 		subcmds: {
 			kill: {
@@ -37,7 +38,7 @@ var cmdData = {
 	},
 	system: {
 		desc: "Parent command for details about the terbium system.",
-		usage: "tb system [subcmd] <args>",
+		usage: "tb system [subcmd] ... <args>",
 		alias: "sys",
 		subcmds: {
 			version: {
@@ -53,17 +54,42 @@ var cmdData = {
 	},
 	application: {
 		desc: "Parent command for running/modifying apps.",
-		usage: "tb application [subcmd] <args>",
+		usage: "tb application [subcmd] ... <args>",
 		alias: "app",
 		subcmds: {
 			run: {
 				desc: "Runs the app located at the specified package ID",
-				usage: "tb application run [pkgid]",
+				usage: "tb application run [app] <args>",
 				alias: "open",
 				args: {
-					pkgid: "The package ID of the app to open",
+					app: "The name of the app to open",
+					"-l/--legacy": "Toggle if the old `com.tb.appname` format should be used or not.",
 				},
 			},
+		},
+	},
+	network: {
+		desc: "Parent command for interacting with Terbium's networking system",
+		usage: "tb network [subcmd] ... <args>",
+		alias: "net",
+		subcmds: {
+			proxy: {
+				desc: "Parent command for modifying/reading info about the current proxy.",
+				usage: "tb network proxy [subcmd] ... <args>",
+				subcmds: {
+					active: {
+						desc: "Prints the active proxy in use by Terbium.",
+						usage: "tb network proxy active",
+					},
+					set: {
+						desc: "Change the proxy that Terbium will use",
+						usage: "tb network proxy set [proxy]",
+						args: {
+							proxy: "The name of the proxy to switch to. CASE SENSITIVE!!!"
+						},
+					},
+				},
+			}
 		},
 	},
 };
@@ -130,19 +156,32 @@ async function tb(args) {
 			help(args._);
 			break;
 		case "restart":
-		case "reboot":
-			switch (args._[1]) {
-				case "-f":
-				case "--force":
+		case "reboot": {
+			function handleReboot() {
+				if (args.f || args.force) {
 					window.parent.sessionStorage.clear();
 					window.parent.location.reload();
-					break;
-				default:
+				} else {
 					window.parent.sessionStorage.setItem("logged-in", "false");
 					window.parent.location.reload();
-					break;
+				}
+			}
+			if (args.s || args.skipPrompt) {
+				handleReboot();
+			} else {
+				await window.parent.tb.dialog.Permissions({
+  					title: "Confirm restart",
+  					message: "Are you sure you want to restart Terbium?",
+  					onOk: () => {
+						handleReboot();
+					},
+  					onCancel: () => {
+						error("tb > restart > operation aborted by user");
+					}
+				});
 			}
 			break;
+		}
 		case "lock":
 			window.parent.sessionStorage.setItem("logged-in", false);
 			window.parent.location.reload();
@@ -150,12 +189,16 @@ async function tb(args) {
 		case "process":
 		case "proc":
 			switch (args._[1]) {
+				case undefined:
+				case null:
+					error("tb > process > expected an argument at pos 3, got nothing");
+					break;
 				case "kill":
 				case "delete":
 					if (args._[2] === undefined) {
-						error("tb: proc: expected an argument at pos 2, got nothing");
+						error("tb > process > kill > expected an argument at pos 4, got nothing");
 					} else {
-						tb.process.kill(args._[2]);
+						window.parent.tb.process.kill(args._[2]);
 					}
 					createNewCommandInput();
 					break;
@@ -169,7 +212,7 @@ async function tb(args) {
 					break;
 				}
 				default:
-					error("tb: proc: expected an argument at pos 2, got nothing");
+					error(`tb > process > unknown subcommand: ${args._[1]}`);
 			}
 			break;
 		case "sys":
@@ -177,7 +220,7 @@ async function tb(args) {
 			switch (args._[1]) {
 				case undefined:
 				case null:
-					error("tb: system: expected an argument at pos 1, got nothing");
+					error("tb > system > expected an argument at pos 3, got nothing");
 					break;
 				case "ver":
 				case "version":
@@ -185,13 +228,17 @@ async function tb(args) {
 					createNewCommandInput();
 					break;
 				case "exportfs":
+					window.parent.tb.setCommandProcessing(false)
 					displayOutput("! WARNING !");
 					displayOutput("Using this command may cause the tab to freeze momentarily.");
 					displayOutput("DO NOT close this tab until the file finishes downloading.");
-					window.parent.tb.system.exportfs();
+					await window.parent.tb.system.exportfs();
+					window.parent.tb.setCommandProcessing(true)
+					displayOutput("Success!")
+					createNewCommandInput();
 					break;
 				default:
-					error(`tb: system: unknown subcommand: ${args._[1]}`);
+					error(`tb > system > unknown subcommand: ${args._[1]}`);
 			}
 			break;
 		case "application":
@@ -199,28 +246,68 @@ async function tb(args) {
 			switch (args._[1]) {
 				case undefined:
 				case null:
-					error("tb: application: expected an argument at pos 1, got nothing");
+					error("tb > application > expected an argument at pos 3, got nothing");
 					break;
 				case "run":
-				case "open":
+				case "open": {
 					if (args._[2] === undefined) {
-						error("tb: application: run: expected an argument at pos 2, got nothing");
+						error("tb > application > run > expected an argument at pos 4, got nothing");
 					} else {
-						if (args._[3]) {
-							await tb.system.openApp(args._[2], { rest: args._[3] });
-							createNewCommandInput();
-						} else {
-							await tb.system.openApp(args._[2]);
-							createNewCommandInput();
+						try  {
+							if (args.l || args.legacy) {
+								// legacy "com.tb.<appname> format"
+								if (args._[3]) {
+									await window.parent.tb.system.openApp(args._[2], { rest: args._[3] });
+									createNewCommandInput();
+								} else {
+									await window.parent.tb.system.openApp(args._[2]);
+									createNewCommandInput();
+								}
+							} else {
+								var raw = await Filer.fs.promises.readFile("/hi/hi.txt", "utf8");
+								var allApps = JSON.parse(raw);
+								var app = allApps.find(obj => obj.name.toLowerCase() == args._[2].toLowerCase());
+								
+							}
+						} catch (e) {
+							error(`tb > application > run > failed to open app: ${e.message}`);
 						}
 					}
 					break;
+				}
 				default:
-					error(`tb: application: unknown subcommand: ${args._[1]}`);
+					error(`tb > application > unknown subcommand: ${args._[1]}`);
+			}
+			break;
+		case "network":
+		case "net":
+			switch (args._[1]) {
+				case "proxy":
+					switch (args._[2]) {
+						case "active":
+							displayOutput(`Active proxy: ${await window.parent.tb.proxy.get()}`);
+							createNewCommandInput();
+							break;
+						case "set":
+							if (typeof args._[3] !== "undefined") {
+								displayOutput((await window.parent.tb.proxy.set(args._[3])) ? `Successfully set the active proxy to ${args._[3]}` : `Could not set the active proxy to ${args._[3]}.`);
+								createNewCommandInput();
+							} else {
+								error("tb > network > proxy > set > expected an argument at pos 5, got nothing");
+							}
+							break;
+						default:
+							error(`tb > network > proxy > unknown subcommand: ${args._[2]}`);
+							break;
+					}
+					break;
+				default:
+					error(`tb > network > unknown subcommand: ${args._[1]}`);
+					break;
 			}
 			break;
 		default:
-			error(`tb: unknown subcommand: ${args._[0]}`);
+			error(`tb > unknown subcommand: ${args._[0]}`);
 			break;
 	}
 }

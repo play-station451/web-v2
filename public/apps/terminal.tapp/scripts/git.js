@@ -1,56 +1,30 @@
 async function git(args) {
 	let user = await window.parent.tb.user.username();
-	let http = window.http;
-	let currentPath = terminal.getAttribute("path");
+	console.log(args._raw)
+	console.log(args)
+	let currentPath = path
 	if (currentPath.startsWith("~")) currentPath = currentPath.replace("~", `/home/${window.parent.sessionStorage.getItem("currAcc")}`);
 	try {
-		if (args.length === 0 || args[0] === "git") {
-			displayOutput(`
-Usage: git [--version] [--help] <command> [<args>]
-
-These are common Git commands used in various situations:
-
-start a working area
-   clone     Clone a repository into a new directory
-   init      Create an empty Git repository or reinitialize an existing one
-
-work on the current change
-   add       Add file contents to the index
-   rm        Remove files from the working tree and from the index
-
-examine the history and state
-   status    Show the working tree status
-
-grow, mark and tweak your common history
-   commit    Record changes to the repository (Make sure to run git add <filename> <directory> before commiting)
-
-collaborate (Login requires your GitHub Token)
-   fetch     Download objects and refs from another repository
-   pull      Fetch from and integrate with another repository or a local branch
-   push      Update remote refs along with associated objects
-`);
-			createNewCommandInput();
-		} else if (args[0] === "clone") {
-			let path;
-			if (!args[2]) {
-				path = "/home";
+		if (args._raw.includes("clone")) {
+			if (!args._[2]) {
+				path = `/home/${sessionStorage.getItem("currAcc")}/`;
 			}
 
-			if (path !== "/" && args[2] === "/") {
-				path = args[2];
+			if (path !== "/" && args._raw[2] === "/") {
+				path = args._raw[2];
 			} else if (path !== "/") {
-				path = `${currentPath}/${args[2]}`;
+				path = `${currentPath}/${args._raw[2]}`;
 			}
 
-			displayOutput(`Cloning into '${args[1].split(/(\\|\/)/g).pop()}'...`);
-			const targetDir = args[2] ?? `${currentPath}/${args[1].split(/(\\|\/)/g).pop()}`;
+			displayOutput(`Cloning into '${args._raw[1].split(/(\\|\/)/g).pop()}'...`);
+			const targetDir = args._[2] ?? `${currentPath}/${args._[1].split(/(\\|\/)/g).pop()}`;
 			await Filer.fs.promises.mkdir(targetDir, { recursive: true });
 			await gitfetch.clone({
 				fs: window.parent.Filer.fs,
 				http: http,
 				dir: targetDir,
 				corsProxy: "https://cors.isomorphic-git.org",
-				url: args[1],
+				url: args._[1],
 				noCheckout: false,
 				singleBranch: true,
 				depth: 1,
@@ -79,9 +53,9 @@ collaborate (Login requires your GitHub Token)
 				value: await window.parent.tb.user.username(),
 			});
 			createNewCommandInput();
-		} else if (args[0] === "init") {
-			let path = currentPath + args[1];
-			if (!args[1]) {
+		} else if (args._raw.includes("init")) {
+			let path = currentPath + args._[1];
+			if (!args._raw[1]) {
 				displayError("Error: Target directory must be specified for 'git init'.");
 				createNewCommandInput();
 				return;
@@ -99,14 +73,14 @@ collaborate (Login requires your GitHub Token)
 			});
 			displayOutput("Initialized empty Git repository.");
 			createNewCommandInput();
-		} else if (args[0] === "checkout") {
-			if (!args[1] || !args[2]) {
+		} else if (args._raw.includes("checkout")) {
+			if (!args._[1] || !args._[2]) {
 				displayOutput("Usage: git checkout <branch> <directory>");
 				createNewCommandInput();
 				return;
 			}
-			const branchName = args[1];
-			const targetDir = currentPath + args[2];
+			const branchName = args._[1];
+			const targetDir = currentPath + args._[2];
 			try {
 				await gitfetch.checkout({
 					fs: window.parent.Filer.fs,
@@ -122,14 +96,14 @@ collaborate (Login requires your GitHub Token)
 				displayError(`Error: ${error.message}`);
 			}
 			createNewCommandInput();
-		} else if (args[0] === "add") {
-			if (!args[1] || !args[2]) {
+		} else if (args._raw.includes("add")) {
+			if (!args._[1] || !args._[2]) {
 				displayOutput("Usage: git add <file> <directory>");
 				createNewCommandInput();
 				return;
 			}
-			const filePath = args[1];
-			const targetDir = currentPath + args[2];
+			const filePath = args._[1];
+			const targetDir = currentPath + args._raw[2];
 			try {
 				await gitfetch.add({
 					fs: window.parent.Filer.fs,
@@ -143,14 +117,14 @@ collaborate (Login requires your GitHub Token)
 			}
 
 			createNewCommandInput();
-		} else if (args[0] === "rm") {
-			if (!args[1] || !args[2]) {
+		} else if (args._raw.includes("rm")) {
+			if (!args._[1] || !args._[2]) {
 				displayOutput("Usage: git rm <file> <directory>");
 				createNewCommandInput();
 				return;
 			}
-			const filePath = args[1];
-			const targetDir = currentPath + args[2];
+			const filePath = args._[1];
+			const targetDir = currentPath + args._[2];
 			try {
 				await gitfetch.remove({
 					fs: window.parent.Filer.fs,
@@ -164,42 +138,19 @@ collaborate (Login requires your GitHub Token)
 			}
 
 			createNewCommandInput();
-		} else if (args[0] === "status") {
-			//if (!args[1]) {
-			//    displayOutput("Usage: git status <directory>");
-			//    createNewCommandInput();
-			//    return;
-			//}
-			//const targetDir = await Filer.fs.promises.readdir(args[1]);
-			//try {
-			//    const status = await gitfetch.status({
-			//        fs: window.parent.Filer.fs,
-			//        dir: targetDir,
-			//        filepath: '',
-			//    });
-			//    displayOutput(JSON.stringify(status, null, 2));
-			//} catch (error) {
-			//    displayError(`Error: ${error.message}`);
-			//}
-			displayOutput("Command is currently not implemented");
+		} else if (args._raw.includes("status")) {
+			displayError("Command is currently not implemented");
 			createNewCommandInput();
-		} else if (args[0] === "pull") {
-			if (!args[1]) {
-				displayOutput("Usage: git pull <directory>");
-				createNewCommandInput();
-				return;
-			}
-			const dirName = args[1];
-			const targetDir = `${currentPath}/${dirName}`;
+		} else if (args._raw.includes("pull")) {
 			try {
 				const result = await gitfetch.pull({
 					fs: window.parent.Filer.fs,
 					http: http,
-					dir: targetDir,
+					dir: path,
 					corsProxy: "https://cors.isomorphic-git.org",
 					author: {
 						name: user,
-						email: `${user}@terbiumux.net`,
+						email: `${user}@terbiumon.top`,
 					},
 					onMessage: e => {
 						displayOutput(e);
@@ -210,14 +161,7 @@ collaborate (Login requires your GitHub Token)
 				displayError(`Error: ${error.message}`);
 			}
 			createNewCommandInput();
-		} else if (args[0] === "push") {
-			if (!args[1]) {
-				displayOutput("Usage: git push <directory>");
-				createNewCommandInput();
-				return;
-			}
-			const dirName = args[1];
-			const targetDir = `${currentPath}/${dirName}`;
+		} else if (args._raw.includes("push")) {
 			try {
 				const result = await window.parent.tb.dialog.WebAuth({
 					title: "GitHub Authentication",
@@ -226,7 +170,7 @@ collaborate (Login requires your GitHub Token)
 							const gitResult = await gitfetch.push({
 								fs: window.parent.Filer.fs,
 								http: http,
-								dir: targetDir,
+								dir: path,
 								corsProxy: "https://cors.isomorphic-git.org",
 								remote: "origin",
 								force: false,
@@ -235,7 +179,7 @@ collaborate (Login requires your GitHub Token)
 								},
 								author: {
 									name: user,
-									email: `${user}@terbiumux.net`,
+									email: `${user}@terbiumon.top`,
 								},
 								onAuth: () => {
 									return { username, password };
@@ -257,20 +201,20 @@ collaborate (Login requires your GitHub Token)
 				displayError(`Error: ${error.message}`);
 				createNewCommandInput();
 			}
-		} else if (args[0] === "fetch") {
-			if (!args[1]) {
+		} else if (args._raw.includes("fetch")) {
+			if (!args._[1]) {
 				displayOutput("Usage: git fetch <directory> <remote-url>");
 				createNewCommandInput();
 				return;
 			}
-			const dirName = args[1];
+			const dirName = args._[1];
 			const targetDir = `${currentPath}/${dirName}/.git`;
-			if (!args[2]) {
+			if (!args._[2]) {
 				displayError("Error: Remote URL must be provided.");
 				createNewCommandInput();
 				return;
 			}
-			const remoteUrl = args[2];
+			const remoteUrl = args._[2];
 			try {
 				await gitfetch.fetch({
 					fs: window.parent.Filer.fs,
@@ -284,29 +228,22 @@ collaborate (Login requires your GitHub Token)
 				displayError(`Error: ${error.message}`);
 			}
 			createNewCommandInput();
-		} else if (args[0] === "commit") {
-			if (!args[1]) {
-				displayOutput("Usage: git commit <directory> <message>");
-				createNewCommandInput();
-				return;
-			}
-			const dirName = args[1];
-			const targetDir = `${currentPath}/${dirName}`;
-			if (!args[2]) {
+		} else if (args._raw.includes("commit")) {
+			if (!args._[1]) {
 				displayError("Error: Commit message must be provided.");
 				createNewCommandInput();
 				return;
 			}
-			const commitMessage = args.slice(2).join(" ");
+			const commitMessage = args._[2] || "Blank Commit"
 			try {
 				await gitfetch.commit({
 					fs: window.parent.Filer.fs,
 					http: http,
-					dir: targetDir,
+					dir: path,
 					corsProxy: "https://cors.isomorphic-git.org",
 					author: {
 						name: user,
-						email: `${user}@terbiumux.net`,
+						email: `${user}@terbiumon.top`,
 					},
 					message: commitMessage,
 				});
@@ -315,6 +252,15 @@ collaborate (Login requires your GitHub Token)
 				displayError(`Error: ${error.message}`);
 			}
 			createNewCommandInput();
+		} else if (args._raw.includes("gui")) {
+			displayOutput("Opening GitGUI app...");
+			try {
+				await tb.system.openApp("com.tb.gitgui");
+				createNewCommandInput();
+			} catch (err) {
+				displayError(`Error while opening GitGUI: ${err}`);
+				createNewCommandInput()
+			}
 		} else {
 			displayOutput(`
 Usage: git [--version] [--help] <command> [<args>]

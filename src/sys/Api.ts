@@ -23,7 +23,7 @@ import { AnuraBareClient } from "./liquor/bcc";
 import apps from "../apps.json";
 import { hash } from "../hash.json";
 import { Lemonade } from "./lemonade";
-import { initializeWebContainer } from "./Node/runtimes/Webcontainers/nodeProc";
+import { initializeWebContainer } from "./Node/runtimes/WebContainers/nodeProc";
 const system = new System();
 const Filer = window.Filer;
 const pw = new pwd();
@@ -749,6 +749,7 @@ export default async function Api() {
 		node: {
 			webContainer: {},
 			servers: new Map<number, string>(),
+			isReady: false,
 		},
 		crypto: async (pass: string, file?: string) => {
 			const newpw = pw.harden(pass);
