@@ -62,7 +62,7 @@ var cmdData = {
 				usage: "tb application run [app] <args>",
 				alias: "open",
 				args: {
-					app: "The name of the app to open",
+					app: "The name of the app to open. Replace any spaces with an underscore ( _ ). Not case sensitive.",
 					"-l/--legacy": "Toggle if the old `com.tb.appname` format should be used or not.",
 				},
 			},
@@ -85,11 +85,11 @@ var cmdData = {
 						desc: "Change the proxy that Terbium will use",
 						usage: "tb network proxy set [proxy]",
 						args: {
-							proxy: "The name of the proxy to switch to. CASE SENSITIVE!!!"
+							proxy: "The name of the proxy to switch to. CASE SENSITIVE!!!",
 						},
 					},
 				},
-			}
+			},
 		},
 	},
 };
@@ -170,14 +170,14 @@ async function tb(args) {
 				handleReboot();
 			} else {
 				await window.parent.tb.dialog.Permissions({
-  					title: "Confirm restart",
-  					message: "Are you sure you want to restart Terbium?",
-  					onOk: () => {
+					title: "Confirm restart",
+					message: "Are you sure you want to restart Terbium?",
+					onOk: () => {
 						handleReboot();
 					},
-  					onCancel: () => {
+					onCancel: () => {
 						error("tb > restart > operation aborted by user");
-					}
+					},
 				});
 			}
 			break;
@@ -228,13 +228,13 @@ async function tb(args) {
 					createNewCommandInput();
 					break;
 				case "exportfs":
-					window.parent.tb.setCommandProcessing(false)
+					window.parent.tb.setCommandProcessing(false);
 					displayOutput("! WARNING !");
 					displayOutput("Using this command may cause the tab to freeze momentarily.");
 					displayOutput("DO NOT close this tab until the file finishes downloading.");
 					await window.parent.tb.system.exportfs();
-					window.parent.tb.setCommandProcessing(true)
-					displayOutput("Success!")
+					window.parent.tb.setCommandProcessing(true);
+					displayOutput("Success!");
 					createNewCommandInput();
 					break;
 				default:
@@ -253,7 +253,7 @@ async function tb(args) {
 					if (args._[2] === undefined) {
 						error("tb > application > run > expected an argument at pos 4, got nothing");
 					} else {
-						try  {
+						try {
 							if (args.l || args.legacy) {
 								// legacy "com.tb.<appname> format"
 								if (args._[3]) {
@@ -264,10 +264,16 @@ async function tb(args) {
 									createNewCommandInput();
 								}
 							} else {
-								var raw = await Filer.fs.promises.readFile("/hi/hi.txt", "utf8");
-								var allApps = JSON.parse(raw);
-								var app = allApps.find(obj => obj.name.toLowerCase() == args._[2].toLowerCase());
-								
+								const trueApp = (args._[2].split("_")).join(" ");
+								const apps = JSON.parse(await Filer.fs.promises.readFile("/apps/installed.json", "utf8"));
+								const app = apps.find(obj => obj.name.toLowerCase() == trueApp.toLowerCase());
+								if (app == undefined) {
+									error(`tb > application > run > could not find an app named "${trueApp}"`);
+								} else {
+									const appConfig = JSON.parse(await Filer.fs.promises.readFile(app.config)).config;
+									window.parent.tb.window.create(appConfig);
+									createNewCommandInput();
+								}
 							}
 						} catch (e) {
 							error(`tb > application > run > failed to open app: ${e.message}`);
