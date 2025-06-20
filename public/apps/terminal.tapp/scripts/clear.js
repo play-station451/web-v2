@@ -1,5 +1,6 @@
-function clear() {
-	window.location.reload();
+function clear(term) {
+	term.clear();
+	createNewCommandInput();
 }
 
-clear();
+clear(term);
