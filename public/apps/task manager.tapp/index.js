@@ -103,7 +103,7 @@ function getTasks() {
 		tr.setAttribute("win-id", winID);
 
 		const thName = document.createElement("th");
-		thName.textContent = window.name;
+		thName.textContent = typeof window.name === "string" ? window.name : window.name.text;
 		thName.classList.add("text-left", "py-2.5", "pl-3.5", "pr-[100px]");
 		const tdMemory = document.createElement("td");
 		tdMemory.textContent = "N/A";

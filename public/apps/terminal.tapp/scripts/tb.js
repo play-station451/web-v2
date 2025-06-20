@@ -67,6 +67,14 @@ var cmdData = {
 					"-j/--json-file": "Process the app argument as a path to an app's configuration file.",
 				},
 			},
+			list: {
+				desc: "Lists the installed applications.",
+				usage: "tb application list <args>",
+				args: {
+					"-d/--directory": "Shows the directory that the application is located",
+					"-c/--config": "Shows the location of the app's config file",
+				},
+			},
 		},
 	},
 	network: {
@@ -204,12 +212,14 @@ async function tb(args) {
 					createNewCommandInput();
 					break;
 				case "list": {
+					/*
 					const proclist = window.parent.tb.process.list();
 					const proclistIDs = Object.keys(proclist);
 					for (let i = 0; i < proclist.length; i++) {
-						displayOutput(`"${proclist[i].name}" [PID: ${proclistIDs[i]}]`);
+						displayOutput(`"${typeof proclist[i].name === "string" ? proclist[i].name : proclist[i].name.text}" [PID: ${proclistIDs[i]}]`);
 					}
-					createNewCommandInput();
+					createNewCommandInput();*/
+					error("tb > process > Listing active processes is currently broken due to an unknown bug.")
 					break;
 				}
 				default:
@@ -256,7 +266,6 @@ async function tb(args) {
 					} else {
 						try {
 							if (args.l || args.legacy) {
-								// legacy "com.tb.<appname> format"
 								if (args._[3]) {
 									await window.parent.tb.system.openApp(args._[2], { rest: args._[3] });
 									createNewCommandInput();
@@ -286,6 +295,14 @@ async function tb(args) {
 							error(`tb > application > run > failed to open app: ${e.message}`);
 						}
 					}
+					break;
+				}
+				case "list": {
+					const apps = JSON.parse(await Filer.fs.promises.readFile("/apps/installed.json", "utf8"));
+					for (const app of apps) {
+						displayOutput(`"${app.name}"${args.d || args.directory ? ` (Directory: ${app.config.replace("index.json","")})`:""}${args.c || args.config ? ` (Configuration: ${app.config})`:""}`);
+					}
+					createNewCommandInput();
 					break;
 				}
 				default:
