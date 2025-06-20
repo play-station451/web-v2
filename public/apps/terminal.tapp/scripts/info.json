@@ -39,6 +39,11 @@
 		"usage": "ls"
 	},
 	{
+		"name": "pwd",
+		"description": "Print the current directory",
+		"usage": "pwd"
+	},
+	{
 		"name": "pkg",
 		"description": "Package manager for Terbium",
 		"usage": "pkg <command> [package]",
