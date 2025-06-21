@@ -18,8 +18,8 @@ import git from "git";
 // This is just to resove the terbium system api's
 const tb = window.tb || window.parent.tb || {};
 
-window.http = http
-window.gitfetch = git
+window.http = http;
+window.gitfetch = git;
 
 /**
  * Converts a hex color to an RGB string

@@ -279,11 +279,11 @@ async function tb(args) {
 								var resolvedAppConfigFile = "";
 								if (args.j || args.jsonFile) resolvedAppConfigFile = args._[2];
 								else {
-									const trueApp = (args._[2].split("_")).join(" ");
+									const trueApp = args._[2].split("_").join(" ");
 									const apps = JSON.parse(await Filer.fs.promises.readFile("/apps/installed.json", "utf8"));
 									const app = apps.find(obj => obj.name.toLowerCase() === trueApp.toLowerCase());
 									if (app === undefined) resolvedAppConfigFile = undefined;
-									else resolvedAppConfigFile = app.config
+									else resolvedAppConfigFile = app.config;
 								}
 								if (resolvedAppConfigFile === undefined) error("tb > application > run > could not find that app");
 								else {
@@ -301,7 +301,7 @@ async function tb(args) {
 				case "list": {
 					const apps = JSON.parse(await Filer.fs.promises.readFile("/apps/installed.json", "utf8"));
 					for (const app of apps) {
-						displayOutput(`"${app.name}"${args.d || args.directory ? ` (Directory: ${app.config.replace("index.json","")})`:""}${args.c || args.config ? ` (Configuration: ${app.config})`:""}`);
+						displayOutput(`"${app.name}"${args.d || args.directory ? ` (Directory: ${app.config.replace("index.json", "")})` : ""}${args.c || args.config ? ` (Configuration: ${app.config})` : ""}`);
 					}
 					createNewCommandInput();
 					break;

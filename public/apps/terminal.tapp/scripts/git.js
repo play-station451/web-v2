@@ -1,8 +1,8 @@
 async function git(args) {
 	let user = await window.parent.tb.user.username();
-	console.log(args._raw)
-	console.log(args)
-	let currentPath = path
+	console.log(args._raw);
+	console.log(args);
+	let currentPath = path;
 	if (currentPath.startsWith("~")) currentPath = currentPath.replace("~", `/home/${window.parent.sessionStorage.getItem("currAcc")}`);
 	try {
 		if (args._raw.includes("clone")) {
@@ -234,7 +234,7 @@ async function git(args) {
 				createNewCommandInput();
 				return;
 			}
-			const commitMessage = args._[2] || "Blank Commit"
+			const commitMessage = args._[2] || "Blank Commit";
 			try {
 				await gitfetch.commit({
 					fs: window.parent.Filer.fs,
@@ -259,7 +259,7 @@ async function git(args) {
 				createNewCommandInput();
 			} catch (err) {
 				displayError(`Error while opening GitGUI: ${err}`);
-				createNewCommandInput()
+				createNewCommandInput();
 			}
 		} else {
 			displayOutput(`
