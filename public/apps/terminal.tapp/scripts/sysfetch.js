@@ -9,9 +9,9 @@ async function sysfetch(args) {
 			accent = settings["accent"];
 		}
 		displayOutput("                                 %cSystem Information", "color: #3cc3f0; font-weight: bold; text-decoration: underline;");
-		displayOutput(`%c@@@@@@@@@@@@@@~ B@@@@@@@@#G?.     OS: %cTerbiumOS v2.0.0`, `color: ${accent}`, "color: #b6b6b6");
-		displayOutput("%cB###&@@@@&####^ #@@@&PPPB@@@G.    Kernel: %cAyla v1.0.0", `color: ${accent}`, "color: #b6b6b6");
-		displayOutput("%c    ~@@@@J     .#@@@P   ~&@@@^    DE: %cAlexa", `color: ${accent}`, "color: #b6b6b6");
+		displayOutput(`%c@@@@@@@@@@@@@@~ B@@@@@@@@#G?.     OS %c:TerbiumOS ${tb.system.version()}`, `color: ${accent}`, "color: #b6b6b6");
+		displayOutput("%cB###&@@@@&####^ #@@@&PPPB@@@G.    Kernel %c:Ayla v1.0.0", `color: ${accent}`, "color: #b6b6b6");
+		displayOutput("%c    ~@@@@J     .#@@@P   ~&@@@^    DE %c:Alexa", `color: ${accent}`, "color: #b6b6b6");
 		displayOutput("%c    ^@@@@?     .#@@@@###&@@&7  ", `color: ${accent}`);
 		displayOutput("%c    ^@@@@?     .#@@@#555P&@@B7" + "   %cHardware Information (estimated)", `color: ${accent}`, "color: #3cc3f0; font-weight: bold; text-decoration: underline;");
 		await displayCPUInfo();
