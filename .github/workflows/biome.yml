@@ -34,7 +34,17 @@ jobs:
           biome ci . 2>&1 | tee biome-output.log
           BIOME_EXIT_CODE=${PIPESTATUS[0]}
           
-          echo "success=$([ $BIOME_EXIT_CODE -eq 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          if [ $BIOME_EXIT_CODE -eq 0 ]; then
+            echo "success=true" >> $GITHUB_OUTPUT
+          else
+            echo "success=false" >> $GITHUB_OUTPUT
+            # Store the output for later use
+            {
+              echo 'lint-output<<EOF'
+              cat biome-output.log
+              echo 'EOF'
+            } >> $GITHUB_OUTPUT
+          fi
 
       - name: "Check for Git changes"
         id: "verify-changed-files"
@@ -61,7 +71,5 @@ jobs:
       - name: "Fail if Biome CI check failed"
         if: steps.biome-check.outputs.success == 'false'
         run: |
-          echo "Biome CI check failed. Output:"
-          cat biome-output.log
+          echo "${{ steps.biome-check.outputs.lint-output }}"
           exit 1
-
