@@ -75,6 +75,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 		selection: "#444444",
 	});
 	term.setOption("cursorBlink", true);
+	window.term = term;
 
 	// Load command history
 	await loadHistory();
