@@ -697,7 +697,7 @@ const eruda = () => {
 	animationCheckbox.addEventListener("mousedown", () => {
 		setState(!realCheckbox.checked);
 	});
-}
+};
 eruda();
 
 /*

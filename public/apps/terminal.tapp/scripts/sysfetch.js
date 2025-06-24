@@ -1,4 +1,4 @@
-async function sysfetch(args,term) {
+async function sysfetch(args, term) {
 	if (args._raw.includes("-v")) {
 		displayOutput("Sysfetch v1.0.0");
 		createNewCommandInput();
@@ -78,4 +78,4 @@ async function getStorage(accent) {
 	return true;
 }
 
-sysfetch(args,term);
+sysfetch(args, term);

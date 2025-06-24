@@ -26,7 +26,7 @@ async function pkg(args) {
 							if (userInput === "y") {
 								displayOutput("");
 								displayOutput(`Reinstalling ${exactMatch.name}...`);
-								installApp(app.name, "", installed)
+								installApp(app.name, "", installed);
 							} else {
 								createNewCommandInput();
 							}
@@ -60,24 +60,24 @@ async function pkg(args) {
 					await Filer.fs.promises.writeFile("/apps/installed.json", JSON.stringify(installed, null, 2), "utf8");
 					displayOutput(`Uninstalling ${app.name}...`);
 					const configPath = app.config;
-					console.log(configPath)
+					console.log(configPath);
 					if (configPath.endsWith("index.json")) {
 						let webApps = JSON.parse(await Filer.fs.promises.readFile("/apps/web_apps.json", "utf8"));
 						const waIndex = webApps.findIndex(webApp => webApp.name.toLowerCase() === app.name.toLowerCase());
 						if (waIndex !== -1) {
 							webApps.splice(waIndex, 1);
 							await Filer.fs.promises.writeFile("/apps/web_apps.json", JSON.stringify(webApps, null, 2), "utf8");
-							await tb.launcher.removeApp(app.name)
+							await tb.launcher.removeApp(app.name);
 							displayOutput(`${app.name} has been uninstalled.`);
 						}
 					} else if (configPath.endsWith("manifest.json")) {
-						await Filer.fs.promises.unlink(`/system/etc/anura/configs/${app.name}.json`)
+						await Filer.fs.promises.unlink(`/system/etc/anura/configs/${app.name}.json`);
 						await tb.sh.rm(configPath.replace("/manifest.json", "/"));
-						await tb.launcher.removeApp(app.name)
+						await tb.launcher.removeApp(app.name);
 						displayOutput(`${app.name} has been uninstalled.`);
 					} else if (configPath.endsWith(".tbconfig")) {
 						await tb.sh.rm(configPath.replace("/.tbconfig", "/"));
-						await tb.launcher.removeApp(app.name)
+						await tb.launcher.removeApp(app.name);
 						displayOutput(`${app.name} has been uninstalled.`);
 					}
 				} else {
@@ -165,12 +165,11 @@ async function pkg(args) {
 function installApp(name, type) {
 	switch (type) {
 		case "web":
-
 			break;
 		case "TAPP":
 			break;
 		case "anura":
-			break;	
+			break;
 	}
 }
 
