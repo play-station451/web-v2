@@ -679,6 +679,27 @@ async function convertTBSIF() {
 	input.click();
 }
 
+const animationCheckbox = document.querySelector(".eruda-check");
+const eruda = () => {
+	const realCheckbox = animationCheckbox.querySelector("input[type='checkbox']");
+	const checkIcon = animationCheckbox.querySelector(".checkIcon");
+	const setState = enabled => {
+		realCheckbox.checked = enabled;
+		if (enabled) {
+			checkIcon.classList.remove("opacity-0", "scale-85");
+			localStorage.setItem("eruda", "true");
+		} else {
+			checkIcon.classList.add("opacity-0", "scale-85");
+			localStorage.removeItem("eruda");
+		}
+	};
+	setState(localStorage.getItem("eruda") === "true");
+	animationCheckbox.addEventListener("mousedown", () => {
+		setState(!realCheckbox.checked);
+	});
+}
+eruda();
+
 /*
 const animationCheckbox = document.querySelector(".animations-check");
 animationCheckbox.addEventListener("mousedown", async (e) => {

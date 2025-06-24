@@ -133,6 +133,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 				const argv = parser(rawArgs);
 				argv._raw = rawArgs.join(" ");
 				await handleCommand(cmd, argv);
+			} else {
+				await writePowerline();
 			}
 			accCommand = "";
 			return;

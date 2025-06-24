@@ -159,7 +159,7 @@ export async function Updater() {
 		try {
 			const response = await fetch(repo);
 			const ver = (await response.json()).version;
-			if (ver !== version) {
+			if (ver > version) {
 				const res = await consola.prompt(`A new version of Terbium is available. Would you like to download it? (New Version: ${ver}, Current: ${version})`, {
 					type: "confirm",
 				});
