@@ -462,6 +462,7 @@ async function installApp(app) {
 					iconSrc: "/fs/apps/system/app store.tapp/icon.svg",
 					time: 5000,
 				});
+				await Filer.fs.promises.unlink(`${appPath}.zip`);
 				document.querySelector(".install").innerText = "Uninstall";
 			} catch (e) {
 				console.error("Error installing the app:", e);

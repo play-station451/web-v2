@@ -3,6 +3,7 @@ async function pkg(args) {
 		"pkg <command> -h: Display help for <command>.",
 		"pkg install <package-name>: Install an app matching <package-name> from the repo.",
 		"pkg remove <package-name>: Uninstall an app matching <package-name> from the repo.",
+		"pkg update: <package-name>: Update a package to the latest version if available.",
 		"pkg list: Shows a list of installed apps.",
 		"pkg search <package-name>: Search for an app matching <package-name> in the repo.",
 		"pkg repo: Changes the Package Managers Fetch repo (Use -r to remove the repo you added)",
@@ -98,6 +99,27 @@ async function pkg(args) {
 			} else {
 				displayOutput("Usage: pkg remove <package-name>");
 				createNewCommandInput();
+			}
+			break;
+		case "update":
+			if (args._[1]) {
+				displayOutput("Checking for updates...");
+				const config = JSON.parse(await Filer.fs.promises.readFile(`/apps/system/${args._[1].toLowerCase()}.tapp/.tbconfig`, "utf8"));
+				const response = await tb.libcurl.fetch(localStorage.getItem("appRepo") || "https://raw.githubusercontent.com/TerbiumOS/app-repo/main/apps.json");
+				const repoData = await response.json();
+				const packageName = args._[1];
+				const exactMatch = repoData.find(pkg => pkg.name.toLowerCase() === packageName);
+				if (config.version !== exactMatch.version) {
+					displayOutput(`Updating ${exactMatch.name} from version ${config.version} to ${exactMatch.version}...`);
+					await tb.sh.promises.rm(`/apps/system/${args._[1].toLowerCase()}.tapp/`, { recursive: true });
+					await installApp(exactMatch, "TAPP");
+					displayOutput(`${exactMatch.name} updated successfully!`);
+					createNewCommandInput();
+				}
+			} else {
+				displayOutput("Usage: pkg update <package-name>");
+				createNewCommandInput();
+				return;
 			}
 			break;
 		case "list":
@@ -263,6 +285,7 @@ async function installApp(app, type) {
 					message: appData.wmArgs.message,
 					snapable: appData.wmArgs.snapable,
 				});
+				await Filer.fs.promises.unlink(`${DLPath}.zip`);
 				try {
 					let apps = JSON.parse(await Filer.fs.promises.readFile(`/apps/installed.json`, "utf8"));
 					apps.push({
@@ -312,6 +335,7 @@ async function installApp(app, type) {
 					icon: appData.icon,
 					id: appData.package,
 				};
+				await Filer.fs.promises.unlink(`${APath}.zip`);
 				try {
 					let apps = JSON.parse(await Filer.fs.promises.readFile(`/apps/installed.json`, "utf8"));
 					apps.push({

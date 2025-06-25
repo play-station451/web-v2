@@ -51,7 +51,8 @@
 			"install": "Install a package",
 			"remove": "Remove a package",
 			"update": "Update a package",
-			"list": "List all packages"
+			"list": "List all packages",
+			"search": "Search for a package"
 		}
 	},
 	{
@@ -77,13 +78,8 @@
 	},
 	{
 		"name": "curl",
-		"description": "Allows you to fetch a script from the internet and run it",
-		"usage": "curl [script url], -s [path]"
-	},
-	{
-		"name": "javascript",
-		"description": "Allows you to run JavaScript code",
-		"usage": "javascript [code] | [file]"
+		"description": "Allows you to fetch a script from the internet and run it or save it to the fs",
+		"usage": "curl [script url], -k [path]"
 	},
 	{
 		"name": "node",
@@ -231,5 +227,10 @@
 		"name": "tb",
 		"description": "Command for debugging terbium and interacting directly with it's API's",
 		"usage": "tb [subcmd] [subcmd] ... <args>"
+	},
+	{
+		"name": "unzip",
+		"description": "unzip a file to a directory",
+		"usage": "unzip [file] [directory]"
 	}
 ]
