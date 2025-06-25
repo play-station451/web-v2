@@ -750,6 +750,18 @@ export default async function Api() {
 			webContainer: {},
 			servers: new Map<number, string>(),
 			isReady: false,
+			start: () => {
+				initializeWebContainer()
+			},
+			stop: () =>{
+				if (window.tb.node.isReady) {
+					// @ts-expect-error
+					window.tb.node.webContainer.teardown();
+					return true;
+				} else {
+					throw new Error("No WebContainer is running");
+				}
+			}
 		},
 		crypto: async (pass: string, file?: string) => {
 			const newpw = pw.harden(pass);

@@ -522,5 +522,7 @@ export interface COM {
 		webContainer: import("@webcontainer/api").WebContainer | {};
 		servers: Map<number, string>;
 		isReady: boolean;
+		start: () => void;
+		stop(): boolean;
 	};
 }
