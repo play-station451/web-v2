@@ -58,7 +58,7 @@ function rm(args) {
 	if (args._raw.includes("-d")) {
 		options.directory = true;
 	}
-	const toDel = `${path}/${args._raw.replace(/^-f|-rf|-r|-v|-d/g, "").trim()}`
+	const toDel = `${path}/${args._raw.replace(/^-f|-rf|-r|-v|-d/g, "").trim()}`;
 	console.log(toDel);
 	Filer.fs.stat(toDel, (err, stats) => {
 		if (err) return console.log(err);
