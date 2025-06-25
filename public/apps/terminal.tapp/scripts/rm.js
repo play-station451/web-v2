@@ -25,7 +25,8 @@ function rm(args) {
 		return;
 	}
 	let path = terminal.getAttribute("path");
-	const systemDirs = ["/home", "/home/documents", "/home/videos", "/home/pictures", "/home/music", "/home/trash"];
+	const user = sessionStorage.getItem("currAcc");
+	const systemDirs = ["/home", `/home/${user}/documents`, `/home/${user}/videos`, `/home/${user}/pictures`, `/home/${user}/music`];
 
 	for (let arg of args) {
 		if (!arg.startsWith("-")) {
@@ -109,7 +110,7 @@ function rm(args) {
 				createNewCommandInput();
 			}
 		} else {
-			sh.rm(path, { recursive: options.recursive, force: options.force }, err => {
+			tb.sh.rm(path, { recursive: options.recursive, force: options.force }, err => {
 				if (err) {
 					displayError(`rm: cannot remove "${path}": ${err.message}`);
 					createNewCommandInput();
