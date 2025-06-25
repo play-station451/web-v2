@@ -6,7 +6,7 @@ function rm(args) {
 		"-d: remove empty directories.; you should use rmdir instead.",
 	];
 
-	if (!args || args.length === 0 || args.includes("-h")) {
+	if (!args._raw || args._raw.includes("-h")) {
 		displayOutput("Usage: rm [OPTION] [FILE]");
 		displayOutput("Remove (unlink) the FILE(s).");
 		displayOutput(" ");
@@ -24,23 +24,8 @@ function rm(args) {
 		createNewCommandInput();
 		return;
 	}
-	let path = terminal.getAttribute("path");
 	const user = sessionStorage.getItem("currAcc");
 	const systemDirs = ["/home", `/home/${user}/documents`, `/home/${user}/videos`, `/home/${user}/pictures`, `/home/${user}/music`];
-
-	for (let arg of args) {
-		if (!arg.startsWith("-")) {
-			if (arg.startsWith("/")) {
-				path = arg.split("/").join("/");
-			} else {
-				path = terminal.getAttribute("path") + "/" + arg;
-			}
-			break;
-		}
-	}
-	if (path.includes("~")) {
-		path = path.replace("~", `/home/${window.parent.sessionStorage.getItem("currAcc")}`);
-	}
 
 	for (let sdir of systemDirs) {
 		if (path === sdir) {
@@ -57,66 +42,68 @@ function rm(args) {
 		directory: false,
 	};
 
-	if (args.includes("-rf")) {
+	if (args._raw.includes("-rf")) {
 		options.force = true;
 		options.recursive = true;
 	}
-	if (args.includes("-r")) {
+	if (args._raw.includes("-r")) {
 		options.recursive = true;
 	}
-	if (args.includes("-f")) {
+	if (args._raw.includes("-f")) {
 		options.force = true;
 	}
-	if (args.includes("-v")) {
+	if (args._raw.includes("-v")) {
 		options.verbose = true;
 	}
-	if (args.includes("-d")) {
+	if (args._raw.includes("-d")) {
 		options.directory = true;
 	}
-	Filer.fs.stat(path, (err, stats) => {
+	const toDel = `${path}/${args._raw.replace(/^-f|-rf|-r|-v|-d/g, "").trim()}`
+	console.log(toDel);
+	Filer.fs.stat(toDel, (err, stats) => {
 		if (err) return console.log(err);
 		if (stats.isDirectory()) {
 			if (options.force || options.recursive) {
-				sh.rm(path, { recursive: options.recursive, force: options.force }, err => {
+				tb.sh.rm(toDel, { recursive: options.recursive, force: options.force }, err => {
 					if (err) {
-						displayError(`rm: cannot remove "${path}": ${err.message}`);
+						displayError(`rm: cannot remove "${toDel}": ${err.message}`);
 						createNewCommandInput();
 					} else {
 						if (options.verbose) {
-							displayOutput(`removed directory "${path}"`);
+							displayOutput(`removed directory "${toDel}"`);
 						}
 						createNewCommandInput();
 					}
 				});
 			} else if (options.directory) {
-				Filer.fs.rmdir(path, err => {
+				Filer.fs.rmdir(toDel, err => {
 					if (err) {
 						if (err.code === "ENOTEMPTY") {
-							displayError(`rm: cannot remove "${path}": Directory not empty`);
+							displayError(`rm: cannot remove "${toDel}": Directory not empty`);
 							displayOutput("Use -r to remove non-empty directories. or -rf to remove non-empty directories without prompt.");
 						} else {
-							displayError(`rm: cannot remove "${path}": ${err.message}`);
+							displayError(`rm: cannot remove "${toDel}": ${err.message}`);
 						}
 						createNewCommandInput();
 					} else {
 						if (options.verbose) {
-							displayOutput(`removed directory "${path}"`);
+							displayOutput(`removed directory "${toDel}"`);
 						}
 						createNewCommandInput();
 					}
 				});
 			} else {
-				displayError(`rm: cannot remove "${path}": Is a directory`);
+				displayError(`rm: cannot remove "${toDel}": Is a directory`);
 				createNewCommandInput();
 			}
 		} else {
-			tb.sh.rm(path, { recursive: options.recursive, force: options.force }, err => {
+			tb.sh.rm(toDel, { recursive: options.recursive, force: options.force }, err => {
 				if (err) {
-					displayError(`rm: cannot remove "${path}": ${err.message}`);
+					displayError(`rm: cannot remove "${toDel}": ${err.message}`);
 					createNewCommandInput();
 				} else {
 					if (options.verbose) {
-						displayOutput(`removed "${path}"`);
+						displayOutput(`removed "${toDel}"`);
 					}
 					createNewCommandInput();
 				}

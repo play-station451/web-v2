@@ -4,7 +4,7 @@ function rmdir(args) {
 		createNewCommandInput();
 		return;
 	}
-	tb.sh.rmdir(`${path}/${args._raw}`, err => {
+	tb.sh.rm(`${path}/${args._raw}`, err => {
 		if (err) {
 			displayError(`rmdir: ${err.message}`);
 			createNewCommandInput();
