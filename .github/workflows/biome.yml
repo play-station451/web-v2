@@ -38,12 +38,6 @@ jobs:
             echo "success=true" >> $GITHUB_OUTPUT
           else
             echo "success=false" >> $GITHUB_OUTPUT
-            # Store the output for later use
-            {
-              echo 'lint-output<<EOF'
-              cat biome-output.log
-              echo 'EOF'
-            } >> $GITHUB_OUTPUT
           fi
 
       - name: "Check for Git changes"
@@ -71,5 +65,5 @@ jobs:
       - name: "Fail if Biome CI check failed"
         if: steps.biome-check.outputs.success == 'false'
         run: |
-          echo "${{ steps.biome-check.outputs.lint-output }}"
+          cat biome-output.log
           exit 1
