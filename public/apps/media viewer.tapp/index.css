@@ -1,62 +1,63 @@
 @font-face {
-    font-family: Inter;
-    src: url(/fonts/inter.ttf);
+	font-family: Inter;
+	src: url(/fonts/inter.ttf);
 }
 
-html, body {
-    font-family: Inter;
-    font-size: 14px;
-    font-weight: 400;
-    line-height: 20px;
-    color: #ffffff;
-    background-color: transparent;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    height: 100%;
+html,
+body {
+	font-family: Inter;
+	font-size: 14px;
+	font-weight: 400;
+	line-height: 20px;
+	color: #ffffff;
+	background-color: transparent;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+	height: 100%;
 }
 
 .media {
-    overflow: auto;
-    height: 100%;
-    width: 100%;
-    scrollbar-width: thin;
-    scrollbar-color: #ffffff44 transparent;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    background-image: url(./bg.png);
-    background-repeat: repeat;
-    background-position: center;
-    background-size: 5%;
+	overflow: auto;
+	height: 100%;
+	width: 100%;
+	scrollbar-width: thin;
+	scrollbar-color: #ffffff44 transparent;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	background-image: url(./bg.png);
+	background-repeat: repeat;
+	background-position: center;
+	background-size: 5%;
 }
 
 .media::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+	width: 8px;
+	height: 8px;
 }
 
 .media::-webkit-scrollbar-corner {
-    background-color: #ffffff;
+	background-color: #ffffff;
 }
 
 .media::-webkit-scrollbar-track {
-    background-color: #ffffff;
-    width: 8px;
-    height: 8px;
+	background-color: #ffffff;
+	width: 8px;
+	height: 8px;
 }
 
 .media::-webkit-scrollbar-thumb {
-    background-color: #00000028;
-    border: none;
-    width: 8px;
-    height: 8px;
+	background-color: #00000028;
+	border: none;
+	width: 8px;
+	height: 8px;
 }
 
 .media img {
-    width: max-content;
-    height: max-content;
-    max-width: 100%;
-    max-height: 100%;
+	width: max-content;
+	height: max-content;
+	max-width: 100%;
+	max-height: 100%;
 }

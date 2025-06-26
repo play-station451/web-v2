@@ -1,12 +1,12 @@
 {
-    "name": "Terminal",
-    "config": {
-        "title": "Terminal",
-        "icon": "/fs/apps/system/terminal.tapp/icon.svg",
-        "src": "/fs/apps/system/terminal.tapp/index.html",
-        "size": {
-            "width": 612,
-            "height": 400
-        }
-    }
+	"name": "Terminal",
+	"config": {
+		"title": "Terminal",
+		"icon": "/fs/apps/system/terminal.tapp/icon.svg",
+		"src": "/fs/apps/system/terminal.tapp/index.html",
+		"size": {
+			"width": 612,
+			"height": 400
+		}
+	}
 }

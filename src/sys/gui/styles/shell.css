@@ -1,19 +1,23 @@
 .show_desk {
-    background-color: #ffffff3e;
+	background-color: #ffffff3e;
 }
 
 .island {
-    position: relative;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(8px);
-    background-color: #2020208c;
-    box-shadow: 0px 0px 6px 0px #00000052, inset 0 0 0 0.5px #ffffff38;
-    color: #ffffff;
-    box-shadow: 0px 0px 6px 0px #00000052, inset 0 0 0 0.5px #ffffff38;
-    transition: 150ms ease-in-out;
+	position: relative;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	backdrop-filter: blur(8px);
+	background-color: #2020208c;
+	box-shadow:
+		0px 0px 6px 0px #00000052,
+		inset 0 0 0 0.5px #ffffff38;
+	color: #ffffff;
+	box-shadow:
+		0px 0px 6px 0px #00000052,
+		inset 0 0 0 0.5px #ffffff38;
+	transition: 150ms ease-in-out;
 }
 
 /*
@@ -27,56 +31,56 @@
 } */
 
 .island.text {
-    padding: 6px 16px !important;
+	padding: 6px 16px !important;
 }
 
 .island .app .app_name {
-    font-size: 20px;
-    font-weight: 700;
+	font-size: 20px;
+	font-weight: 700;
 }
 
 .island .app .app_controls {
-    display: flex;
-    gap: 8px;
-    align-items: center;
+	display: flex;
+	gap: 8px;
+	align-items: center;
 }
 
 .island .app .app_controls .app_control {
-    background-color: transparent;
-    border: none;
-    font-size: 14px;
-    line-height: 14px;
-    opacity: 0.80;
-    transition: 150ms ease-in-out;
+	background-color: transparent;
+	border: none;
+	font-size: 14px;
+	line-height: 14px;
+	opacity: 0.8;
+	transition: 150ms ease-in-out;
 }
 
 .island .app .app_controls .app_control:hover {
-    opacity: 1;
+	opacity: 1;
 }
 
 .island .app .app_controls .app_control.hidden {
-    display: none;
+	display: none;
 }
 
 body.blurry .shell-menu {
-    backdrop-filter: blur(8px);
+	backdrop-filter: blur(8px);
 }
 
 .shell-menu {
-    background-color: #00000028;
-    color: #ffffff;
+	background-color: #00000028;
+	color: #ffffff;
 }
 
 .shell-menu .shell-menu-item {
-    color: #ffffff;
+	color: #ffffff;
 }
 
 .shell-menu .shell-menu-item:hover {
-    color: #ffffff;
-    background-color: #ffffff28;
+	color: #ffffff;
+	background-color: #ffffff28;
 }
 
 .shell-menu .shell-menu-item {
-    transition: 150ms ease-in-out;
-    cursor: var(--cursor-pointer);
+	transition: 150ms ease-in-out;
+	cursor: var(--cursor-pointer);
 }

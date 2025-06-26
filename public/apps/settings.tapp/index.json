@@ -1,10 +1,10 @@
 {
-    "name": "Settings",
-    "version": "1.0.0",
-    "config": {
-        "title": "Settings",
-        "src": "/fs/apps/system/settings.tapp/index.html",
-        "icon": "/fs/apps/system/settings.tapp/icon.svg",
-        "single": true
-    }
+	"name": "Settings",
+	"version": "1.0.0",
+	"config": {
+		"title": "Settings",
+		"src": "/fs/apps/system/settings.tapp/index.html",
+		"icon": "/fs/apps/system/settings.tapp/icon.svg",
+		"single": true
+	}
 }

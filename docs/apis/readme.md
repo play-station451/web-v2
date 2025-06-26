@@ -202,6 +202,12 @@ So you're looking to use Terbium APIs. Well, you're in the right place! Terbium 
       ```javascript
       tb.window.reload()
       ```
+  - **changeSrc**
+    - Description: Changes the src of the iframe (if present) in the active window.
+    - Example:
+      ```js
+      tb.window.changeSrc("/fs/apps/system/about.tapp/index.html")
+      ```
   - **getId**
     - Description: Gets the ID of the currently active window.
     - Returns: `Promise<string>` - Window ID.
@@ -515,6 +521,23 @@ So you're looking to use Terbium APIs. Well, you're in the right place! Terbium 
         onCancel: () => console.log("Cancel clicked")
       });
       ```
+
+### Node
+  - **WebContainer**
+    - Description: The current webContainer instance for the Node Subsystem, Refer to [here](https://webcontainers.io/api) for Documentation.
+  
+  - **servers**
+    - Description: The Map of ports running on the Node Subsystem
+
+  - **isReady**
+    - Description: Returns weither or not the WebContainer is booted or not.
+    - Returns: boolean
+
+  - **start**
+    - Description: Boots the WebContainer
+ 
+  - **stop**
+    - Description: Stops the WebContainer
 
 ### Platform
   - **getPlatform**

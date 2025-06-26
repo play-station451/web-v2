@@ -1,59 +1,42 @@
 function ls(args) {
-    let currentPath = terminal.getAttribute("path");
-    if(currentPath.startsWith("~")) currentPath = currentPath.replace("~", `/home/${window.parent.sessionStorage.getItem("currAcc")}`);
-    if (args) {
-        try {
-            sh.ls(currentPath + args, (err, entries) => {
-            if(err) {
-                const errorText = document.createElement("div");
-                errorText.textContent = `ls: ${err.message}`;
-                errorText.className = "error-text";
-                outputElement.appendChild(errorText);
-                createNewCommandInput();
-            } else {
-                entries.forEach(entry => {
-                    const entryText = document.createElement("div");
-                    entryText.textContent = entry.name;
-                    outputElement.appendChild(entryText);
-                })
-                createNewCommandInput();   
-            }
-        })
-        } catch {
-            sh.ls(args, (err, entries) => {
-                if(err) {
-                    const errorText = document.createElement("div");
-                    errorText.textContent = `ls: ${err.message}`;
-                    errorText.className = "error-text";
-                    outputElement.appendChild(errorText);
-                    createNewCommandInput();
-                } else {
-                    entries.forEach(entry => {
-                        const entryText = document.createElement("div");
-                        entryText.textContent = entry.name;
-                        outputElement.appendChild(entryText);
-                    })
-                    createNewCommandInput();   
-                }
-            })
-        }
-    } else {
-        sh.ls(currentPath, (err, entries) => {
-            if(err) {
-                const errorText = document.createElement("div");
-                errorText.textContent = `ls: ${err.message}`;
-                errorText.className = "error-text";
-                outputElement.appendChild(errorText);
-                createNewCommandInput();
-            } else {
-                entries.forEach(entry => {
-                    const entryText = document.createElement("div");
-                    entryText.textContent = entry.name;
-                    outputElement.appendChild(entryText);
-                })
-                createNewCommandInput();   
-            }
-        })
-    }
+	if (args._raw) {
+		try {
+			tb.sh.ls(path + args._raw, (err, entries) => {
+				if (err) {
+					displayError(`ls: ${err.message}`);
+					createNewCommandInput();
+				} else {
+					entries.forEach(entry => {
+						displayOutput(entry.name);
+					});
+					createNewCommandInput();
+				}
+			});
+		} catch {
+			tb.sh.ls(args._raw, (err, entries) => {
+				if (err) {
+					displayError(`ls: ${err.message}`);
+					createNewCommandInput();
+				} else {
+					entries.forEach(entry => {
+						displayOutput(entry.name);
+					});
+					createNewCommandInput();
+				}
+			});
+		}
+	} else {
+		tb.sh.ls(path, (err, entries) => {
+			if (err) {
+				displayOutput(`ls: ${err.message}`);
+				createNewCommandInput();
+			} else {
+				entries.forEach(entry => {
+					displayOutput(entry.name);
+				});
+				createNewCommandInput();
+			}
+		});
+	}
 }
-ls(args)
+ls(args);

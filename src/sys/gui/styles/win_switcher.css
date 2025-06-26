@@ -1,63 +1,63 @@
 .win-switcher {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: 1fr;
-    gap: 20px;
-    color: #ffffff
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	grid-template-rows: 1fr;
+	gap: 20px;
+	color: #ffffff;
 }
 
 .app-switcher {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    color: #ffffff;
-    padding: 8px 20px;
-    cursor: var(--cursor-pointer);
-    border-radius: 8px;
-    transition: 150ms ease-in-out;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	color: #ffffff;
+	padding: 8px 20px;
+	cursor: var(--cursor-pointer);
+	border-radius: 8px;
+	transition: 150ms ease-in-out;
 }
 
 .win-switcher .active .icon {
-    width: 75px;
-    height: 75px;
-    pointer-events: none;
+	width: 75px;
+	height: 75px;
+	pointer-events: none;
 }
 
 .win-switcher .active .title {
-    font-size: 16px;
-    font-weight: 600;
-    pointer-events: none;
-    text-align: center;
-    user-select: none;
-    color: #ffffff;
+	font-size: 16px;
+	font-weight: 600;
+	pointer-events: none;
+	text-align: center;
+	user-select: none;
+	color: #ffffff;
 }
 
 .win-switcher:hover {
-    background-color: #ffffff48;
+	background-color: #ffffff48;
 }
 
 .win-switcher .active {
-    background-color: #ffffff36;
-    padding: 2px;
-    border-radius: 12px;
-    cursor: var(--cursor-pointer);
-    justify-content: center;
-    align-items: center;
-    align-content: center;
+	background-color: #ffffff36;
+	padding: 2px;
+	border-radius: 12px;
+	cursor: var(--cursor-pointer);
+	justify-content: center;
+	align-items: center;
+	align-content: center;
 }
 
 .win-switcher .icon {
-    width: 75px;
-    height: 75px;
-    pointer-events: none;
+	width: 75px;
+	height: 75px;
+	pointer-events: none;
 }
 
 .win-switcher .title {
-    font-size: 16px;
-    font-weight: 600;
-    pointer-events: none;
-    text-align: center;
-    user-select: none;
-    color: #ffffff;
+	font-size: 16px;
+	font-weight: 600;
+	pointer-events: none;
+	text-align: center;
+	user-select: none;
+	color: #ffffff;
 }
