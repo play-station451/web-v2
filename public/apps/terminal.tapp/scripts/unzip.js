@@ -68,8 +68,8 @@ async function unzip(args) {
 		return;
 	}
 	try {
-		await uzip(`${path}/${args._raw[0]}`, `${path}/${args._raw[1]}`);
-		displayOutput(`Successfully unzipped ${args._raw[0]} to ${args._raw[1]}`);
+		await uzip(`${path}/${args._[0]}`, `${path}/${args._[1]}`);
+		displayOutput(`Successfully unzipped ${args._[0]} to ${args._[1]}`);
 	} catch (e) {
 		displayError(`Error unzipping file: ${e.message}`);
 	}

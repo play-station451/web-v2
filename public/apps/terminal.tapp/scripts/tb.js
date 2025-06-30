@@ -50,6 +50,10 @@ var cmdData = {
 				desc: "Export the terbium filesystem.",
 				usage: "tb system exportfs",
 			},
+			restartNode: {
+				desc: "Restarts the NodeJS Container",
+				usage: "tb system restartNode",
+			},
 		},
 	},
 	application: {
@@ -249,6 +253,20 @@ async function tb(args) {
 					displayOutput("Success!");
 					createNewCommandInput();
 					break;
+				case "restartNode":
+					window.parent.tb.setCommandProcessing(true);
+					displayOutput("Restarting NodeJS container...");
+					try {
+						await window.parent.tb.node.stop();
+						displayOutput("NodeJS container stopped successfully. Restarting...");
+						await window.parent.tb.node.start();
+						displayOutput("NodeJS container restarted successfully.");
+						window.parent.tb.setCommandProcessing(false);
+						createNewCommandInput();
+					} catch (e) {
+						error(`tb > system > restartNode > failed to stop NodeJS container try again later`);
+						window.parent.tb.setCommandProcessing(false);
+					}
 				default:
 					error(`tb > system > unknown subcommand: ${args._[1]}`);
 			}
