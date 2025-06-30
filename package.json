@@ -1,7 +1,7 @@
 {
 	"name": "tb-v2",
 	"private": true,
-	"version": "2.0.0-beta3",
+	"version": "2.1.0-beta",
 	"type": "module",
 	"scripts": {
 		"start": "npm run build && tsx bootstrap.ts",

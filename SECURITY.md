@@ -4,9 +4,12 @@
 
 | Version | Supported |
 | ------- | --------- |
-| 2.0.0-beta   | ❌ |
-| 2.0.0-beta2   | ✅ |
-| 2.0.0-beta3   | ✅ |
+| 2.0.0-beta  | ❌ |
+| 2.0.0-beta2 | ❌ |
+| 2.0.0-beta3 | ✅ |
+| 2.1.0-beta  | ✅ |
+
+If your version of terbium is unsupported, please do not make a GitHub Issue about it. Please update to a newer version if your running a unsupported version.
 
 ### Supported Liquor Versions
 
@@ -30,6 +33,6 @@ REMEMBER: Please DO NOT report vulnerabilities in the repository Issues tab.
 
 If you are wondering what counts as a vulnerability, heres a good list:
 
--   XSS in the URL your using
--   The ability to execute malicious code on the server hosting Terbium
--   Any kind of leak of data/information in the code
+- XSS in the URL your using
+- The ability to execute malicious code on the server hosting Terbium
+- Any kind of leak of data/information in the code
