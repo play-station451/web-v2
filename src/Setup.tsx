@@ -505,9 +505,7 @@ export default function Setup() {
 			currentViewRef.current?.classList.remove("-translate-x-6");
 			currentViewRef.current?.classList.remove("opacity-0");
 		}, 150);
-		setTimeout(() => {
-			saveData();
-		}, 2000);
+		saveData();
 		return (
 			<p
 				ref={el => {

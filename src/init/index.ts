@@ -217,7 +217,8 @@ export async function init() {
 		await Filer.promises.mkdir(`/home/${user}/desktop`);
 		let r2 = [];
 		let sysapps: { name: string; config: string; user: string }[] = [];
-		apps.forEach(async (app, i) => {
+		for (let i = 0; i < apps.length; i++) {
+			const app = apps[i];
 			const name = app.name.toLowerCase();
 			var topPos: number = 0;
 			var leftPos: number = 0;
@@ -267,7 +268,7 @@ export async function init() {
 				user: "System",
 			});
 			await Filer.promises.symlink(`/apps/system/${name}.tapp/index.json`, `/home/${user}/desktop/${name}.lnk`);
-		});
+		}
 		await copyfs();
 		await Filer.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(items));
 		await Filer.promises.writeFile(

@@ -39,8 +39,6 @@ export async function BuildApps() {
 							if (data.name !== "Browser") {
 								data.config.src = data.config.src.replace(`/apps/${data.name.toLowerCase()}.tapp/`, `/fs/apps/system/${data.name.toLowerCase()}.tapp/`);
 								data.config.icon = data.config.icon.replace(`/apps/${data.name.toLowerCase()}.tapp/`, `/fs/apps/system/${data.name.toLowerCase()}.tapp/`);
-							} else {
-								return;
 							}
 							result.push({ name: data.name, config: data.config });
 						}
@@ -105,7 +103,7 @@ export async function CreateAppsPaths() {
 
 	const accmp: string[] = [];
 	fs.readdirSync(baseDir, { withFileTypes: true }).forEach(app => {
-		if (app.isDirectory() && app.name.toLocaleLowerCase().endsWith(".tapp") && !app.name.toLowerCase().includes("browser.tapp")) {
+		if (app.isDirectory() && app.name.toLocaleLowerCase().endsWith(".tapp")) {
 			const appPath = path.join(baseDir, app.name);
 			if (app.name.toLowerCase() === "settings.tapp") {
 				collectPaths(appPath);
