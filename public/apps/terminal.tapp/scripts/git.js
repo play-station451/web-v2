@@ -24,13 +24,13 @@ async function git(args) {
 				path = `/home/${sessionStorage.getItem("currAcc")}/`;
 			}
 
-			if (path !== "/" && args._raw[2] === "/") {
-				path = args._raw[2];
+			if (path !== "/" && args._[2] === "/") {
+				path = args._[2];
 			} else if (path !== "/") {
-				path = `${currentPath}/${args._raw[2]}`;
+				path = `${currentPath}/${args._[2]}`;
 			}
 
-			displayOutput(`Cloning into '${args._raw[1].split(/(\\|\/)/g).pop()}'...`);
+			displayOutput(`Cloning into '${args._[1].split(/(\\|\/)/g).pop()}'...`);
 			const targetDir = args._[2] ?? `${currentPath}/${args._[1].split(/(\\|\/)/g).pop()}`;
 			await Filer.fs.promises.mkdir(targetDir, { recursive: true });
 			await gitfetch.clone({
@@ -69,7 +69,7 @@ async function git(args) {
 			createNewCommandInput();
 		} else if (args._raw.includes("init")) {
 			let path = currentPath + args._[1];
-			if (!args._raw[1]) {
+			if (!args._[1]) {
 				displayError("Error: Target directory must be specified for 'git init'.");
 				createNewCommandInput();
 				return;
@@ -117,7 +117,7 @@ async function git(args) {
 				return;
 			}
 			const filePath = args._[1];
-			const targetDir = currentPath + args._raw[2];
+			const targetDir = currentPath + args._[2];
 			try {
 				await gitfetch.add({
 					fs: window.parent.Filer.fs,
