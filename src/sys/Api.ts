@@ -757,6 +757,7 @@ export default async function Api() {
 				if (window.tb.node.isReady) {
 					// @ts-expect-error
 					window.tb.node.webContainer.teardown();
+					window.tb.node.isReady = false;
 					return true;
 				} else {
 					throw new Error("No WebContainer is running");
