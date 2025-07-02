@@ -382,26 +382,25 @@ export default async function Api() {
 					},
 					codec: {
 						encode: `
-                            if (!url) return Promise.resolve(url);
-                            let result = "";
-	                        let len = url.length;
-	                            for (let i = 0; i < len; i++) {
-	                                const char = url[i];
-	                                result += i % 2 ? String.fromCharCode(char.charCodeAt(0) ^ 2) : char;
-                                }
-	                        return encodeURIComponent(result);
-                        `,
+							let result = "";
+							let len = url.length;
+							for (let i = 0; i < len; i++) {
+								const char = url[i];
+								result += i % 2 ? String.fromCharCode(char.charCodeAt(0) ^ 2) : char;
+							}
+							return encodeURIComponent(result);
+						`,
 						decode: `
-                            if (!url) return Promise.resolve(url);
-	                        url = decodeURIComponent(url);
-	                        let result = "";
-	                        let len = url.length;
-	                        for (let i = 0; i < len; i++) {
-	                            const char = url[i];
-	                            result += i % 2 ? String.fromCharCode(char.charCodeAt(0) ^ 2) : char;
-	                        }
-		                    return result;
-                        `,
+							if (!url) return url;
+							url = decodeURIComponent(url);
+							let result = "";
+							let len = url.length;
+							for (let i = 0; i < len; i++) {
+								const char = url[i];
+								result += i % 2 ? String.fromCharCode(char.charCodeAt(0) ^ 2) : char;
+							}
+							return result;
+						`,
 					},
 				});
 				scramjet.init();
