@@ -66,6 +66,10 @@ async function unzip(args) {
 		displayOutput("Usage: unzip <zipfile> <target>");
 		createNewCommandInput();
 		return;
+	} else if (path.includes("/mnt/")) {
+		displayError("TNSM unzip: Unzipping files from mounted drives is not supported yet.");
+		createNewCommandInput();
+		return;
 	}
 	try {
 		await uzip(`${path}/${args._[0]}`, `${path}/${args._[1]}`);

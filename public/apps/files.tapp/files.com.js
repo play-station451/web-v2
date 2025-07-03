@@ -162,6 +162,95 @@ tb_island.addControl({
 });
 
 tb_island.addControl({
+	text: "Network Storage",
+	appname: "Files",
+	id: "files_net",
+	click: () => {
+		const options = [
+			{
+				text: "Map Dav Drive",
+				click: async () => {
+					await tb.dialog.Message({
+						title: "Enter a name for the Dav Drive",
+						defaultValue: "",
+						onOk: async res1 => {
+							await tb.dialog.Message({
+								title: "Enter the URL for the Dav Drive",
+								defaultValue: "",
+								onOk: async res2 => {
+									await tb.dialog.WebAuth({
+										title: "Enter the credentials for the Dav Drive",
+										onOk: async res3 => {
+											const { username, password } = res3;
+											const davjson = JSON.parse(await Filer.fs.promises.readFile(`/apps/user/${await tb.user.username()}/files/davs.json`, "utf8"));
+											davjson.push({
+												name: res1,
+												url: res2,
+												username: username,
+												password: password,
+											});
+											await Filer.fs.promises.writeFile(`/apps/user/${await tb.user.username()}/files/davs.json`, JSON.stringify(davjson, null, 2));
+											const config = JSON.parse(await Filer.fs.promises.readFile(`/apps/user/${await tb.user.username()}/files/config.json`, "utf8"));
+											config.drives[res1] = res2;
+											await Filer.fs.promises.writeFile(`/apps/user/${await tb.user.username()}/files/config.json`, JSON.stringify(config, null, 2));
+											await tb.notification.Toast({
+												application: "System",
+												iconSrc: "/fs/apps/system/about.tapp/icon.svg",
+												message: "New Dav Device has been added",
+											});
+											openPath(document.querySelector(".nav-input.dir").value);
+											window.dispatchEvent(new Event("updcfg"));
+										},
+									});
+								},
+							});
+						},
+					});
+				},
+			},
+			{
+				text: "UnMap Dav Drive",
+				click: async () => {
+					await tb.dialog.Message({
+						title: "Enter the name of the Dav Drive to remove",
+						defaultValue: "",
+						onOk: async response => {
+							const davjson = JSON.parse(await Filer.fs.promises.readFile(`/apps/user/${await tb.user.username()}/files/davs.json`, "utf8"));
+							const index = davjson.findIndex(entry => entry.name === response);
+							if (index !== -1) {
+								davjson.splice(index, 1);
+								await Filer.fs.promises.writeFile(`/apps/user/${await tb.user.username()}/files/davs.json`, JSON.stringify(davjson, null, 2));
+								const config = JSON.parse(await Filer.fs.promises.readFile(`/apps/user/${await tb.user.username()}/files/config.json`, "utf8"));
+								delete config.drives[response];
+								await Filer.fs.promises.writeFile(`/apps/user/${await tb.user.username()}/files/config.json`, JSON.stringify(config, null, 2));
+								await tb.notification.Toast({
+									application: "System",
+									iconSrc: "/fs/apps/system/about.tapp/icon.svg",
+									message: "Dav Drive has been removed",
+								});
+								openPath(document.querySelector(".nav-input.dir").value);
+								window.dispatchEvent(new Event("updcfg"));
+							} else {
+								await tb.notification.Toast({
+									application: "System",
+									iconSrc: "/fs/apps/system/about.tapp/icon.svg",
+									message: "Dav Drive not found",
+								});
+							}
+						},
+					});
+				},
+			},
+		];
+		tb.contextmenu.create({
+			x: 6,
+			y: appIsland.clientHeight + 12,
+			options: options,
+		});
+	},
+});
+
+tb_island.addControl({
 	text: "Empty Trash",
 	appname: "Files",
 	id: "files-et",

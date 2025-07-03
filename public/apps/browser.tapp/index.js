@@ -243,9 +243,8 @@ function newTab() {
 						regexStr = "^" + regexStr + "$";
 						return new RegExp(regexStr).test(url);
 					}
-					if (getPat(urlbar.value, script.match)) {
+					if (getPat(urlbar.value, script.match) === "true") {
 						const user_script = document.createElement("script");
-						console.log(script.file);
 						console.log("Script: %a\nScript path: %b", script.name, script.file);
 						user_script.type = "text/javascript";
 						user_script.text = await Filer.promises.readFile(script.file, "utf8");
@@ -253,6 +252,17 @@ function newTab() {
 						user_script.id = `userscript-${script.name}`;
 						user_script.setAttribute("data-script-path", script.file);
 						userscript_container.appendChild(user_script);
+					} else if (script.match === "*://*/*") {
+						const user_script = document.createElement("script");
+						console.log("Script: %a\nScript path: %b", script.name, script.file);
+						user_script.type = "text/javascript";
+						user_script.text = await Filer.promises.readFile(script.file, "utf8");
+						user_script.type = "text/javascript";
+						user_script.id = `userscript-${script.name}`;
+						user_script.setAttribute("data-script-path", script.file);
+						userscript_container.appendChild(user_script);
+					} else {
+						console.log(`Skipping script ${script.name}`);
 					}
 				}
 			});

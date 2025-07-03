@@ -1,4 +1,4 @@
-function rm(args) {
+async function rm(args) {
 	let availableOptions = [
 		"-f: ignore nonexistent files and arguments, never prompt.",
 		"-r: remove directories and their contents recursively.; optionally you can also use -rf to remove directories and their contents recursively without prompt.",
@@ -60,55 +60,76 @@ function rm(args) {
 	}
 	const toDel = `${path}/${args._raw.replace(/^-f|-rf|-r|-v|-d/g, "").trim()}`;
 	console.log(toDel);
-	Filer.fs.stat(toDel, (err, stats) => {
-		if (err) return console.log(err);
-		if (stats.isDirectory()) {
-			if (options.force || options.recursive) {
+	if (path.includes("/mnt/")) {
+		try {
+			const match = path.match(/\/mnt\/([^\/]+)\//);
+			const davName = match ? match[1].toLowerCase() : "";
+			const davInstances = JSON.parse(await Filer.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
+			const dav = davInstances.find(d => d.name.toLowerCase() === davName);
+			const client = window.webdav.createClient(dav.url, {
+				username: dav.user,
+				password: dav.pass,
+				authType: window.webdav.AuthType.Digest,
+			});
+			const np = path.replace(`/mnt/${davName.toLowerCase()}/`, "");
+			await client.deleteFile(`${np}/${args._raw}`);
+			createNewCommandInput();
+		} catch (e) {
+			displayError(`TNSM rmdir: ${e.message}`);
+			createNewCommandInput();
+			return;
+		}
+	} else {
+		Filer.fs.stat(toDel, (err, stats) => {
+			if (err) return console.log(err);
+			if (stats.isDirectory()) {
+				if (options.force || options.recursive) {
+					tb.sh.rm(toDel, { recursive: options.recursive, force: options.force }, err => {
+						if (err) {
+							displayError(`rm: cannot remove "${toDel}": ${err.message}`);
+							createNewCommandInput();
+						} else {
+							if (options.verbose) {
+								displayOutput(`removed directory "${toDel}"`);
+							}
+							createNewCommandInput();
+						}
+					});
+				} else if (options.directory) {
+					Filer.fs.rmdir(toDel, err => {
+						if (err) {
+							if (err.code === "ENOTEMPTY") {
+								displayError(`rm: cannot remove "${toDel}": Directory not empty`);
+								displayOutput("Use -r to remove non-empty directories. or -rf to remove non-empty directories without prompt.");
+							} else {
+								displayError(`rm: cannot remove "${toDel}": ${err.message}`);
+							}
+							createNewCommandInput();
+						} else {
+							if (options.verbose) {
+								displayOutput(`removed directory "${toDel}"`);
+							}
+							createNewCommandInput();
+						}
+					});
+				} else {
+					displayError(`rm: cannot remove "${toDel}": Is a directory`);
+					createNewCommandInput();
+				}
+			} else {
 				tb.sh.rm(toDel, { recursive: options.recursive, force: options.force }, err => {
 					if (err) {
 						displayError(`rm: cannot remove "${toDel}": ${err.message}`);
 						createNewCommandInput();
 					} else {
 						if (options.verbose) {
-							displayOutput(`removed directory "${toDel}"`);
+							displayOutput(`removed "${toDel}"`);
 						}
 						createNewCommandInput();
 					}
 				});
-			} else if (options.directory) {
-				Filer.fs.rmdir(toDel, err => {
-					if (err) {
-						if (err.code === "ENOTEMPTY") {
-							displayError(`rm: cannot remove "${toDel}": Directory not empty`);
-							displayOutput("Use -r to remove non-empty directories. or -rf to remove non-empty directories without prompt.");
-						} else {
-							displayError(`rm: cannot remove "${toDel}": ${err.message}`);
-						}
-						createNewCommandInput();
-					} else {
-						if (options.verbose) {
-							displayOutput(`removed directory "${toDel}"`);
-						}
-						createNewCommandInput();
-					}
-				});
-			} else {
-				displayError(`rm: cannot remove "${toDel}": Is a directory`);
-				createNewCommandInput();
 			}
-		} else {
-			tb.sh.rm(toDel, { recursive: options.recursive, force: options.force }, err => {
-				if (err) {
-					displayError(`rm: cannot remove "${toDel}": ${err.message}`);
-					createNewCommandInput();
-				} else {
-					if (options.verbose) {
-						displayOutput(`removed "${toDel}"`);
-					}
-					createNewCommandInput();
-				}
-			});
-		}
-	});
+		});
+	}
 }
 rm(args);

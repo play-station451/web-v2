@@ -1,6 +1,7 @@
 import parser from "yargs-parser";
 import http from "iso-http";
 import git from "git";
+import * as webdav from "/fs/apps/system/files.tapp/webdav.js";
 
 /**
  * @typedef {import("yargs-parser").Arguments} argv
@@ -20,6 +21,7 @@ const tb = window.tb || window.parent.tb || {};
 
 window.http = http;
 window.gitfetch = git;
+window.webdav = webdav;
 
 /**
  * Converts a hex color to an RGB string
