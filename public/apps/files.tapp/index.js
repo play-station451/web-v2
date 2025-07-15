@@ -277,7 +277,7 @@ const createStorageDeviceCard = (type, davInfo) => {
 				openPath("//");
 				break;
 			case "dav":
-				openPath(davInfo.url);
+				openPath(`/mnt/${davInfo.name}/`);
 				break;
 		}
 	});
@@ -1649,10 +1649,12 @@ const openPath = async path => {
 		showLS();
 		return;
 	}
-	if (path.includes("dav")) {
-		console.log("Loading webdav: " + path);
+	if (path.includes("mnt")) {
 		let davInstances = JSON.parse(await Filer.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
-		let davConfig = davInstances.find(dav => path.startsWith(dav.url));
+		const toFind = path.split("/")[2] || "";
+		let davConfig = davInstances.find(dav => dav.name === toFind);
+		console.log(davConfig);
+		console.log("Loading webdav: " + davConfig.url + path.split("/")[2]);
 		if (!davConfig) {
 			window.parent.tb.dialog.Alert({
 				title: "WebDAV Error",
@@ -1660,15 +1662,15 @@ const openPath = async path => {
 			});
 			return;
 		}
-		let davBase = davConfig.url.replace(/\/+$/, "");
-		let relPath = path.replace(davBase, "") || "/";
-		if (!relPath.startsWith("/")) relPath = "/" + relPath;
+		let relPath = path.replace(`/mnt/${davConfig.name}/`, "/");
+		console.log(relPath)
 		const exp = document.querySelector(".exp");
 		exp.innerHTML = "";
-		exp.setAttribute("path", path);
+		exp.setAttribute("path", davConfig.url + relPath);
 		const dirInput = document.querySelector(".nav-input.dir");
 		dirInput.value = path;
 		exp.innerHTML = `<div style="padding:1em;">Loading WebDAV...</div>`;
+		const modal = document.querySelector(".drive-modal");
 		try {
 			const client = webdav.createClient(davConfig.url, {
 				username: davConfig.user,
@@ -1685,9 +1687,19 @@ const openPath = async path => {
                 </svg>
                 <span>${davConfig.name}</span>
             `;
+			modal.style.display = "flex";
+			modal.innerHTML = `
+				<svg style="width: 22px; height: fit-content;" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4.07982 5.227C4.25015 4.58826 4.6267 4.02366 5.15094 3.62094C5.67518 3.21822 6.31775 2.99993 6.97882 3H17.0198C17.6811 2.99971 18.3239 3.2179 18.8483 3.62063C19.3728 4.02337 19.7494 4.58809 19.9198 5.227L22.0328 13.153C21.1022 12.4051 19.9437 11.9982 18.7498 12H5.24982C4.05559 11.998 2.89667 12.4049 1.96582 13.153L4.07982 5.227Z"/>
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M5.25 13.5C4.75754 13.5 4.26991 13.597 3.81494 13.7855C3.35997 13.9739 2.94657 14.2501 2.59835 14.5983C2.25013 14.9466 1.97391 15.36 1.78545 15.8149C1.597 16.2699 1.5 16.7575 1.5 17.25C1.5 17.7425 1.597 18.2301 1.78545 18.6851C1.97391 19.14 2.25013 19.5534 2.59835 19.9017C2.94657 20.2499 3.35997 20.5261 3.81494 20.7145C4.26991 20.903 4.75754 21 5.25 21H18.75C19.2425 21 19.7301 20.903 20.1851 20.7145C20.64 20.5261 21.0534 20.2499 21.4017 19.9017C21.7499 19.5534 22.0261 19.14 22.2145 18.6851C22.403 18.2301 22.5 17.7425 22.5 17.25C22.5 16.7575 22.403 16.2699 22.2145 15.8149C22.0261 15.36 21.7499 14.9466 21.4017 14.5983C21.0534 14.2501 20.64 13.9739 20.1851 13.7855C19.7301 13.597 19.2425 13.5 18.75 13.5H5.25ZM15.75 18C15.9489 18 16.1397 17.921 16.2803 17.7803C16.421 17.6397 16.5 17.4489 16.5 17.25C16.5 17.0511 16.421 16.8603 16.2803 16.7197C16.1397 16.579 15.9489 16.5 15.75 16.5C15.5511 16.5 15.3603 16.579 15.2197 16.7197C15.079 16.8603 15 17.0511 15 17.25C15 17.4489 15.079 17.6397 15.2197 17.7803C15.3603 17.921 15.5511 18 15.75 18ZM19.5 17.25C19.5 17.4489 19.421 17.6397 19.2803 17.7803C19.1397 17.921 18.9489 18 18.75 18C18.5511 18 18.3603 17.921 18.2197 17.7803C18.079 17.6397 18 17.4489 18 17.25C18 17.0511 18.079 16.8603 18.2197 16.7197C18.3603 16.579 18.5511 16.5 18.75 16.5C18.9489 16.5 19.1397 16.579 19.2803 16.7197C19.421 16.8603 19.5 17.0511 19.5 17.25Z"/>
+                    <circle cx="18" cy="17.25" r="3" fill="#5DD881"/>
+                </svg>
+				<span>WebDav</span>
+			`;
 			for (const item of contents) {
 				const name = item.basename;
-				const itemPath = path.replace(/\/+$/, "") + "/" + name;
+				const itemPath = `${davConfig.url}${relPath}/${name}`;
+				if (item.type === "directory" && item.filename === path.replace(`/mnt/${davConfig.name}/`, "")) continue;
 				const type = item.type === "directory" ? "folder" : "file";
 				const el = document.createElement("div");
 				el.classList.add("path-item", type === "folder" ? "folder-item" : "file-item");
@@ -1720,7 +1732,7 @@ const openPath = async path => {
 				itemTitle.textContent = name;
 				el.appendChild(itemTitle);
 				if (type === "folder") {
-					el.addEventListener("dblclick", () => openPath(itemPath));
+					el.addEventListener("dblclick", () => openPath(itemPath.replace(davConfig.url, `/mnt/${davConfig.name}`)));
 				} else {
 					el.addEventListener("dblclick", async () => {
 						let handlers = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"))["fileAssociatedApps"];
@@ -1802,10 +1814,21 @@ const openPath = async path => {
                 </svg>
                 <span>${davConfig.name}</span>
             `;
+			modal.style.display = "flex";
+			modal.innerHTML = `
+				<svg style="width: 22px; height: fit-content;" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4.07982 5.227C4.25015 4.58826 4.6267 4.02366 5.15094 3.62094C5.67518 3.21822 6.31775 2.99993 6.97882 3H17.0198C17.6811 2.99971 18.3239 3.2179 18.8483 3.62063C19.3728 4.02337 19.7494 4.58809 19.9198 5.227L22.0328 13.153C21.1022 12.4051 19.9437 11.9982 18.7498 12H5.24982C4.05559 11.998 2.89667 12.4049 1.96582 13.153L4.07982 5.227Z"/>
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M5.25 13.5C4.75754 13.5 4.26991 13.597 3.81494 13.7855C3.35997 13.9739 2.94657 14.2501 2.59835 14.5983C2.25013 14.9466 1.97391 15.36 1.78545 15.8149C1.597 16.2699 1.5 16.7575 1.5 17.25C1.5 17.7425 1.597 18.2301 1.78545 18.6851C1.97391 19.14 2.25013 19.5534 2.59835 19.9017C2.94657 20.2499 3.35997 20.5261 3.81494 20.7145C4.26991 20.903 4.75754 21 5.25 21H18.75C19.2425 21 19.7301 20.903 20.1851 20.7145C20.64 20.5261 21.0534 20.2499 21.4017 19.9017C21.7499 19.5534 22.0261 19.14 22.2145 18.6851C22.403 18.2301 22.5 17.7425 22.5 17.25C22.5 16.7575 22.403 16.2699 22.2145 15.8149C22.0261 15.36 21.7499 14.9466 21.4017 14.5983C21.0534 14.2501 20.64 13.9739 20.1851 13.7855C19.7301 13.597 19.2425 13.5 18.75 13.5H5.25ZM15.75 18C15.9489 18 16.1397 17.921 16.2803 17.7803C16.421 17.6397 16.5 17.4489 16.5 17.25C16.5 17.0511 16.421 16.8603 16.2803 16.7197C16.1397 16.579 15.9489 16.5 15.75 16.5C15.5511 16.5 15.3603 16.579 15.2197 16.7197C15.079 16.8603 15 17.0511 15 17.25C15 17.4489 15.079 17.6397 15.2197 17.7803C15.3603 17.921 15.5511 18 15.75 18ZM19.5 17.25C19.5 17.4489 19.421 17.6397 19.2803 17.7803C19.1397 17.921 18.9489 18 18.75 18C18.5511 18 18.3603 17.921 18.2197 17.7803C18.079 17.6397 18 17.4489 18 17.25C18 17.0511 18.079 16.8603 18.2197 16.7197C18.3603 16.579 18.5511 16.5 18.75 16.5C18.9489 16.5 19.1397 16.579 19.2803 16.7197C19.421 16.8603 19.5 17.0511 19.5 17.25Z"/>
+                    <circle cx="18" cy="17.25" r="3" fill="#D8645D"/>
+                </svg>
+				<span>WebDav</span>
+			`;
 		}
 		const search = document.querySelector(".nav-input.search");
 		search.setAttribute("placeholder", `Search ${path.split("/").pop()}`);
 		return;
+	} else {
+		document.querySelector(".drive-modal").style.display = "none";
 	}
 	if (path.split("/").pop() === "") {
 		path = path.substring(0, path.length - 1);
