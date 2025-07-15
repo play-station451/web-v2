@@ -5,7 +5,7 @@ function installer(args) {
 	Filer.fs.exists("/system/qwick", async rootExists => {
 		let rootCallback = async () => {
 			displayOutput("Fetching version data from remote...");
-			const versionRaw = await tb.libcurl.fetch("https://raw.githubusercontent.com/TerbiumOS/qwick/refs/heads/main/version");
+			const versionRaw = await tb.libcurl.fetch("https://terbiumos.github.io/qwick/version");
 			const version = await versionRaw.text();
 			displayOutput(`Found version: v${version}`);
 			displayOutput("Creating Metafile...");
@@ -26,8 +26,12 @@ function installer(args) {
 			};
 			await Filer.fs.promises.writeFile("/system/qwick/Lockfile", JSON.stringify(lockfile, null, 2));
 			displayOutput("Finished creating master Lockfile");
+			const repofile = [
+				"https://terbiumos.github.io/qwick-main-repo/"
+			];
+			await Filer.fs.promises.writeFile("/system/qwick/repo-list.json", JSON.stringify(repofile, null, 2));
 			displayOutput("Fetching main installer...");
-			const installerRaw = await tb.libcurl.fetch(`https://raw.githubusercontent.com/TerbiumOS/qwick/refs/heads/main/installer/installer.js?ts=${Date.now()}`);
+			const installerRaw = await tb.libcurl.fetch(`https://terbiumos.github.io/qwick/installer/installer.js?ts=${Date.now()}`);
 			const installerBody = await installerRaw.text();
 			displayOutput("Fetched installer, executing...");
 			const wrappedInstallerBody = `(async (tb, Filer, displayOutput, displayError) => {
