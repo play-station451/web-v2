@@ -1663,7 +1663,7 @@ const openPath = async path => {
 			return;
 		}
 		let relPath = path.replace(`/mnt/${davConfig.name}/`, "/");
-		console.log(relPath)
+		console.log(relPath);
 		const exp = document.querySelector(".exp");
 		exp.innerHTML = "";
 		exp.setAttribute("path", davConfig.url + relPath);
