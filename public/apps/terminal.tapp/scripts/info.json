@@ -237,5 +237,15 @@
 		"name": "exit",
 		"description": "Exit the terminal",
 		"usage": "exit"
+	},
+	{
+		"name": "qwick_install",
+		"description": "Installs qwick",
+		"usage": "qwick_install"
+	},
+	{
+		"name": "qwick",
+		"description": "Qwick package manager",
+		"usage": "qwick [subcmd] [subcmd] ... <input?> <args?>"
 	}
 ]
