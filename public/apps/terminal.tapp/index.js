@@ -230,12 +230,16 @@ async function getAppInfo(justNames = true) {
 	/**
 	 * @type {Response}
 	 */
-	let appInfoRes;
+	let appInfoResUsr;
+	/**
+	 * @type {Response}
+	 */
+	let appInfoResSys;
 	try {
-		// Temp for testing
-		appInfoRes = await fetch(`/fs/apps/user/${await tb.user.username()}/terminal/info.json`);
+		appInfoResUsr = await fetch(`/fs/apps/user/${await tb.user.username()}/terminal/info.json`);
+		appInfoResSys = await fetch(`/fs/apps/system/terminal.tapp/scripts/info.json`);
 	} catch (error) {
-		displayError(`Failed to fetch info.json, required for getting app info: ${error.message}`);
+		displayError(`Failed to fetch system info.json, required for getting app info: ${error.message}`);
 		createNewCommandInput();
 		return null;
 	}
@@ -245,9 +249,11 @@ async function getAppInfo(justNames = true) {
 	 */
 	let appInfo;
 	try {
-		appInfo = await appInfoRes.json();
+		let appInfoUsr = await appInfoResUsr.json();
+		let appInfoSys = await appInfoResSys.json();
+		appInfo = [ ...appInfoUsr, ...appInfoSys ];
 	} catch (error) {
-		displayError(`Failed to parse info.json: ${error.message}`);
+		displayError(`Failed to parse one or more info.json files: ${error.message}`);
 		createNewCommandInput();
 		return null;
 	}

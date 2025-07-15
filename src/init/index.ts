@@ -329,8 +329,6 @@ export async function init() {
 			}),
 			"utf8",
 		);
-		const res = await fetch("/apps/terminal.tapp/scripts/info.json");
-		const data = await res.json();
-		await Filer.promises.writeFile(`/apps/user/${user}/terminal/info.json`, JSON.stringify(data));
+		await Filer.promises.writeFile(`/apps/user/${user}/terminal/info.json`, JSON.stringify({}));
 	}
 }
