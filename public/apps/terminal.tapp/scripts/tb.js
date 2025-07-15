@@ -114,18 +114,23 @@ async function tb(args) {
 	}
 	function help(args) {
 		function resolveCommand(args) {
-			var resObj = cmdData;
-			if (args.length !== 1) {
-				if (args.length === 2) {
-					resObj = resObj[args[1]];
-				} else {
-					resObj = resObj[args[1]];
-					for (let i = 2; i < args.length; i++) {
-						resObj = resObj.subcmds[args[i]];
-					}
-				}
-			} else resObj.v = true;
-			return resObj;
+			let current = cmdData;
+			for (let i = 1; i < args.length; i++) {
+				const input = args[i];
+				const scope = current.subcmds || current;
+				const match = Object.entries(scope).find(([key, val]) =>
+					key === input || val.alias === input
+				);
+				if (!match) {
+					displayOutput(`Unknown command or alias: ${input}`);
+					return null;
+				};
+				current = match[1];
+			}
+			if (args.length === 1) {
+				current.v = true;
+			}
+			return current;
 		}
 		function formatData(info) {
 			if (typeof info.v === "undefined") {
@@ -136,13 +141,13 @@ async function tb(args) {
 					displayOutput("SUBCOMMANDS:");
 					const subkeys = Object.keys(info.subcmds);
 					for (let i = 0; i < subkeys.length; i++) {
-						displayOutput(`${`\t${subkeys[i]}`.padEnd(30)}${info.subcmds[subkeys[i]].desc}\n`);
+						displayOutput(`${`${subkeys[i]} ${info.subcmds[subkeys[i]].alias ? `(alias: ${info.subcmds[subkeys[i]].alias})` : ""}`.padEnd(40)}${info.subcmds[subkeys[i]].desc}\n`);
 					}
 				} else if (info.args) {
 					displayOutput("ARGUMENTS:");
 					const subkeys = Object.keys(info.args);
 					for (let i = 0; i < subkeys.length; i++) {
-						displayOutput(`${`\t${subkeys[i]}`.padEnd(30)}${info.args[subkeys[i]]}\n`);
+						displayOutput(`${`${subkeys[i]}`.padEnd(40)}${info.args[subkeys[i]]}\n`);
 					}
 				}
 			} else {
@@ -151,12 +156,14 @@ async function tb(args) {
 				displayOutput("List of available commands:\n");
 				const cmdKeys = Object.keys(cmdData);
 				for (let i = 0; i < cmdKeys.length; i++) {
-					displayOutput(`${`\t${cmdKeys[i]}`.padEnd(30)}${cmdData[cmdKeys[i]].desc}\n`);
+					displayOutput(`${`${cmdKeys[i]} ${cmdData[cmdKeys[i]].alias ? `(alias: ${cmdData[cmdKeys[i]].alias})` : ""}`.padEnd(40)}${cmdData[cmdKeys[i]].desc}\n`);
 				}
 			}
 		}
 		const data = resolveCommand(args);
-		formatData(data);
+		if (data != null) {
+			formatData(data);
+		}
 		displayOutput(`Terbium System CLI v${ver}`);
 		createNewCommandInput();
 	}
