@@ -118,13 +118,11 @@ async function tb(args) {
 			for (let i = 1; i < args.length; i++) {
 				const input = args[i];
 				const scope = current.subcmds || current;
-				const match = Object.entries(scope).find(([key, val]) =>
-					key === input || val.alias === input
-				);
+				const match = Object.entries(scope).find(([key, val]) => key === input || val.alias === input);
 				if (!match) {
 					displayOutput(`Unknown command or alias: ${input}`);
 					return null;
-				};
+				}
 				current = match[1];
 			}
 			if (args.length === 1) {

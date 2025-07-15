@@ -251,7 +251,7 @@ async function getAppInfo(justNames = true) {
 	try {
 		let appInfoUsr = await appInfoResUsr.json();
 		let appInfoSys = await appInfoResSys.json();
-		appInfo = [ ...appInfoUsr, ...appInfoSys ];
+		appInfo = [...appInfoUsr, ...appInfoSys];
 	} catch (error) {
 		displayError(`Failed to parse one or more info.json files: ${error.message}`);
 		createNewCommandInput();
