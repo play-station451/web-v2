@@ -178,7 +178,7 @@ async function handleCommand(name, args) {
 	 * The URLs to try to fetch the scripts from
 	 * @type {string[]}
 	 */
-	const debug = (new URL(location.host)).searchParams["dev"];
+	const debug = new URL(location.host).searchParams["dev"];
 	const scriptPath = debug ? `/apps/terminal.tapp/scripts/${name.toLowerCase()}.js` : `/fs/apps/system/terminal.tapp/scripts/${name.toLowerCase()}.js`;
 	/**
 	 * @type {appInfo}
