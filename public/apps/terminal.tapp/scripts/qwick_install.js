@@ -26,9 +26,7 @@ function installer(args) {
 			};
 			await Filer.fs.promises.writeFile("/system/qwick/Lockfile", JSON.stringify(lockfile, null, 2));
 			displayOutput("Finished creating master Lockfile");
-			const repofile = [
-				"https://terbiumos.github.io/qwick-main-repo/"
-			];
+			const repofile = ["https://terbiumos.github.io/qwick-main-repo/"];
 			await Filer.fs.promises.writeFile("/system/qwick/repo-list.json", JSON.stringify(repofile, null, 2));
 			displayOutput("Fetching main installer...");
 			const installerRaw = await tb.libcurl.fetch(`https://terbiumos.github.io/qwick/installer/installer.js?ts=${Date.now()}`);
