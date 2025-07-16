@@ -37,11 +37,10 @@ function installer(args) {
 					await Filer.fs.promises.writeFile("/system/qwick/cache/cache.lock", "{}");
 				}
 				if (!rootExists) Filer.fs.mkdir("/system/qwick/cache", { recursive: true }, cacheCallback);
-				else rootCallback();
+				else cacheCallback();
 			})
 			Filer.fs.exists("/system/qwick/coredeps", async cacheExists => {
 				if (!rootExists) Filer.fs.mkdir("/system/qwick/coredeps", { recursive: true }, cacheCallback);
-				else rootCallback();
 			})
 			displayOutput("Fetching main installer...");
 			const installerRaw = await tb.libcurl.fetch(`https://terbiumos.github.io/qwick/installer/installer.js?ts=${Date.now()}`);
