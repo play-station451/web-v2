@@ -38,7 +38,7 @@ function installer(args) {
 				else cacheCallback();
 			});
 			Filer.fs.exists("/system/qwick/coredeps", async coredepsExists => {
-				if (!coredepsExists) Filer.fs.mkdir("/system/qwick/coredeps", { recursive: true }, cacheCallback);
+				if (!coredepsExists) Filer.fs.mkdir("/system/qwick/coredeps", { recursive: true }, () => {});
 			});
 			displayOutput("Fetching main installer...");
 			const installerRaw = await tb.libcurl.fetch(`https://terbiumos.github.io/qwick/installer/installer.js?ts=${Date.now()}`);
