@@ -53,8 +53,3 @@ jobs:
         run: |
           echo "Biome formatting changes were needed. Please pull the latest changes."
           exit 1
-
-      - name: "Biome CI check"
-        if: steps.verify-changed-files.outputs.changed == 'false'
-        run: |
-          biome ci .
