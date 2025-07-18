@@ -1643,6 +1643,7 @@ const openPath = async path => {
 	}
 	if (path === "storage devices") {
 		showStorageDevices();
+		document.querySelector(".drive-modal").style.display = "flex";
 		return;
 	}
 	if (path === "local storage") {

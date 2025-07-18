@@ -178,8 +178,7 @@ async function handleCommand(name, args) {
 	 * The URLs to try to fetch the scripts from
 	 * @type {string[]}
 	 */
-	const debug = new URL(location.host).searchParams["dev"];
-	const scriptPath = debug ? `/apps/terminal.tapp/scripts/${name.toLowerCase()}.js` : `/fs/apps/system/terminal.tapp/scripts/${name.toLowerCase()}.js`;
+	const scriptPaths = [`/fs/apps/system/terminal.tapp/scripts/${name.toLowerCase()}.js`, `/apps/terminal.tapp/scripts/${name.toLowerCase()}.js`];
 	/**
 	 * @type {appInfo}
 	 */
@@ -200,11 +199,15 @@ async function handleCommand(name, args) {
 	 */
 	let scriptRes;
 	try {
-		scriptRes = await fetch(scriptPath);
-	} catch (error) {
-		displayError(`Failed to fetch script: ${error.message}`);
-		createNewCommandInput();
-		return;
+		scriptRes = await fetch(scriptPaths[0]);
+	} catch {
+		try {
+			scriptRes = await fetch(scriptPathss[1]);
+		} catch (error) {
+			displayError(`Failed to fetch script: ${error.message}`);
+			createNewCommandInput();
+			return;
+		}
 	}
 	try {
 		const script = await scriptRes.text();
@@ -230,19 +233,11 @@ async function getAppInfo(justNames = true) {
 	/**
 	 * @type {Response}
 	 */
-	let appInfoResUsr;
+	const appInfoResUsr = await fetch(`/fs/apps/user/${await tb.user.username()}/terminal/info.json`);
 	/**
 	 * @type {Response}
 	 */
-	let appInfoResSys;
-	try {
-		appInfoResUsr = await fetch(`/fs/apps/user/${await tb.user.username()}/terminal/info.json`);
-		appInfoResSys = await fetch(`/fs/apps/system/terminal.tapp/scripts/info.json`);
-	} catch (error) {
-		displayError(`Failed to fetch system info.json, required for getting app info: ${error.message}`);
-		createNewCommandInput();
-		return null;
-	}
+	const appInfoResSys = await fetch(`/fs/apps/system/terminal.tapp/scripts/info.json`);
 
 	/**
 	 * @type {Response}
@@ -251,6 +246,8 @@ async function getAppInfo(justNames = true) {
 	try {
 		let appInfoUsr = await appInfoResUsr.json();
 		let appInfoSys = await appInfoResSys.json();
+		if (!Array.isArray(appInfoUsr)) appInfoUsr = appInfoUsr ? [appInfoUsr] : [];
+		if (!Array.isArray(appInfoSys)) appInfoSys = appInfoSys ? [appInfoSys] : [];
 		appInfo = [...appInfoUsr, ...appInfoSys];
 	} catch (error) {
 		displayError(`Failed to parse one or more info.json files: ${error.message}`);
