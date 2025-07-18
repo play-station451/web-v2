@@ -26,20 +26,6 @@ jobs:
       - name: "Format with Biome"
         run: "biome format --write ."
 
-      - name: "Run Biome CI check (to be reported later)"
-        id: "biome-check"
-        run: |
-          # Don't exit on error
-          set +e
-          biome ci . 2>&1 | tee biome-output.log
-          BIOME_EXIT_CODE=${PIPESTATUS[0]}
-          
-          if [ $BIOME_EXIT_CODE -eq 0 ]; then
-            echo "success=true" >> $GITHUB_OUTPUT
-          else
-            echo "success=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: "Check for Git changes"
         id: "verify-changed-files"
         run: |
@@ -62,8 +48,13 @@ jobs:
           github_token: "${{ secrets.GITHUB_TOKEN }}"
           branch: "${{ github.ref_name }}"
 
-      - name: "Fail if Biome CI check failed"
-        if: steps.biome-check.outputs.success == 'false'
+      - name: "Fail if formatting was needed"
+        if: steps.verify-changed-files.outputs.changed == 'true'
         run: |
-          cat biome-output.log
+          echo "Biome formatting changes were needed. Please pull the latest changes."
           exit 1
+
+      - name: "Biome CI check"
+        if: steps.verify-changed-files.outputs.changed == 'false'
+        run: |
+          biome ci .
