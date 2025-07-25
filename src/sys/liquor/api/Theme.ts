@@ -15,7 +15,7 @@ let settings: ThemeProps;
 		const data = await Filer.fs.promises.readFile("/system/etc/anura/theme.json", "utf8");
 		settings = JSON.parse(data);
 	} catch (err) {
-		console.error("Error reading theme settings:", err);
+		if (localStorage.getItem("setup")) console.error("Error reading theme settings:", err);
 	}
 })();
 

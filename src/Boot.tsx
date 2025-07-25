@@ -60,7 +60,6 @@ export default function Boot() {
 			}));
 			if (localStorage.getItem("setup") === "true" && (!(await dirExists("/system/etc/terbium/")) || !(await dirExists("/apps/system/")))) {
 				const bootent = recreatedEntries.filter((entry: any) => entry.name !== "TB React" && entry.name !== "TB React (Cloaked)");
-				bootent.push({ name: "TB System Recovery", action: eval(`(${recovery.toString()})`) });
 				setentries(bootent);
 			} else {
 				setentries(recreatedEntries);

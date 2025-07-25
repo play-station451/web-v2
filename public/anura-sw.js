@@ -73,7 +73,7 @@ async function currentFs() {
 self.Buffer = Filer.Buffer;
 
 importScripts("/assets/libs/comlink.min.umd.js");
-
+importScripts("/assets/libs/idb-keyval.js");
 importScripts("/assets/libs/workbox/workbox-sw.js");
 workbox.setConfig({
 	debug: false,

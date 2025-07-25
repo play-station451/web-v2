@@ -331,4 +331,5 @@ export async function init() {
 		);
 		await Filer.promises.writeFile(`/apps/user/${user}/terminal/info.json`, JSON.stringify({}));
 	}
+	return true;
 }
