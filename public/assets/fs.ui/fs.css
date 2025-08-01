@@ -4,18 +4,18 @@
 
 @media (prefers-color-scheme: light) {
     :root {
-        --cursor-normal: url("/cursors/light/normal.svg") 6 0, default;
+    --cursor-normal: url("/cursors/light/normal.svg") 6 0, default;
         --cursor-pointer: url("/cursors/light/pointer.svg") 6 0, pointer;
         --cursor-text: url("/cursors/light/text.svg") 10 0, text;
         --cursor-crosshair: url("/cursors/light/crosshair.svg") 0 0, crosshair;
         --cursor-wait: url("/cursors/light/wait.svg") 0 0, wait;
         --cursor-se-resize: url("/cursors/light/resize-l.svg") 0 0, se-resize;
-	--cursor-sw-resize: url("/cursors/light/resize-r.svg") 0 0, sw-resize;
-	--cursor-ne-resize: url("/cursors/light/resize-r.svg") 0 0, ne-resize;
-	--cursor-n-resize: url("/cursors/light/resize-v.svg") 0 0, n-resize;
-	--cursor-s-resize: url("/cursors/light/resize-v.svg") 0 0, s-resize;
-	--cursor-e-resize: url("/cursors/light/resize-h.svg") 0 0, e-resize;
-	--cursor-w-resize: url("/cursors/light/resize-h.svg") 0 0, w-resize;
+        --cursor-sw-resize: url("/cursors/light/resize-r.svg") 0 0, sw-resize;
+        --cursor-ne-resize: url("/cursors/light/resize-r.svg") 0 0, ne-resize;
+        --cursor-n-resize: url("/cursors/light/resize-v.svg") 0 0, n-resize;
+        --cursor-s-resize: url("/cursors/light/resize-v.svg") 0 0, s-resize;
+        --cursor-e-resize: url("/cursors/light/resize-h.svg") 0 0, e-resize;
+        --cursor-w-resize: url("/cursors/light/resize-h.svg") 0 0, w-resize;
     }
 
     body {
