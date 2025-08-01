@@ -43,7 +43,7 @@ export default defineConfig({
 	server: {
 		port: process.env.port || 3001,
 		watch: {
-			ignored: ["**/public/apps/terminal.tapp/scripts/**"],
+			ignored: ["**/public/apps/terminal.tapp/**"],
 		},
 	},
 });

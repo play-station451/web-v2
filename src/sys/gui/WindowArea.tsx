@@ -35,11 +35,6 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 	const minMaxRef = useRef<SVGSVGElement>(null);
 	const closeRef = useRef<SVGSVGElement>(null);
 
-	const topResizer = useRef<HTMLDivElement>(null);
-	const leftResizer = useRef<HTMLDivElement>(null);
-	const rightResizer = useRef<HTMLDivElement>(null);
-	const bottomResizer = useRef<HTMLDivElement>(null);
-
 	const contentRef = useRef<HTMLDivElement>(null);
 	const titleRef = useRef<HTMLSpanElement>(null);
 	const thtmlref = useRef<HTMLDivElement>(null);
@@ -388,12 +383,22 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 		const onUp = () => {
 			window.removeEventListener("mousemove", onMove);
 			window.removeEventListener("mouseup", onUp);
+			window.removeEventListener("blur", onUp);
 			setIsMouseDown(false);
 			setIsResizing(false);
 		};
 
+		window.onmouseleave = () => {
+						setIsDragging(false);
+						setIsMouseDown(false);
+						window.removeEventListener("mousemove", onMove);
+						window.removeEventListener("mouseup", onUp);
+						window.removeEventListener("blur", onUp);
+					};
+
 		window.addEventListener("mousemove", onMove);
 		window.addEventListener("mouseup", onUp);
+		window.addEventListener("blur", onUp);
 		setIsMouseDown(true);
 	};
 
@@ -413,6 +418,7 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 		// @ts-ignore
 		<div
 			ref={windowRef}
+			// @ts-ignore
 			message={message}
 			id={wid}
 			pid={pid}
@@ -450,10 +456,10 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 					setZIndex(windowStore.getWindow(wid)?.zIndex);
 				}}
 			></div>
-			<div ref={topResizer} className="absolute left-0 right-0 h-[6px] cursor-n-resize" data-resizer="top" onMouseDown={() => handleMouseDown("top")} />
-			<div ref={leftResizer} className="absolute left-0 top-[6px] bottom-[6px] w-[6px] cursor-w-resize" data-resizer="left" onMouseDown={() => handleMouseDown("left")} />
-			<div ref={rightResizer} className="absolute right-0 top-[6px] bottom-[6px] w-[6px] cursor-e-resize" data-resizer="right" onMouseDown={() => handleMouseDown("right")} />
-			<div ref={bottomResizer} className="absolute bottom-0 left-0 right-0 h-[6px] cursor-s-resize" data-resizer="bottom" onMouseDown={() => handleMouseDown("bottom")} />
+			<div className="absolute left-0 right-0 h-[6px] cursor-n-resize" data-resizer="top" onMouseDown={() => handleMouseDown("top")} />
+			<div className="absolute left-0 top-[6px] bottom-[6px] w-[6px] cursor-w-resize" data-resizer="left" onMouseDown={() => handleMouseDown("left")} />
+			<div className="absolute right-0 top-[6px] bottom-[6px] w-[6px] cursor-e-resize" data-resizer="right" onMouseDown={() => handleMouseDown("right")} />
+			<div className="absolute bottom-0 left-0 right-0 h-[6px] cursor-s-resize" data-resizer="bottom" onMouseDown={() => handleMouseDown("bottom")} />
 			<div className="absolute top-0 left-0 size-2.5 cursor-nw-resize" onMouseDown={() => handleMouseDown("top-left")} />
 			<div className="absolute top-0 right-0 size-2.5 cursor-ne-resize" onMouseDown={() => handleMouseDown("top-right")} />
 			<div className="absolute bottom-0 left-0 size-2.5 cursor-sw-resize" onMouseDown={() => handleMouseDown("bottom-left")} />
@@ -481,14 +487,24 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 						if (srcRef.current) srcRef.current.style.pointerEvents = "none";
 					};
 
-					window.addEventListener("mousemove", onMove);
-
-					window.onmouseup = () => {
+					const onUp = () => {
 						window.removeEventListener("mousemove", onMove);
+						window.removeEventListener("mouseup", onUp);
+						window.removeEventListener("blur", onUp);
+						setIsMouseDown(false);
+						setIsDragging(false);
 					};
+
+					window.addEventListener("mousemove", onMove);
+					window.addEventListener("mouseup", onUp);
+					window.addEventListener("blur", onUp);
 
 					window.onmouseleave = () => {
 						setIsDragging(false);
+						setIsMouseDown(false);
+						window.removeEventListener("mousemove", onMove);
+						window.removeEventListener("mouseup", onUp);
+						window.removeEventListener("blur", onUp);
 					};
 
 					setIsMouseDown(true);
@@ -1421,6 +1437,7 @@ const WindowArea: React.FC<WindowAreaProps> = ({ className }) => {
 		// @ts-ignore
 		<window-area
 			class={`${className ?? className} relative`}
+			// @ts-ignore
 			onContextMenuCapture={(e: MouseEvent) => {
 				const pos = { x: e.clientX, y: e.clientY };
 				window.tb.contextmenu.create({
