@@ -389,12 +389,12 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 		};
 
 		window.onmouseleave = () => {
-						setIsDragging(false);
-						setIsMouseDown(false);
-						window.removeEventListener("mousemove", onMove);
-						window.removeEventListener("mouseup", onUp);
-						window.removeEventListener("blur", onUp);
-					};
+			setIsDragging(false);
+			setIsMouseDown(false);
+			window.removeEventListener("mousemove", onMove);
+			window.removeEventListener("mouseup", onUp);
+			window.removeEventListener("blur", onUp);
+		};
 
 		window.addEventListener("mousemove", onMove);
 		window.addEventListener("mouseup", onUp);
