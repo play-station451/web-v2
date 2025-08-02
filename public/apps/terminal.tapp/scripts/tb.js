@@ -105,6 +105,24 @@ var cmdData = {
 			},
 		},
 	},
+	node: {
+		desc: "Parent command for interacting with Terbium's NodeJS container",
+		usage: "tb node [subcmd] ... <args>",
+		subcmds: {
+			restart: {
+				desc: "Restarts the NodeJS container",
+				usage: "tb node restart"
+			},
+			start: {
+				desc: "Starts the NodeJS container",
+				usage: "tb node start"
+			},
+			stop: {
+				desc: "Stops the NodeJS container",
+				usage: "tb node stop"
+			},
+		},
+	},
 };
 
 async function tb(args) {
@@ -258,20 +276,6 @@ async function tb(args) {
 					displayOutput("Success!");
 					createNewCommandInput();
 					break;
-				case "restartNode":
-					window.parent.tb.setCommandProcessing(true);
-					displayOutput("Restarting NodeJS container...");
-					try {
-						await window.parent.tb.node.stop();
-						displayOutput("NodeJS container stopped successfully. Restarting...");
-						await window.parent.tb.node.start();
-						displayOutput("NodeJS container restarted successfully.");
-						window.parent.tb.setCommandProcessing(false);
-						createNewCommandInput();
-					} catch (e) {
-						error(`tb > system > restartNode > failed to stop NodeJS container try again later`);
-						window.parent.tb.setCommandProcessing(false);
-					}
 				default:
 					error(`tb > system > unknown subcommand: ${args._[1]}`);
 			}
@@ -354,6 +358,63 @@ async function tb(args) {
 							error(`tb > network > proxy > unknown subcommand: ${args._[2]}`);
 							break;
 					}
+					break;
+				default:
+					error(`tb > network > unknown subcommand: ${args._[1]}`);
+					break;
+			}
+			break;
+		case "node":
+			switch (args._[1]) {
+				case "restart":
+					window.parent.tb.setCommandProcessing(true);
+					displayOutput("Restarting NodeJS container...");
+					try {
+						await window.parent.tb.node.stop();
+						displayOutput("container stopped successfullty. starting...");
+						await window.parent.tb.node.start();
+						displayOutput("Container restarted.");
+						window.parent.tb.setCommandProcessing(false);
+						createNewCommandInput();
+					} catch (e) {
+						error("tb > node > restart > Could not restart the NodeJS container.");
+					}
+					window.parent.tb.setCommandProcessing(false);
+					createNewCommandInput();
+					break;
+				case "start":
+					window.parent.tb.setCommandProcessing(true);
+					if (window.parent.tb.node.isReady) {
+						displayOutput("NodeJS container is already running.");
+					}
+					else {
+						displayOutput("Starting NodeJS container...");
+						try {
+							window.parent.tb.node.start();
+							displayOutput("Successfully started the NodeJS container.");
+						} catch (_) {
+							error("tb > node > start > An error occured while starting the NodeJS container.");
+						}
+					}
+					window.parent.tb.setCommandProcessing(false);
+					createNewCommandInput();
+					break;
+				case "stop":
+					window.parent.tb.setCommandProcessing(true);
+					if (window.parent.tb.node.isReady) {
+						displayOutput("Stopping NodeJS container...");
+						try {
+							window.parent.tb.node.start();
+							displayOutput("Successfully stopped the NodeJS container.");
+						} catch (_) {
+							error("tb > node > stop > An error occured while stopping the NodeJS container.");
+						}
+					}
+					else {
+						displayOutput("NodeJS container is already stopped.");
+					}
+					window.parent.tb.setCommandProcessing(false);
+					createNewCommandInput()
 					break;
 				default:
 					error(`tb > network > unknown subcommand: ${args._[1]}`);
