@@ -111,15 +111,15 @@ var cmdData = {
 		subcmds: {
 			restart: {
 				desc: "Restarts the NodeJS container",
-				usage: "tb node restart"
+				usage: "tb node restart",
 			},
 			start: {
 				desc: "Starts the NodeJS container",
-				usage: "tb node start"
+				usage: "tb node start",
 			},
 			stop: {
 				desc: "Stops the NodeJS container",
-				usage: "tb node stop"
+				usage: "tb node stop",
 			},
 		},
 	},
@@ -386,8 +386,7 @@ async function tb(args) {
 					window.parent.tb.setCommandProcessing(true);
 					if (window.parent.tb.node.isReady) {
 						displayOutput("NodeJS container is already running.");
-					}
-					else {
+					} else {
 						displayOutput("Starting NodeJS container...");
 						try {
 							window.parent.tb.node.start();
@@ -409,12 +408,11 @@ async function tb(args) {
 						} catch (_) {
 							error("tb > node > stop > An error occured while stopping the NodeJS container.");
 						}
-					}
-					else {
+					} else {
 						displayOutput("NodeJS container is already stopped.");
 					}
 					window.parent.tb.setCommandProcessing(false);
-					createNewCommandInput()
+					createNewCommandInput();
 					break;
 				default:
 					error(`tb > network > unknown subcommand: ${args._[1]}`);
