@@ -31,6 +31,34 @@ export default function Updater() {
 	useEffect(() => {
 		const main = async () => {
 			let sysapps = ["about.tapp", "app store.tapp", "browser.tapp", "calculator.tapp", "feedback.tapp", "files.tapp", "media viewer.tapp", "settings.tapp", "task manager.tapp", "terminal.tapp", "text editor.tapp"];
+			let sysscripts = [
+				"cat.js",
+				"cd.js",
+				"clear.js",
+				"curl.js",
+				"echo.js",
+				"exit.js",
+				"git.js",
+				"help.js",
+				"info.json",
+				"info.schema.json",
+				"ls.js",
+				"mkdir.js",
+				"node.js",
+				"ping.js",
+				"pkg.js",
+				"pkill.js",
+				"pwd.js",
+				"qwick.js",
+				"qwick_install.js",
+				"rm.js",
+				"rmdir.js",
+				"sysfetch.js",
+				"taskkill.js",
+				"tb.js",
+				"touch.js",
+				"unzip.js",
+			];
 			if (await dirExists("/system/tmp/terb-upd/")) {
 				// @ts-expect-error
 				await new Filer.fs.Shell().promises.rm(`/system/tmp/terb-upd/`, { recursive: true });
@@ -38,6 +66,7 @@ export default function Updater() {
 			statusref.current!.innerText = "Installing latest version of TB...";
 			await Filer.fs.promises.mkdir("/system/tmp/terb-upd/");
 			const apps = await Filer.fs.promises.readdir("/apps/system/");
+			const scripts = await Filer.fs.promises.readdir("/apps/system/terminal.tapp/scripts/");
 			setProgress(20);
 			statusref.current!.innerText = "Creating a backup";
 			if (await fileExists("/apps/system/settings.tapp/wisp-servers.json")) {
@@ -52,9 +81,18 @@ export default function Updater() {
 			for (const item of apps) {
 				setProgress(prevProgress => prevProgress + 1);
 				if (sysapps.includes(item)) {
-					await copyDir(`/apps/system/${item}/`, `/system/tmp/terb-upd/${item}.old`, true);
-					// @ts-expect-error
-					await new Filer.fs.Shell().promises.rm(`/apps/system/${item}/`, { recursive: true });
+					if (item === "terminal.tapp") {
+						for (const item of scripts) {
+							setProgress(prevProgress => prevProgress + 1);
+							if (!sysscripts.includes(item)) {
+								console.log(`Skipping ${item}...`);
+							}
+						}
+					} else {
+						await copyDir(`/apps/system/${item}/`, `/system/tmp/terb-upd/${item}.old`, true);
+						// @ts-expect-error
+						await new Filer.fs.Shell().promises.rm(`/apps/system/${item}/`, { recursive: true });
+					}
 				} else {
 					console.log(`Skipping ${item}...`);
 				}

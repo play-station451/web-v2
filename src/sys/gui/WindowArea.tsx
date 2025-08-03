@@ -57,6 +57,7 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 	const [isResizing, setIsResizing] = useState<boolean>(false);
 	const [controls, setControls] = useState(config.controls);
 	const [src, setSrc] = useState(config.src);
+	const originalSize = useRef<{width: number; height: number } | null>(null);
 	const mobileCheck = async () => {
 		if ((await window.tb.platform.getPlatform()) === "mobile") {
 			setMaximized(true);
@@ -280,21 +281,52 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 	const handleSnap = (newX: number, newY: number) => {
 		if (config.snapable !== false) {
 			if (!windowRef.current) return;
+			originalSize.current = { width, height };
 			const windowWidth = windowRef.current.offsetWidth;
+			const windowHeight = windowRef.current.offsetHeight;
 			const SNAP_THRESHOLD = 7;
-			if (newX <= SNAP_THRESHOLD) {
+			const CORNER_THRESHOLD = 40;
+			const atLeft = newX <= SNAP_THRESHOLD;
+			const atRight = newX + windowWidth >= window.innerWidth - SNAP_THRESHOLD;
+			const atTop = newY <= SNAP_THRESHOLD;
+			const atBottom = newY + windowHeight >= window.innerHeight - SNAP_THRESHOLD;
+			if (atLeft && atTop && newX <= CORNER_THRESHOLD && newY <= CORNER_THRESHOLD) {
+				setX(0);
+				setY(0);
+				setSnapRegion("top-left");
+				onSnapPreview?.("top-left");
+			} else if (atRight && atTop && newX + windowWidth >= window.innerWidth - CORNER_THRESHOLD && newY <= CORNER_THRESHOLD) {
+				setX(window.innerWidth - windowWidth);
+				setY(0);
+				setSnapRegion("top-right");
+				onSnapPreview?.("top-right");
+			} else if (atLeft && atBottom && newX <= CORNER_THRESHOLD && newY + windowHeight >= window.innerHeight - CORNER_THRESHOLD) {
+				setX(0);
+				setY(window.innerHeight - windowHeight);
+				setSnapRegion("bottom-left");
+				onSnapPreview?.("bottom-left");
+			} else if (atRight && atBottom && newX + windowWidth >= window.innerWidth - CORNER_THRESHOLD && newY + windowHeight >= window.innerHeight - CORNER_THRESHOLD) {
+				setX(window.innerWidth - windowWidth);
+				setY(window.innerHeight - windowHeight);
+				setSnapRegion("bottom-right");
+				onSnapPreview?.("bottom-right");
+			} else if (atLeft) {
 				setX(0);
 				setSnapRegion("left");
 				onSnapPreview?.("left");
-			} else if (newX + windowWidth >= window.innerWidth - SNAP_THRESHOLD) {
+			} else if (atRight) {
 				setX(window.innerWidth - windowWidth);
 				setSnapRegion("right");
 				onSnapPreview?.("right");
-			} else if (newY <= SNAP_THRESHOLD) {
+			} else if (atTop) {
 				setY(0);
 				setSnapRegion("top");
 				onSnapPreview?.("top");
 			} else {
+				if (snapRegion && originalSize.current) {
+					setWidth(originalSize.current.width);
+					setHeight(originalSize.current.height);
+				}
 				setSnapRegion(null);
 				onSnapDone?.();
 			}
@@ -304,7 +336,7 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 		const snap = () => {
 			setIsMouseDown(false);
 			setIsDragging(false);
-			if (windowRef.current)
+			if (windowRef.current) {
 				if (snapRegion === "left") {
 					windowRef.current.style.left = "0";
 					windowRef.current.style.width = "50%";
@@ -319,14 +351,39 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 					if (maximized === false && isDragging === true) {
 						setMaximized(true);
 					}
+				} else if (snapRegion === "top-left") {
+					windowRef.current.style.left = "0";
+					windowRef.current.style.top = "0";
+					windowRef.current.style.width = "50%";
+					windowRef.current.style.height = "50%";
+				} else if (snapRegion === "top-right") {
+					windowRef.current.style.left = "50%";
+					windowRef.current.style.top = "0";
+					windowRef.current.style.width = "50%";
+					windowRef.current.style.height = "50%";
+				} else if (snapRegion === "bottom-left") {
+					windowRef.current.style.left = "0";
+					windowRef.current.style.top = "50%";
+					windowRef.current.style.width = "50%";
+					windowRef.current.style.height = "50%";
+				} else if (snapRegion === "bottom-right") {
+					windowRef.current.style.left = "50%";
+					windowRef.current.style.top = "50%";
+					windowRef.current.style.width = "50%";
+					windowRef.current.style.height = "50%";
 				} else {
-					if (isResizing === false && isDragging) {
+					if (originalSize.current) {
+						windowRef.current.style.width = `${originalSize.current.width}px`;
+						windowRef.current.style.height = `${originalSize.current.height}px`;
+					} else if (isResizing === false && isDragging) {
 						windowRef.current.style.left = `${x}`;
 						windowRef.current.style.width = `${width}`;
 						windowRef.current.style.height = `${height}`;
 						windowRef.current.style.top = `${y}`;
 					}
 				}
+			}
+			setSnapRegion(null);
 			onSnapDone?.();
 			if (srcRef.current) {
 				srcRef.current.style.pointerEvents = "auto";
@@ -1417,19 +1474,39 @@ const WindowArea: React.FC<WindowAreaProps> = ({ className }) => {
 		switch (direction) {
 			case "left":
 				return `
-                    left-0 w-6/12 h-full
-                    ${prevShowing ? "translate-x-0" : "-translate-x-4"}
-                `;
+					left-0 w-6/12 h-full
+					${prevShowing ? "translate-x-0" : "-translate-x-4"}
+				`;
 			case "right":
 				return `
-                    right-0 w-6/12 h-full
-                    ${prevShowing ? "translate-x-0" : "translate-x-4"}
-                `;
+					right-0 w-6/12 h-full
+					${prevShowing ? "translate-x-0" : "translate-x-4"}
+				`;
 			case "top":
 				return `
-                    left-0 right-0 w-full h-full
-                    ${prevShowing ? "translate-y-0" : "-translate-y-4"}
-                `;
+					left-0 right-0 w-full h-full
+					${prevShowing ? "translate-y-0" : "-translate-y-4"}
+				`;
+			case "top-left":
+				return `
+					left-0 top-0 w-6/12 h-6/12
+					${prevShowing ? "translate-x-0 translate-y-0" : "-translate-x-4 -translate-y-4"}
+				`;
+			case "top-right":
+				return `
+					right-0 top-0 w-6/12 h-6/12
+					${prevShowing ? "translate-x-0 translate-y-0" : "translate-x-4 -translate-y-4"}
+				`;
+			case "bottom-left":
+				return `
+					left-0 top-[50%] w-6/12 h-6/12
+					${prevShowing ? "translate-x-0 translate-y-0" : "-translate-x-4 translate-y-4"}
+				`;
+			case "bottom-right":
+				return `
+					right-0 top-[50%] w-6/12 h-6/12
+					${prevShowing ? "translate-x-0 translate-y-0" : "translate-x-4 translate-y-4"}
+				`;
 		}
 	};
 
