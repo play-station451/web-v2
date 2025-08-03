@@ -57,7 +57,7 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 	const [isResizing, setIsResizing] = useState<boolean>(false);
 	const [controls, setControls] = useState(config.controls);
 	const [src, setSrc] = useState(config.src);
-	const originalSize = useRef<{width: number; height: number } | null>(null);
+	const originalSize = useRef<{ width: number; height: number } | null>(null);
 	const mobileCheck = async () => {
 		if ((await window.tb.platform.getPlatform()) === "mobile") {
 			setMaximized(true);
@@ -334,6 +334,7 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 	};
 	useEffect(() => {
 		const snap = () => {
+			console.log("kongsole");
 			setIsMouseDown(false);
 			setIsDragging(false);
 			if (windowRef.current) {
