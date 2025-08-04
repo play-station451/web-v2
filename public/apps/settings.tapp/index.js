@@ -273,12 +273,12 @@ async function getWispSrvs() {
 		let data = JSON.parse(await Filer.fs.promises.readFile("//apps/system/settings.tapp/wisp-servers.json"));
 		const servers = data.map(item => ({
 			text: item.name,
-			value: item.name
+			value: item.name,
 		}));
 		window.parent.tb.dialog.Select({
 			title: "Select the Wisp server to remove",
 			options: servers,
-			onOk: async (selectedName) => {
+			onOk: async selectedName => {
 				data = data.filter(item => item.name !== selectedName);
 				await Filer.fs.promises.writeFile("//apps/system/settings.tapp/wisp-servers.json", JSON.stringify(data));
 				document.querySelector(`.srv-${selectedName.replace(/\s/g, "-")}`).remove();
