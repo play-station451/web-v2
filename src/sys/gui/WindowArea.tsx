@@ -334,7 +334,6 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 	};
 	useEffect(() => {
 		const snap = () => {
-			console.log("kongsole");
 			setIsMouseDown(false);
 			setIsDragging(false);
 			if (windowRef.current) {
@@ -349,9 +348,7 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 					windowRef.current.style.height = "100%";
 					windowRef.current.style.top = "0";
 				} else if (snapRegion === "top") {
-					if (maximized === false && isDragging === true) {
-						setMaximized(true);
-					}
+					setMaximized(true);
 				} else if (snapRegion === "top-left") {
 					windowRef.current.style.left = "0";
 					windowRef.current.style.top = "0";
@@ -1164,7 +1161,6 @@ const DesktopItems = () => {
 			if (itemIndex !== -1) {
 				const currentLeft = desktopConfig[itemIndex].position.left;
 				const currentTop = desktopConfig[itemIndex].position.top;
-				// console.log(currentLeft, currentTop, left, top) debuging moment
 				if ((Math.abs(Math.round(currentLeft) - Math.round(left)) > 67 || Math.abs(Math.round(currentTop) - Math.round(top)) > 67) && (Math.round(currentLeft) !== Math.round(left) || Math.round(currentTop) !== Math.round(top))) {
 					desktopConfig[itemIndex].position.left = Math.round(left);
 					desktopConfig[itemIndex].position.top = Math.round(top);

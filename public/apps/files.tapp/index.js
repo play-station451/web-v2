@@ -415,6 +415,7 @@ const showStorageDevices = () => {
 	};
 	getdav();
 	exp.appendChild(sd_items);
+	document.querySelector(".drive-modal").style.display = "none";
 	const dirInput = document.querySelector(".nav-input.dir");
 	dirInput.value = "storage devices";
 };
@@ -1643,7 +1644,6 @@ const openPath = async path => {
 	}
 	if (path === "storage devices") {
 		showStorageDevices();
-		document.querySelector(".drive-modal").style.display = "flex";
 		return;
 	}
 	if (path === "local storage") {
