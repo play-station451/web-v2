@@ -4,6 +4,7 @@ import { unzipSync } from "fflate";
 import { libcurl } from "libcurl.js/bundled";
 import { dirExists } from "./sys/types";
 import { hash } from "./hash.json";
+import apps from "./apps.json";
 
 export default function Recovery() {
 	const [selected, setSelected] = useState(0);
@@ -67,6 +68,55 @@ export default function Recovery() {
 		setShowCursor(false);
 		await unzip("//uploaded.zip", "//");
 		await Filer.fs.promises.mkdir("/system/tmp/");
+		// @ts-expect-error types
+		await new Filer.fs.Shell().promises.rm("/home/Guest/desktop/", { recursive: true });
+		await Filer.fs.promises.mkdir("/home/Guest/desktop/");
+		let r2 = [];
+		let sysapps: { name: string; config: string; user: string }[] = [];
+		let items: { name: string; item: string; position: { custom: boolean; top: number; left: number } }[] = [];
+		for (let i = 0; i < apps.length; i++) {
+			const app = apps[i];
+			const name = app.name.toLowerCase();
+			var topPos: number = 0;
+			var leftPos: number = 0;
+			if (i % 12 === 0) {
+				topPos = 0;
+			} else {
+				topPos = i % 12;
+			}
+			if (i < 12) {
+				leftPos = 0;
+			} else {
+				leftPos = 1;
+			}
+			if (topPos * 66 > window.innerHeight - 130) {
+				leftPos = 1.15;
+				if (r2.length === 0) {
+					topPos = 0;
+				} else {
+					topPos = r2.length % 12;
+				}
+				r2.push({
+					name: app.name,
+				});
+			}
+			items.push({
+				name: app.name,
+				item: `/home/Guest/desktop/${name}.lnk`,
+				position: {
+					custom: false,
+					top: topPos,
+					left: leftPos,
+				},
+			});
+			sysapps.push({
+				name: app.name,
+				config: `/apps/system/${name}.tapp/index.json`,
+				user: "System",
+			});
+			await Filer.fs.promises.writeFile(`/home/Guest/desktop/.desktop.json`, JSON.stringify(items));
+			await Filer.fs.promises.symlink(`/apps/system/${name}.tapp/index.json`, `/home/Guest/desktop/${name}.lnk`);
+		}
 		statusref.current!.innerText = "Cleaning up...";
 		setProgress(85);
 		await Filer.fs.promises.unlink("//uploaded.zip");
@@ -90,6 +140,7 @@ export default function Recovery() {
 			if (target && target.files) {
 				const file = target.files[0];
 				const content = await file.arrayBuffer();
+				setProgress(10);
 				if (await dirExists("/system/")) {
 					// @ts-expect-error types
 					await new Filer.fs.Shell().promises.rm("/system/", { recursive: true });
@@ -102,13 +153,69 @@ export default function Recovery() {
 					// @ts-expect-error types
 					await new Filer.fs.Shell().promises.rm("/home/", { recursive: true });
 				}
+				setProgress(25);
 				await Filer.fs.promises.writeFile("//uploaded.zip", Filer.Buffer.from(content));
+				setProgress(35);
 				setShowCursor(false);
 				main.current!.classList.remove("flex");
 				main.current!.classList.add("hidden");
 				progresscheck.current!.classList.remove("hidden");
 				progresscheck.current!.classList.add("flex");
 				await unzip("//uploaded.zip", "//");
+				setProgress(72);
+				const users = await Filer.fs.promises.readdir("/home/");
+				for (const user of users) {
+					// note from XSTARS, this is a workaround that fixes the stupid symlink bug but it fucks over people with custom symlinks so be aware of that
+					// @ts-expect-error types
+					await new Filer.fs.Shell().promises.rm(`/home/${user}/desktop/`, { recursive: true });
+					await Filer.fs.promises.mkdir(`/home/${user}/desktop/`);
+					let r2 = [];
+					let sysapps: { name: string; config: string; user: string }[] = [];
+					let items: { name: string; item: string; position: { custom: boolean; top: number; left: number } }[] = [];
+					for (let i = 0; i < apps.length; i++) {
+						const app = apps[i];
+						const name = app.name.toLowerCase();
+						var topPos: number = 0;
+						var leftPos: number = 0;
+						if (i % 12 === 0) {
+							topPos = 0;
+						} else {
+							topPos = i % 12;
+						}
+						if (i < 12) {
+							leftPos = 0;
+						} else {
+							leftPos = 1;
+						}
+						if (topPos * 66 > window.innerHeight - 130) {
+							leftPos = 1.15;
+							if (r2.length === 0) {
+								topPos = 0;
+							} else {
+								topPos = r2.length % 12;
+							}
+							r2.push({
+								name: app.name,
+							});
+						}
+						items.push({
+							name: app.name,
+							item: `/home/${user}/desktop/${name}.lnk`,
+							position: {
+								custom: false,
+								top: topPos,
+								left: leftPos,
+							},
+						});
+						sysapps.push({
+							name: app.name,
+							config: `/apps/system/${name}.tapp/index.json`,
+							user: "System",
+						});
+						await Filer.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(items));
+						await Filer.fs.promises.symlink(`/apps/system/${name}.tapp/index.json`, `/home/${user}/desktop/${name}.lnk`);
+					}
+				}
 				await Filer.fs.promises.mkdir("/system/tmp/");
 				statusref.current!.innerText = "Cleaning up...";
 				setProgress(85);
