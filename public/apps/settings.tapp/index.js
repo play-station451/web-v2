@@ -180,7 +180,7 @@ async function getWispSrvs() {
 		let settdata = JSON.parse(settings);
 
 		const card = document.createElement("div");
-		card.classList.add("flex", "justify-between", "w-full", "p-1.5", "rounded-lg", "duration-150");
+		card.classList.add("flex", "justify-between", "w-full", "p-1.5", "rounded-lg", "duration-150", `srv-${id.replace(/\s/g, "-")}`);
 		if (name === settdata.wispServer) {
 			card.classList.add("bg-[#4acd609c]");
 		} else {
@@ -198,14 +198,14 @@ async function getWispSrvs() {
                         <span class="text-xs leading-tight">${name}</span>
                     </div>
                 </div>
-                <p latency class="text-sm p-2 bg-[#ffffff38] rounded-lg leading-none text-[#ffffffce] font-extrabold">Pinging...</p>
+                <p latency-${id.replace(/\s/g, "-")} class="text-sm p-2 bg-[#ffffff38] rounded-lg leading-none text-[#ffffffce] font-extrabold ">Pinging...</p>
             </div>
         `;
 
 		card.innerHTML = html;
 		setTimeout(async () => {
 			const res = await ping(name);
-			document.querySelector(`[latency]`).innerHTML = res.latency + "ms";
+			document.querySelector(`[latency-${id.replace(/\s/g, "-")}]`).innerHTML = res.latency + "ms";
 		}, 1750);
 
 		card.addEventListener("click", async () => {
@@ -265,6 +265,24 @@ async function getWispSrvs() {
 						makeCard(val, sessionStorage.getItem("wispSrv"));
 					},
 				});
+			},
+		});
+	});
+	const rmWispbtn = document.getElementById("rmWisp");
+	rmWispbtn.addEventListener("click", async () => {
+		let data = JSON.parse(await Filer.fs.promises.readFile("//apps/system/settings.tapp/wisp-servers.json"));
+		const servers = data.map(item => ({
+			text: item.name,
+			value: item.name
+		}));
+		window.parent.tb.dialog.Select({
+			title: "Select the Wisp server to remove",
+			options: servers,
+			onOk: async (selectedName) => {
+				data = data.filter(item => item.name !== selectedName);
+				await Filer.fs.promises.writeFile("//apps/system/settings.tapp/wisp-servers.json", JSON.stringify(data));
+				document.querySelector(`.srv-${selectedName.replace(/\s/g, "-")}`).remove();
+				window.parent.window.dispatchEvent(new Event("update-wispsrvs"));
 			},
 		});
 	});
