@@ -371,8 +371,9 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 					windowRef.current.style.height = "50%";
 				} else {
 					if (originalSize.current) {
-						windowRef.current.style.width = `${originalSize.current.width}px`;
-						windowRef.current.style.height = `${originalSize.current.height}px`;
+						// Note from XSTARS, This is disabled until I can fix it in a few days
+						//windowRef.current.style.width = `${originalSize.current.width}px`;
+						//windowRef.current.style.height = `${originalSize.current.height}px`;
 					} else if (isResizing === false && isDragging) {
 						windowRef.current.style.left = `${x}`;
 						windowRef.current.style.width = `${width}`;

@@ -330,6 +330,7 @@ export async function init() {
 			"utf8",
 		);
 		await Filer.promises.writeFile(`/apps/user/${user}/terminal/info.json`, JSON.stringify({}));
+		await Filer.promises.mkdir(`/apps/user/${user}/app store/`);
 		await Filer.promises.writeFile(
 			`/apps/user/${user}/app store/repos.json`,
 			JSON.stringify([
