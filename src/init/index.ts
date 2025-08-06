@@ -330,6 +330,19 @@ export async function init() {
 			"utf8",
 		);
 		await Filer.promises.writeFile(`/apps/user/${user}/terminal/info.json`, JSON.stringify({}));
+		await Filer.promises.writeFile(
+			`/apps/user/${user}/app store/repos.json`,
+			JSON.stringify([
+				{
+					name: "TB App Repo",
+					url: "https://raw.githubusercontent.com/TerbiumOS/tb-repo/refs/heads/main/manifest.json",
+				},
+				{
+					name: "XSTARS XTRAS",
+					url: "https://raw.githubusercontent.com/Notplayingallday383/app-repo/refs/heads/main/manifest.json",
+				},
+			]),
+		);
 	}
 	return true;
 }

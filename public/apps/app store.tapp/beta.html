@@ -15,73 +15,51 @@
             font-weight: bold;
         }
 
-        .sidebar::-webkit-scrollbar {
+        ::-webkit-scrollbar {
 	        width: 8px;
+	        height: 100%;
         }
 
-        .sidebar::-webkit-scrollbar-track {
-	        background-color: transparent;
-        }
-
-        .sidebar::-webkit-scrollbar-thumb {
-	        background-color: #ffffff30;
+        ::-webkit-scrollbar-thumb {
+	        background-color: #ffffff28;
 	        border-radius: 8px;
-    	    border: 2px solid transparent;
+        }
+
+        ::-webkit-scrollbar-track {
+	        background-color: #ffffff10;
+	        border-radius: 8px;
         }
     </style>
     <script src="/assets/libs/filer.min.js"></script>
     <script src="/assets/libs/tailwind.min.js"></script>
+    <script src="./beta.js"></script>
 </head>
     <body>
-        <div class="fixed top-[5px] left-[5px] h-[calc(100vh-10px)] w-[200px] bg-[#00000022] rounded-lg flex flex-col gap-[7px] p-2">
-            <div class="repo-card flex flex-row items-center bg-[#00000032] rounded-lg h-[50px] p-1 gap-1">
-                <img src="/tb.svg" alt="Featured App" class="w-[32px] h-[32px] rounded-[12px] object-cover" />
-                <h3 class="text-white text-base font-black">TB App Repo</h3>
-                <svg class="flex-1" width="20" height="20" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="16" cy="16" r="16" fill="#5DD881"/>
-                </svg>
+        <div class="fixed top-[5px] left-[5px] h-[calc(100vh-20px)] w-[200px] bg-[#00000022] rounded-lg flex flex-col gap-[7px] p-2">
+            <div class="flex flex-col h-full">
+                <div class="flex flex-col gap-[7px] flex-1 repo-list overflow-y-auto"></div>
+                <div class="repo-card flex flex-row items-center bg-[#00000032] rounded-lg h-[50px] p-1 gap-1 mt-auto">
+                    <h3 class="text-white text-base font-black">Add Repo</h3>
+                </div>
             </div>
         </div>
         <div class="main flex flex-col items-center absolute left-[215px] top-0 right-0 h-full gap-1">
             <h1 class="font-black text-3xl">Featured App of the Day</h1>
-            <div class="featured flex w-[97%] h-[175px] bg-[#00000032] rounded-lg p-2 items-center gap-6 relative bg-[url('/tb.svg')] bg-no-repeat bg-center">
+            <div class="featured flex w-[97%] h-[175px] bg-[#00000032] rounded-[22px] p-2 items-center gap-6 relative bg-no-repeat bg-center">
                 <div class="info flex flex-col justify-end text-white absolute left-6 bottom-6">
-                    <h3 class="text-2xl font-bold mb-2">GeekBar Pulse</h3>
-                    <h4 class="text-[16px] mb-1 text-[#ffffff75]">Version 69.420</h4>
-                    <h4 class="text-[16px] text-[#ffffff75]">By TerbiumOS Development</h4>
+                    <h3 class="text-2xl font-bold mb-2">Loading...</h3>
+                    <h4 class="text-[16px] mb-1 text-[#ffffff75]">Loading...</h4>
+                    <h4 class="text-[16px] text-[#ffffff75]">Loading...</h4>
+                </div>
+                <div class="info flex flex-col justify-end text-white absolute right-6 bottom-6">
+                    <button class="bg-[#5DD881] text-black rounded-lg p-1.5">Install</button>
                 </div>
             </div>
             <h1 class="font-black text-3xl">All Apps</h1>
-            <div class="flex-col all-apps grid grid-cols-4 gap-1.5 w-full max-w-[100%] ml-[-10px]">
-                <div class="app-card w-[100%] h-[100px] bg-[#00000032] rounded-[12px] flex flex-col items-center justify-center">
-                    <img src="/tb.svg" alt="App Icon" class="w-[50px] h-[50px] rounded-[12px] mb-4 object-cover" />
-                    <span class="text-white text-lg font-bold">App 1</span>
-                </div>
-                <div class="app-card w-[100%] h-[100px] bg-[#00000032] rounded-[12px] flex flex-col items-center justify-center">
-                    <img src="/tb.svg" alt="App Icon" class="w-[50px] h-[50px] rounded-[12px] mb-4 object-cover" />
-                    <span class="text-white text-lg font-bold">App 2</span>
-                </div>
-                <div class="app-card w-[100%] h-[100px] bg-[#00000032] rounded-[12px] flex flex-col items-center justify-center">
-                    <img src="/tb.svg" alt="App Icon" class="w-[50px] h-[50px] rounded-[12px] mb-4 object-cover" />
-                    <span class="text-white text-lg font-bold">App 3</span>
-                </div>
-                <div class="app-card w-[100%] h-[100px] bg-[#00000032] rounded-[12px] flex flex-col items-center justify-center">
-                    <img src="/tb.svg" alt="App Icon" class="w-[50px] h-[50px] rounded-[12px] mb-4 object-cover" />
-                    <span class="text-white text-lg font-bold">App 4</span>
-                </div>
-                <div class="app-card w-[100%] h-[100px] bg-[#00000032] rounded-[12px] flex flex-col items-center justify-center">
-                    <img src="/tb.svg" alt="App Icon" class="w-[50px] h-[50px] rounded-[12px] mb-4 object-cover" />
-                    <span class="text-white text-lg font-bold">App 5</span>
-                </div>
-                <div class="app-card w-[100%] h-[100px] bg-[#00000032] rounded-[12px] flex flex-col items-center justify-center">
-                    <img src="/tb.svg" alt="App Icon" class="w-[50px] h-[50px] rounded-[12px] mb-4 object-cover" />
-                    <span class="text-white text-lg font-bold">App 6</span>
-                </div>
-                <div class="app-card w-[100%] h-[100px] bg-[#00000032] rounded-[12px] flex flex-col items-center justify-center">
-                    <img src="/tb.svg" alt="App Icon" class="w-[50px] h-[50px] rounded-[12px] mb-4 object-cover" />
-                    <span class="text-white text-lg font-bold">App 7</span>
-                </div>
+            <div class="apps-list flex-col all-apps grid grid-cols-4 gap-1.5 w-full max-h-[45%] ml-[-10px] overflow-y-auto">
             </div>
+        </div>
+        <div class="app-prev hidden flex-col absolute left-[215px] top-0 right-0 h-full gap-1 overflow-y-auto">
         </div>
     </body>
 </html>

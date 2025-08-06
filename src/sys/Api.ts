@@ -744,7 +744,7 @@ export default async function Api() {
 		},
 		libcurl: libcurl,
 		fflate: fflate,
-		fs: Filer,
+		fs: Filer.fs,
 		node: {
 			webContainer: {},
 			servers: new Map<number, string>(),

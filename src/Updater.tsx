@@ -238,6 +238,23 @@ export default function Updater() {
 				await Filer.fs.promises.writeFile("/apps/installed.json", JSON.stringify(insapps));
 				await Filer.fs.promises.writeFile("/system/var/terbium/recent.json", JSON.stringify([]));
 			}
+			// v2.1-beta update
+			if (!(await fileExists(`/apps/user/${user}/app store/repos.json`))) {
+				await Filer.fs.promises.mkdir(`/apps/user/${user}/app store/`);
+				await Filer.fs.promises.writeFile(
+					`/apps/user/${user}/app store/repos.json`,
+					JSON.stringify([
+						{
+							name: "TB App Repo",
+							url: "https://raw.githubusercontent.com/TerbiumOS/tb-repo/refs/heads/main/manifest.json",
+						},
+						{
+							name: "XSTARS XTRAS",
+							url: "https://raw.githubusercontent.com/Notplayingallday383/app-repo/refs/heads/main/manifest.json",
+						},
+					]),
+				);
+			}
 			if (!(await fileExists(`/apps/user/${user}/browser/favorites.json`))) {
 				await Filer.fs.promises.mkdir(`/apps/user/${user}/browser/`);
 				await Filer.fs.promises.writeFile(`/apps/user/${user}/browser/favorites.json`, JSON.stringify([]));

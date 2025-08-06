@@ -488,7 +488,7 @@ export interface COM {
 	};
 	libcurl: Libcurl;
 	fflate: any;
-	fs: FilerType;
+	fs: FilerFS;
 	crypto(pass: string, file: string): Promise<string>;
 	platform: {
 		getPlatform(): Promise<"desktop" | "mobile">;
