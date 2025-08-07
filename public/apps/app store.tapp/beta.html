@@ -9,6 +9,9 @@
 	        font-family: Inter;
 	        src: url("/fonts/Inter.ttf");
         }
+        html, body {
+            height: 100%;
+        }
         body {
             color: #fff;
             font-family: Inter;
@@ -38,14 +41,14 @@
         <div class="fixed top-[5px] left-[5px] h-[calc(100vh-20px)] w-[200px] bg-[#00000022] rounded-lg flex flex-col gap-[7px] p-2">
             <div class="flex flex-col h-full">
                 <div class="flex flex-col gap-[7px] flex-1 repo-list overflow-y-auto"></div>
-                <div class="repo-card flex flex-row items-center bg-[#00000032] rounded-lg h-[50px] p-1 gap-1 mt-auto">
+                <div class="repo-card flex flex-row items-center bg-[#00000032] rounded-lg h-[50px] p-1 gap-1 mt-auto" onClick="addRepo()">
                     <h3 class="text-white text-base font-black">Add Repo</h3>
                 </div>
             </div>
         </div>
-        <div class="main flex flex-col items-center absolute left-[215px] top-0 right-0 h-full gap-1">
+        <div class="main flex flex-col items-center absolute left-[215px] top-0 right-0 min-h-screen gap-1">
             <h1 class="font-black text-3xl">Featured App of the Day</h1>
-            <div class="featured flex w-[97%] h-[175px] bg-[#00000032] rounded-[22px] p-2 items-center gap-6 relative bg-no-repeat bg-center">
+            <div class="featured flex w-[97%] bg-[#00000032] rounded-[22px] p-2 items-center gap-6 relative bg-no-repeat bg-center bg-cover" style="height:175px;">
                 <div class="info flex flex-col justify-end text-white absolute left-6 bottom-6">
                     <h3 class="text-2xl font-bold mb-2">Loading...</h3>
                     <h4 class="text-[16px] mb-1 text-[#ffffff75]">Loading...</h4>
@@ -55,8 +58,13 @@
                     <button class="bg-[#5DD881] text-black rounded-lg p-1.5">Install</button>
                 </div>
             </div>
-            <h1 class="font-black text-3xl">All Apps</h1>
-            <div class="apps-list flex-col all-apps grid grid-cols-4 gap-1.5 w-full max-h-[45%] ml-[-10px] overflow-y-auto">
+            <div class="flex flex-row justify-center items-center w-full my-4">
+                <div class="app-togg bg-[#5DD88122] text-white font-black p-1 px-6 rounded-[22px] mr-2" onclick="view('apps')">Apps</div>
+                <div class="pwa-togg bg-[#00000022] text-white font-black p-1 px-6 rounded-[22px] ml-2" onclick="view('pwa')">PWAs</div>
+            </div>
+            <div class="apps-list flex-col all-apps grid grid-cols-4 gap-1.5 w-full h-full ml-[-10px] overflow-y-auto">
+            </div>
+            <div class="pwa-list hidden flex-col all-apps grid-cols-4 gap-1.5 w-full h-full ml-[-10px] overflow-y-auto">
             </div>
         </div>
         <div class="app-prev hidden flex-col absolute left-[215px] top-0 right-0 h-full gap-1 overflow-y-auto">

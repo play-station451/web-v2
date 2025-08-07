@@ -252,6 +252,10 @@ export default function Updater() {
 							name: "XSTARS XTRAS",
 							url: "https://raw.githubusercontent.com/Notplayingallday383/app-repo/refs/heads/main/manifest.json",
 						},
+						{
+							name: "Anura App Repo",
+							url: "https://raw.githubusercontent.com/MercuryWorkshop/anura-repo/refs/heads/master/manifest.json",
+						},
 					]),
 				);
 			}
