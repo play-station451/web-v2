@@ -1,4 +1,5 @@
 let currRepo;
+let viewType = "apps";
 /**
  * Loads the repos content
  * @param {string} url
@@ -56,11 +57,11 @@ async function loadRepo(url) {
 					const icnurl1 = URL.createObjectURL(blob1);
 					const displayName = app.name && app.name.length > 10 ? app.name.slice(0, 10) + "..." : app.name || "Unknown";
 					const cardHtml = `
-					<div class="app-card w-[100%] h-[105px] bg-[#00000032] rounded-[12px] flex flex-col items-center justify-center" data-app-index="${data.apps.indexOf(app)}">
-						<img src="${icnurl1 || "/tb.svg"}" alt="App Icon" class="w-[50px] h-[50px] rounded-[12px] mb-4 object-cover" />
-						<span class="text-white text-lg font-bold">${displayName}</span>
-					</div>
-				`;
+						<div class="app-card w-[100%] h-[105px] bg-[#00000032] rounded-[12px] flex flex-col items-center justify-center" data-app-index="${data.apps.indexOf(app)}">
+							<img src="${icnurl1 || "/tb.svg"}" alt="App Icon" class="w-[50px] h-[50px] rounded-[12px] mb-4 object-cover" />
+							<span class="text-white text-lg font-bold">${displayName}</span>
+						</div>
+					`;
 					return { html: cardHtml, hasWmArgs: !!app.wmArgs };
 				}),
 			);
@@ -105,11 +106,11 @@ async function loadRepo(url) {
 					const icnurl1 = URL.createObjectURL(blob1);
 					const displayName = app.name && app.name.length > 10 ? app.name.slice(0, 10) + "..." : app.name || "Unknown";
 					const cardHtml = `
-					<div class="app-card w-[100%] h-[105px] bg-[#00000032] rounded-[12px] flex flex-col items-center justify-center" data-app-index="${data.apps.indexOf(app)}">
-						<img src="${icnurl1 || "/tb.svg"}" alt="App Icon" class="w-[50px] h-[50px] rounded-[12px] mb-4 object-cover" />
-						<span class="text-white text-lg font-bold">${displayName}</span>
-					</div>
-				`;
+						<div class="app-card w-[100%] h-[105px] bg-[#00000032] rounded-[12px] flex flex-col items-center justify-center" data-app-index="${data.apps.indexOf(app)}">
+							<img src="${icnurl1 || "/tb.svg"}" alt="App Icon" class="w-[50px] h-[50px] rounded-[12px] mb-4 object-cover" />
+							<span class="text-white text-lg font-bold">${displayName}</span>
+						</div>
+					`;
 					return { html: cardHtml, hasWmArgs: !!app.wmArgs };
 				}),
 			);
@@ -154,11 +155,13 @@ async function loadApp(app, type) {
 	}
 	switch (type) {
 		case "Terbium":
+		case "tb-PWA":
 			const icn1 = await window.parent.tb.libcurl.fetch(app.icon);
 			const blob1 = await icn1.blob();
 			icnUrl = URL.createObjectURL(blob1);
 			break;
 		case "Anura":
+		case "tb-liq":
 			const icn2 = await window.parent.tb.libcurl.fetch(`${currRepo.url.replace("manifest.json", "")}/apps/${app.package}/${app.icon}`);
 			const blob2 = await icn2.blob();
 			icnUrl = URL.createObjectURL(blob2);
@@ -268,15 +271,38 @@ async function loadRepos() {
 		const repoinfo = await window.parent.tb.libcurl.fetch(repo.url);
 		if (!repoinfo.ok) {
 			const displayName = repo.name && repo.name.length > 8 ? repo.name.slice(0, 8) + "..." : repo.name || "Unknown";
-			repoList.innerHTML += `
-				<div class="repo-card flex flex-row items-center bg-[#00000032] rounded-lg h-[50px] p-1 gap-1" onclick="loadRepo('${repo.url}')">
-					<img src="/tb.svg" alt="Featured App" class="w-[32px] h-[32px] rounded-[12px] object-cover" />
-					<h3 class="text-white text-base font-black">${displayName}</h3>
-					<svg class="flex-1" width="20" height="20" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-						<circle cx="16" cy="16" r="16" fill="#D8645D"/>
-					</svg>
-				</div>
+			const repoCard = document.createElement("div");
+			repoCard.className = "repo-card flex flex-row items-center bg-[#00000032] rounded-lg h-[50px] p-1 gap-1";
+			repoCard.onclick = () => loadRepo(repo.url);
+			repoCard.innerHTML = `
+				<img src="/tb.svg" alt="Featured App" class="w-[32px] h-[32px] rounded-[12px] object-cover" />
+				<h3 class="text-white text-base font-black">${displayName}</h3>
+				<svg class="flex-1" width="20" height="20" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<circle cx="16" cy="16" r="16" fill="#D8645D"/>
+				</svg>
 			`;
+			repoCard.addEventListener("contextmenu", function (e) {
+				e.preventDefault();
+				window.parent.tb.contextmenu.create({
+					x: e.clientX + 100,
+					y: e.clientY + 275,
+					options: [
+						{ text: "Load Repo", click: () => loadRepo(repo.url) },
+						{
+							text: "Remove Repo",
+							click: () => {
+								repoList.removeChild(repoCard);
+								const index = repos.findIndex(r => r.url === repo.url);
+								if (index !== -1) {
+									repos.splice(index, 1);
+								}
+								window.parent.tb.fs.promises.writeFile(`/apps/user/${sessionStorage.getItem("currAcc")}/app store/repos.json`, JSON.stringify(repos, null, 2));
+							},
+						},
+					],
+				});
+			});
+			repoList.appendChild(repoCard);
 			continue;
 		}
 		const data = await repoinfo.json();
@@ -285,15 +311,38 @@ async function loadRepos() {
 			const blob = await icn.blob();
 			const icnurl = URL.createObjectURL(blob);
 			const displayName = data.name && data.name.length > 8 ? data.name.slice(0, 8) + "..." : data.name || "Unknown";
-			repoList.innerHTML += `
-				<div class="repo-card flex flex-row items-center bg-[#00000032] rounded-lg h-[50px] p-1 gap-1" onclick="loadRepo('${repo.url}')">
-	                <img src="${icnurl || "/tb.svg"}" alt="Featured App" class="w-[32px] h-[32px] rounded-[12px] object-cover" />
-    	            <h3 class="text-white text-base font-black">${displayName}</h3>
-        	        <svg class="flex-1" width="20" height="20" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-            	        <circle cx="16" cy="16" r="16" fill="#5DD881"/>
-                	</svg>
-            	</div>
+			const repoCard = document.createElement("div");
+			repoCard.className = "repo-card flex flex-row items-center bg-[#00000032] rounded-lg h-[50px] p-1 gap-1";
+			repoCard.onclick = () => loadRepo(repo.url);
+			repoCard.innerHTML = `
+				<img src="${icnurl || "/tb.svg"}" alt="Featured App" class="w-[32px] h-[32px] rounded-[12px] object-cover" />
+				<h3 class="text-white text-base font-black">${displayName}</h3>
+				<svg class="flex-1" width="20" height="20" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<circle cx="16" cy="16" r="16" fill="#5DD881"/>
+				</svg>
 			`;
+			repoCard.addEventListener("contextmenu", function (e) {
+				e.preventDefault();
+				window.parent.tb.contextmenu.create({
+					x: e.clientX + 100,
+					y: e.clientY + 275,
+					options: [
+						{ text: "Load Repo", click: () => loadRepo(repo.url) },
+						{
+							text: "Remove Repo",
+							click: () => {
+								repoList.removeChild(repoCard);
+								const index = repos.findIndex(r => r.url === repo.url);
+								if (index !== -1) {
+									repos.splice(index, 1);
+								}
+								window.parent.tb.fs.promises.writeFile(`/apps/user/${sessionStorage.getItem("currAcc")}/app store/repos.json`, JSON.stringify(repos, null, 2));
+							},
+						},
+					],
+				});
+			});
+			repoList.appendChild(repoCard);
 		} else if (data.title) {
 			throw new Error("Xen repo not implemented yet.");
 		} else {
@@ -301,15 +350,38 @@ async function loadRepos() {
 			const blob = await icn.blob();
 			const icnurl = URL.createObjectURL(blob);
 			const displayName = data.repo.name && data.repo.name.length > 8 ? data.repo.name.slice(0, 8) + "..." : data.repo.name || "Unknown";
-			repoList.innerHTML += `
-			<div class="repo-card flex flex-row items-center bg-[#00000032] rounded-lg h-[50px] p-1 gap-1" onclick="loadRepo('${repo.url}')">
-                <img src="${icnurl || "/tb.svg"}" alt="Featured App" class="w-[32px] h-[32px] rounded-[12px] object-cover" />
-                <h3 class="text-white text-base font-black">${displayName}</h3>
-                <svg class="flex-1" width="20" height="20" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="16" cy="16" r="16" fill="#5DD881"/>
-                </svg>
-            </div>
-		`;
+			const repoCard = document.createElement("div");
+			repoCard.className = "repo-card flex flex-row items-center bg-[#00000032] rounded-lg h-[50px] p-1 gap-1";
+			repoCard.onclick = () => loadRepo(repo.url);
+			repoCard.innerHTML = `
+				<img src="${icnurl || "/tb.svg"}" alt="Featured App" class="w-[32px] h-[32px] rounded-[12px] object-cover" />
+				<h3 class="text-white text-base font-black">${displayName}</h3>
+				<svg class="flex-1" width="20" height="20" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<circle cx="16" cy="16" r="16" fill="#5DD881"/>
+				</svg>
+			`;
+			repoCard.addEventListener("contextmenu", function (e) {
+				e.preventDefault();
+				window.parent.tb.contextmenu.create({
+					x: e.clientX + 100,
+					y: e.clientY + 275,
+					options: [
+						{ text: "Load Repo", click: () => loadRepo(repo.url) },
+						{
+							text: "Remove Repo",
+							click: () => {
+								repoList.removeChild(repoCard);
+								const index = repos.findIndex(r => r.url === repo.url);
+								if (index !== -1) {
+									repos.splice(index, 1);
+								}
+								window.parent.tb.fs.promises.writeFile(`/apps/user/${sessionStorage.getItem("currAcc")}/app store/repos.json`, JSON.stringify(repos, null, 2));
+							},
+						},
+					],
+				});
+			});
+			repoList.appendChild(repoCard);
 		}
 	}
 }
@@ -320,6 +392,7 @@ async function loadRepos() {
  */
 function view(type) {
 	if (type === "apps") {
+		viewType = "apps";
 		document.querySelector(".apps-list").classList.remove("hidden");
 		document.querySelector(".pwa-list").classList.add("hidden");
 		document.querySelector(".apps-list").classList.remove("flex");
@@ -331,6 +404,7 @@ function view(type) {
 		document.querySelector(".pwa-togg").classList.remove("bg-[#5DD88122]");
 		document.querySelector(".pwa-togg").classList.add("bg-[#00000022]");
 	} else if (type === "pwa") {
+		viewType = "pwa";
 		document.querySelector(".pwa-list").classList.remove("hidden");
 		document.querySelector(".apps-list").classList.add("hidden");
 		document.querySelector(".pwa-list").classList.remove("flex");
@@ -387,6 +461,34 @@ async function addRepo() {
 			loadRepos();
 		},
 	});
+}
+
+/**
+ * Searches for the apps that are loaded in
+ * @param {string} input - The search input
+ */
+async function search(input) {
+	if (viewType === "apps") {
+		const applist = document.querySelector(".apps-list");
+		applist.querySelectorAll(".app-card").forEach(card => {
+			const appName = card.querySelector("span").textContent.toLowerCase();
+			if (appName.includes(input.toLowerCase())) {
+				card.classList.remove("hidden");
+			} else {
+				card.classList.add("hidden");
+			}
+		});
+	} else {
+		const pwaList = document.querySelector(".pwa-list");
+		pwaList.querySelectorAll(".app-card").forEach(card => {
+			const appName = card.querySelector("span").textContent.toLowerCase();
+			if (appName.includes(input.toLowerCase())) {
+				card.classList.remove("hidden");
+			} else {
+				card.classList.add("hidden");
+			}
+		});
+	}
 }
 
 /**
@@ -748,4 +850,11 @@ const dirExists = async path => {
 window.addEventListener("load", async () => {
 	await loadRepo("https://raw.githubusercontent.com/TerbiumOS/tb-repo/refs/heads/main/manifest.json");
 	loadRepos();
+	window.parent.document.querySelector(".app-search").addEventListener("input", e => {
+		search(e.target.value);
+	});
+});
+
+window.addEventListener("contextmenu", e => {
+	e.preventDefault();
 });
