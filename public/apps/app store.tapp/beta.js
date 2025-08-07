@@ -143,26 +143,20 @@ async function loadApp(app, type) {
 	document.querySelector(".main").classList.add("hidden");
 	let icnUrl;
 	let isInstalled = false;
+	const installedApps = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/installed.json`, "utf8"));
+	if (installedApps.some(a => a.name === app.name)) {
+		isInstalled = true;
+	}
+	if (app.wmArgs) {
+		type = "tb-PWA";
+	} else if ("anura-pkg" in app) {
+		type = "tb-liq";
+	}
 	switch (type) {
 		case "Terbium":
 			const icn1 = await window.parent.tb.libcurl.fetch(app.icon);
 			const blob1 = await icn1.blob();
 			icnUrl = URL.createObjectURL(blob1);
-			const web_apps = JSON.parse(await window.parent.tb.fs.promises.readFile("/apps/web_apps.json", "utf8"));
-			const sysInstalled = await window.parent.tb.fs.promises.readdir("/apps/system");
-			const userInstalled = await window.parent.tb.fs.promises.readdir(`/apps/user/${sessionStorage.getItem("currAcc")}/`);
-			if (web_apps[app.name]) {
-				isInstalled = true;
-			} else if (sysInstalled.includes(`${app.name}.tapp`)) {
-				isInstalled = true;
-			} else if (userInstalled.includes(`${app.name}.tapp`)) {
-				isInstalled = true;
-			}
-			if (app.wmArgs) {
-				type = "tb-PWA";
-			} else if ("anura-pkg" in app) {
-				type = "tb-liq";
-			}
 			break;
 		case "Anura":
 			const icn2 = await window.parent.tb.libcurl.fetch(`${currRepo.url.replace("manifest.json", "")}/apps/${app.package}/${app.icon}`);
@@ -172,7 +166,6 @@ async function loadApp(app, type) {
 		case "Xen":
 			break;
 	}
-	window.toInstall = app;
 	document.querySelector(".app-prev").innerHTML = `
 		<h1 class="font-black text-3xl" onclick="document.querySelector('.app-prev').classList.remove('flex'); document.querySelector('.app-prev').classList.add('hidden'); document.querySelector('.main').classList.remove('hidden'); document.querySelector('.main').classList.add('flex');">${typeof currRepo === "object" ? currRepo.name : currRepo} → ${app.name}</h1>
 		<div class="featured flex w-[97%] h-[175px] bg-[#00000032] rounded-[22px] p-2 items-center gap-6 relative bg-no-repeat bg-[url('${icnUrl || "/tb.svg"}')] bg-center bg-cover">
@@ -231,24 +224,37 @@ async function loadApp(app, type) {
 		</div>
 	`;
 
-	if (!isInstalled) {
+	const addBtns = () => {
 		const installBtn = document.querySelector(".ins-btn");
-		installBtn.addEventListener("click", async function () {
-			installBtn.disabled = true;
-			installBtn.textContent = "Installing...";
-			installBtn.classList.remove("bg-[#5DD881]", "text-black");
-			installBtn.classList.add("bg-[#4d4d4d]", "text-white");
-			const success = await install(type);
-			if (success) {
-				installBtn.outerHTML = `<button class="uns-btn bg-[#4d4d4d] text-white rounded-lg p-1.5" onclick="uninstall('${type}')">Uninstall</button>`;
-			} else {
-				installBtn.disabled = false;
-				installBtn.textContent = "Install";
-				installBtn.classList.remove("bg-[#4d4d4d]", "text-white");
-				installBtn.classList.add("bg-[#5DD881]", "text-black");
-			}
-		});
-	}
+		const unsBtn = document.querySelector(".uns-btn");
+		if (installBtn) {
+			installBtn.addEventListener("click", async function handler() {
+				installBtn.disabled = true;
+				installBtn.textContent = "Installing...";
+				installBtn.classList.remove("bg-[#5DD881]", "text-black");
+				installBtn.classList.add("bg-[#4d4d4d]", "text-white");
+				const success = await install(app, type);
+				if (success) {
+					installBtn.outerHTML = `<button class="uns-btn bg-[#4d4d4d] text-white rounded-lg p-1.5">Uninstall</button>`;
+					addBtns();
+				} else {
+					installBtn.disabled = false;
+					installBtn.textContent = "Install";
+					installBtn.classList.remove("bg-[#4d4d4d]", "text-white");
+					installBtn.classList.add("bg-[#5DD881]", "text-black");
+				}
+			});
+		}
+		if (unsBtn) {
+			unsBtn.addEventListener("click", async function handler() {
+				await uninstall(app, type);
+				unsBtn.outerHTML = `<button class="ins-btn bg-[#5DD881] text-black rounded-lg p-1.5">Install</button>`;
+				addBtns();
+			});
+		}
+	};
+
+	addBtns();
 }
 
 /**
@@ -275,10 +281,13 @@ async function loadRepos() {
 		}
 		const data = await repoinfo.json();
 		if (data.maintainer) {
+			const icn = await window.parent.tb.libcurl.fetch(repo.icon);
+			const blob = await icn.blob();
+			const icnurl = URL.createObjectURL(blob);
 			const displayName = data.name && data.name.length > 8 ? data.name.slice(0, 8) + "..." : data.name || "Unknown";
 			repoList.innerHTML += `
 				<div class="repo-card flex flex-row items-center bg-[#00000032] rounded-lg h-[50px] p-1 gap-1" onclick="loadRepo('${repo.url}')">
-	                <img src="/tb.svg" alt="Featured App" class="w-[32px] h-[32px] rounded-[12px] object-cover" />
+	                <img src="${icnurl || "/tb.svg"}" alt="Featured App" class="w-[32px] h-[32px] rounded-[12px] object-cover" />
     	            <h3 class="text-white text-base font-black">${displayName}</h3>
         	        <svg class="flex-1" width="20" height="20" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
             	        <circle cx="16" cy="16" r="16" fill="#5DD881"/>
@@ -294,7 +303,7 @@ async function loadRepos() {
 			const displayName = data.repo.name && data.repo.name.length > 8 ? data.repo.name.slice(0, 8) + "..." : data.repo.name || "Unknown";
 			repoList.innerHTML += `
 			<div class="repo-card flex flex-row items-center bg-[#00000032] rounded-lg h-[50px] p-1 gap-1" onclick="loadRepo('${repo.url}')">
-                <img src="${icnurl}" alt="Featured App" class="w-[32px] h-[32px] rounded-[12px] object-cover" />
+                <img src="${icnurl || "/tb.svg"}" alt="Featured App" class="w-[32px] h-[32px] rounded-[12px] object-cover" />
                 <h3 class="text-white text-base font-black">${displayName}</h3>
                 <svg class="flex-1" width="20" height="20" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <circle cx="16" cy="16" r="16" fill="#5DD881"/>
@@ -338,18 +347,46 @@ function view(type) {
 /**
  * Adds a new repo to the repo list
  */
-function addRepo() {
-	const repoList = document.querySelector(".repo-list");
-	const newRepoCard = document.createElement("div");
-	newRepoCard.className = "repo-card flex flex-row items-center bg-[#00000032] rounded-lg h-[50px] p-1 gap-1";
-	newRepoCard.innerHTML = `
-			<img src="/tb.svg" alt="New Repo" class="w-[32px] h-[32px] rounded-[12px] object-cover" />
-			<h3 class="text-white text-base font-black">https://raw.githubusercontent.com/MercuryWorkshop/anura-repo/refs/heads/master/manifest.json</h3>
-			<svg class="flex-1" width="20" height="20" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-				<circle cx="16" cy="16" r="16" fill="#5DD881"/>
-			</svg>
-		`;
-	repoList.appendChild(newRepoCard);
+async function addRepo() {
+	window.parent.tb.dialog.Message({
+		title: "Enter a Repo URL",
+		onOk: async value => {
+			const res = await window.parent.tb.libcurl.fetch(value);
+			const meta = await res.json();
+			const repos = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/app store/repos.json`, "utf8"));
+			if (meta.maintainer) {
+				const list = await window.parent.tb.libcurl.fetch(value.replace("manifest.json", "list.json"));
+				if (list.ok) {
+					repos.push({
+						name: name || meta.name || "Unknown",
+						url: value,
+						icon: "https://anura.pro/icon.png",
+					});
+				} else {
+					window.parent.tb.notification.Toast({
+						message: "Failed to add repo. The URL does not point to a valid Anura repo manifest",
+						application: "App Store",
+						iconSrc: "/fs/apps/system/app store.tapp/icon.svg",
+						time: 5000,
+					});
+				}
+			} else if (meta.title) {
+				repos.push({
+					name: meta.title || "Unknown",
+					url: value,
+					icon: "https://raw.githubusercontent.com/NebulaServices/XenOS/refs/heads/main/public/assets/logo.svg",
+				});
+			} else {
+				repos.push({
+					name: meta.repo.name || "Unknown",
+					url: value,
+					icon: meta.repo.icon,
+				});
+			}
+			await window.parent.tb.fs.promises.writeFile(`/apps/user/${sessionStorage.getItem("currAcc")}/app store/repos.json`, JSON.stringify(repos, null, 2));
+			loadRepos();
+		},
+	});
 }
 
 /**
@@ -357,8 +394,7 @@ function addRepo() {
  * @param {string} type - The type of app (Terbium, tb-PWA, Anura, Xen)
  * @returns {Promise<boolean>} - Returns true if the installation was successful, false otherwise
  */
-async function install(type) {
-	const app = window.toInstall;
+async function install(app, type) {
 	if (app.requirements) {
 		if (app.requirements.os && app.requirements.os.replace("v", "") !== window.parent.tb.system.version()) {
 			window.parent.tb.notification.Toast({
@@ -409,15 +445,15 @@ async function install(type) {
 					snapable: appData.wmArgs.snapable,
 				});
 				try {
-					let apps = JSON.parse(await Filer.fs.promises.readFile(`/apps/installed.json`, "utf8"));
+					let apps = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/installed.json`, "utf8"));
 					apps.push({
 						name: app.name,
 						user: await window.parent.tb.user.username(),
 						config: `/apps/system/${app.name}.tapp/.tbconfig`,
 					});
-					await Filer.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(apps));
+					await window.parent.tb.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(apps));
 				} catch {
-					await Filer.fs.promises.writeFile(
+					await window.parent.tb.fs.promises.writeFile(
 						`/apps/installed.json`,
 						JSON.stringify([
 							{
@@ -447,8 +483,8 @@ async function install(type) {
 				return false;
 			}
 		case "tb-PWA":
-			const web_apps = JSON.parse(await window.parent.tb.fs.promises.readFile("/apps/web_apps.json", "utf8")).apps;
-			web_apps.push(app.name.toLowerCase());
+			const web_apps = JSON.parse(await window.parent.tb.fs.promises.readFile("/apps/web_apps.json", "utf8"));
+			web_apps.apps.push(app.name.toLowerCase());
 			await window.parent.tb.fs.promises.writeFile("/apps/web_apps.json", JSON.stringify(web_apps));
 			await window.parent.tb.launcher.addApp({
 				title: app["wmArgs"]["title"],
@@ -494,12 +530,149 @@ async function install(type) {
 			});
 			return true;
 		case "tb-liq":
-			break;
 		case "Anura":
-			console.log("krip walk")
-			break;
+			try {
+				if (type === "tb-liq") {
+					await window.parent.tb.system.download(app["anura-pkg"], `/apps/anura/${app.name}.zip`);
+				} else {
+					await window.parent.tb.system.download(`${currRepo.url.replace("manifest.json", "")}/apps/${app.package}/${app.data}`, `/apps/anura/${app.name}.zip`);
+				}
+				await unzip(`/apps/anura/${app.name}.zip`, `/apps/anura/${app.name}/`);
+				await window.parent.tb.fs.promises.unlink(`/apps/anura/${app.name}.zip`);
+				const appConf = await window.parent.tb.fs.promises.readFile(`/apps/anura/${app.name}/manifest.json`, "utf8");
+				const appData = JSON.parse(appConf);
+				console.log(appData);
+				await window.parent.tb.launcher.addApp({
+					name: appData.name,
+					title: appData.wininfo.title,
+					icon: `/fs/apps/anura/${app.name}/${appData.icon}`,
+					src: `/fs/apps/anura/${app.name}/${appData.index}`,
+					size: {
+						width: appData.wininfo.width,
+						height: appData.wininfo.height,
+					},
+					single: appData.wininfo.allowMultipleInstance,
+				});
+				window.parent.anura.apps[appData.package] = {
+					title: appData.name,
+					icon: appData.icon,
+					id: appData.package,
+				};
+				try {
+					let apps = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/installed.json`, "utf8"));
+					apps.push({
+						name: appData.name,
+						user: await window.parent.tb.user.username(),
+						config: `/apps/anura/${app.name}/manifest.json`,
+					});
+					await window.parent.tb.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(apps));
+				} catch {
+					await window.parent.tb.fs.promises.writeFile(
+						`/apps/installed.json`,
+						JSON.stringify([
+							{
+								name: appData.name,
+								user: await window.parent.tb.user.username(),
+								config: `/apps/anura/${app.name}/manifest.json`,
+							},
+						]),
+					);
+				}
+				window.parent.tb.notification.Toast({
+					message: `${app.name} has been installed!`,
+					application: "App Store",
+					iconSrc: "/fs/apps/system/app store.tapp/icon.svg",
+					time: 5000,
+				});
+				return true;
+			} catch (e) {
+				console.error("Error installing the app:", e);
+				await new Filer.fs.Shell().promises.rm(`/apps/anura/${app.name}`, { recursive: true });
+				window.parent.tb.notification.Toast({
+					message: `Failed to install ${app.name}. Check the console for details.`,
+					application: "App Store",
+					iconSrc: "/fs/apps/system/app store.tapp/icon.svg",
+					time: 5000,
+				});
+				return false;
+			}
 		case "Xen":
 			throw new Error("Xen repo not implemented yet.");
+	}
+}
+
+/**
+ * Uninstalls the requested app
+ * @param {Object} app - The app to uninstall
+ * @param {string} type - The type of app (Terbium, tb-PWA, Anura, Xen)
+ */
+async function uninstall(app, type) {
+	switch (type) {
+		case "Terbium":
+			if (await dirExists(`/apps/system/${app.name}.tapp`)) {
+				await new window.parent.tb.fs.Shell().promises.rm(`/apps/system/${app.name}.tapp`, { recursive: true });
+			} else {
+				await new window.parent.tb.fs.Shell().promises.rm(`/apps/user/${sessionStorage.getItem("currAcc")}/${app.name}.tapp`, { recursive: true });
+			}
+			try {
+				let installedApps = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/installed.json`, "utf8"));
+				installedApps = installedApps.filter(a => a.name !== app.name);
+				await window.parent.tb.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(installedApps));
+			} catch {
+				throw new Error("Failed to update the installed app list");
+			}
+			window.parent.tb.launcher.removeApp(app.name);
+			window.parent.tb.notification.Toast({
+				message: `Successfully uninstalled ${app.name}.`,
+				application: "App Store",
+				iconSrc: "/fs/apps/system/app store.tapp/icon.svg",
+				time: 5000,
+			});
+			break;
+		case "tb-PWA":
+			const web_apps = JSON.parse(await window.parent.tb.fs.promises.readFile("/apps/web_apps.json", "utf8"));
+			const index = web_apps.apps.indexOf(app.name.toLowerCase());
+			if (index > -1) {
+				web_apps.splice(index, 1);
+			}
+			await window.parent.tb.fs.promises.writeFile("/apps/web_apps.json", JSON.stringify(web_apps));
+			window.parent.tb.launcher.removeApp(app.name);
+			await window.parent.tb.fs.promises.unlink(`/apps/user/${sessionStorage.getItem("currAcc")}/${app.name}/index.json`);
+			await window.parent.tb.fs.promises.rmdir(`/apps/user/${sessionStorage.getItem("currAcc")}/${app.name}`, { recursive: true });
+			try {
+				let installedApps = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/installed.json`, "utf8"));
+				installedApps = installedApps.filter(a => a.name !== app.name);
+				await window.parent.tb.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(installedApps));
+			} catch {
+				throw new Error("Failed to update the installed app list");
+			}
+			window.parent.tb.launcher.removeApp(app.name);
+			window.parent.tb.notification.Toast({
+				message: `Successfully uninstalled ${app.name}.`,
+				application: "App Store",
+				iconSrc: "/fs/apps/system/app store.tapp/icon.svg",
+				time: 5000,
+			});
+			break;
+		case "Anura":
+		case "tb-liq":
+			await new window.parent.tb.fs.Shell().promises.rm(`/apps/anura/${app.name}`, { recursive: true });
+			try {
+				let installedApps = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/installed.json`, "utf8"));
+				installedApps = installedApps.filter(a => a.name !== app.name);
+				await window.parent.tb.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(installedApps));
+			} catch {
+				throw new Error("Failed to update the installed app list");
+			}
+			window.parent.tb.launcher.removeApp(app.name);
+			delete window.parent.anura.apps[app.package];
+			window.parent.tb.notification.Toast({
+				message: `Successfully uninstalled ${app.name}.`,
+				application: "App Store",
+				iconSrc: "/fs/apps/system/app store.tapp/icon.svg",
+				time: 5000,
+			});
+			break;
 	}
 }
 
@@ -512,7 +685,7 @@ async function unzip(path, target) {
 	const response = await fetch("/fs/" + path);
 	const zipFileContent = await response.arrayBuffer();
 	if (!(await dirExists(target))) {
-		await Filer.fs.promises.mkdir(target, { recursive: true });
+		await window.parent.tb.fs.promises.mkdir(target, { recursive: true });
 	}
 	const compressedFiles = window.parent.tb.fflate.unzipSync(new Uint8Array(zipFileContent));
 	for (const [relativePath, content] of Object.entries(compressedFiles)) {
@@ -524,14 +697,14 @@ async function unzip(path, target) {
 			if (i === pathParts.length - 1 && !relativePath.endsWith("/")) {
 				try {
 					console.log(`touch ${currentPath.slice(0, -1)}`);
-					await Filer.fs.promises.writeFile(currentPath.slice(0, -1), Filer.Buffer.from(content));
+					await window.parent.tb.fs.promises.writeFile(currentPath.slice(0, -1), Filer.Buffer.from(content));
 				} catch {
 					console.log(`Cant make ${currentPath.slice(0, -1)}`);
 				}
 			} else if (!(await dirExists(currentPath))) {
 				try {
 					console.log(`mkdir ${currentPath}`);
-					await Filer.fs.promises.mkdir(currentPath);
+					await window.parent.tb.fs.promises.mkdir(currentPath);
 				} catch {
 					console.log(`Cant make ${currentPath}`);
 				}
@@ -540,7 +713,7 @@ async function unzip(path, target) {
 		if (relativePath.endsWith("/")) {
 			try {
 				console.log(`mkdir fp ${fullPath}`);
-				await Filer.fs.promises.mkdir(fullPath);
+				await window.parent.tb.fs.promises.mkdir(fullPath);
 			} catch {
 				console.log(`Cant make ${fullPath}`);
 			}
@@ -556,7 +729,7 @@ async function unzip(path, target) {
  */
 const dirExists = async path => {
 	return new Promise(resolve => {
-		Filer.fs.stat(path, (err, stats) => {
+		window.parent.tb.fs.stat(path, (err, stats) => {
 			if (err) {
 				if (err.code === "ENOENT") {
 					resolve(false);

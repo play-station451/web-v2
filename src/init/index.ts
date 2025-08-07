@@ -345,6 +345,7 @@ export async function init() {
 				{
 					name: "Anura App Repo",
 					url: "https://raw.githubusercontent.com/MercuryWorkshop/anura-repo/refs/heads/master/manifest.json",
+					icon: "https://anura.pro/icon.png",
 				},
 			]),
 		);
