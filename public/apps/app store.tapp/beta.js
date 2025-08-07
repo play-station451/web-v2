@@ -141,115 +141,113 @@ async function loadApp(app, type) {
 	document.querySelector(".app-prev").classList.add("flex");
 	document.querySelector(".main").classList.remove("flex");
 	document.querySelector(".main").classList.add("hidden");
+	let icnUrl;
+	let isInstalled = false;
 	switch (type) {
 		case "Terbium":
 			const icn1 = await window.parent.tb.libcurl.fetch(app.icon);
 			const blob1 = await icn1.blob();
-			const icnurl1 = URL.createObjectURL(blob1);
-			document.querySelector(".app-prev").innerHTML = `
-				<h1 class="font-black text-3xl" onclick="document.querySelector('.app-prev').classList.remove('flex'); document.querySelector('.app-prev').classList.add('hidden'); document.querySelector('.main').classList.remove('hidden'); document.querySelector('.main').classList.add('flex');">${currRepo} → ${app.name}</h1>
-				<div class="featured flex w-[97%] h-[175px] bg-[#00000032] rounded-[22px] p-2 items-center gap-6 relative bg-no-repeat bg-[url('${icnurl1 || "/tb.svg"}')] bg-center bg-cover">
-					<div class="info flex flex-col justify-end text-white absolute left-6 bottom-6">
-						<h3 class="text-2xl font-bold mb-2">${app.name}</h3>
-						<h4 class="text-[16px] text-[#ffffff75]">By ${app.developer || "Unknown"}</h4>
-					</div>
-					<div class="info flex flex-col justify-end text-white absolute right-6 bottom-6">
-						<button class="bg-[#5DD881] text-black rounded-lg p-1.5">Install</button>
-					</div>
-				</div>
-				<div class="flex w-[97%] h-[45%] mt-6 gap-6">
-					<div class="w-1/2 bg-[#00000032] rounded-[12px] h-full p-4 overflow-auto">
-						<h2 class="font-black text-3xl mb-2">About ${app.name}</h2>
-						<p class="text-white text-base">${app.description || "No description available."}</p>
-						<ul class="text-white text-base">
-							<li><strong>Version:</strong> ${app.version || "1.0.0"}</li>
-							<li><strong>Developer:</strong> ${app.developer || "Unknown"}</li>
-							<li><strong>License:</strong> ${app.license || "N/A"}</li>
-							<li><strong>Scanned:</strong> ${app.scanned || "N/A"}</li>
-							<li><strong>Size:</strong> ${app.size || "N/A"}</li>
-							<ul>
-								<h2 class="font-black text-3xl mb-2">Requirements:</h2>
-								<li><strong>OS: ${(app.requirements && app.requirements.os) || "Any"}</strong></li>
-								<li><strong>Proxy: ${(app.requirements && app.requirements.proxy) || "Any"}</strong></li>
-							</ul>
-						</ul>
-					</div>
-					<div class="w-1/2 bg-[#00000032] rounded-[12px] h-full p-4 overflow-auto">
-						<h2 class="font-black text-3xl mb-2">Images</h2>
-						<div class="flex flex-wrap gap-4">
-							${
-								app.images
-									? app.images
-											.map(
-												img => `
-								<div class="w-full">
-									<img src="${img}" alt="App Image" class="w-full h-[200px] rounded-[12px] object-cover" />
-								</div>
-							`,
-											)
-											.join("")
-									: "<p class='text-white'>No images available.</p>"
-							}
-						</div>
-					</div>
-				</div>
-			`;
+			icnUrl = URL.createObjectURL(blob1);
+			const web_apps = JSON.parse(await window.parent.tb.fs.promises.readFile("/apps/web_apps.json", "utf8"));
+			const sysInstalled = await window.parent.tb.fs.promises.readdir("/apps/system");
+			const userInstalled = await window.parent.tb.fs.promises.readdir(`/apps/user/${sessionStorage.getItem("currAcc")}/`);
+			if (web_apps[app.name]) {
+				isInstalled = true;
+			} else if (sysInstalled.includes(`${app.name}.tapp`)) {
+				isInstalled = true;
+			} else if (userInstalled.includes(`${app.name}.tapp`)) {
+				isInstalled = true;
+			}
+			if (app.wmArgs) {
+				type = "tb-PWA";
+			} else if ("anura-pkg" in app) {
+				type = "tb-liq";
+			}
 			break;
 		case "Anura":
 			const icn2 = await window.parent.tb.libcurl.fetch(`${currRepo.url.replace("manifest.json", "")}/apps/${app.package}/${app.icon}`);
 			const blob2 = await icn2.blob();
-			const icnurl2 = URL.createObjectURL(blob2);
-			document.querySelector(".app-prev").innerHTML = `
-				<h1 class="font-black text-3xl" onclick="document.querySelector('.app-prev').classList.remove('flex'); document.querySelector('.app-prev').classList.add('hidden'); document.querySelector('.main').classList.remove('hidden'); document.querySelector('.main').classList.add('flex');">${currRepo.name} → ${app.name}</h1>
-				<div class="featured flex w-[97%] h-[175px] bg-[#00000032] rounded-[22px] p-2 items-center gap-6 relative bg-no-repeat bg-[url('${icnurl2 || "/tb.svg"}')] bg-center bg-cover">
-					<div class="info flex flex-col justify-end text-white absolute left-6 bottom-6">
-						<h3 class="text-2xl font-bold mb-2">${app.name}</h3>
-						<h4 class="text-[16px] text-[#ffffff75]">By ${app.developer || "Unknown"}</h4>
-					</div>
-					<div class="info flex flex-col justify-end text-white absolute right-6 bottom-6">
-						<button class="bg-[#5DD881] text-black rounded-lg p-1.5">Install</button>
-					</div>
-				</div>
-				<div class="flex w-[97%] h-[45%] mt-6 gap-6">
-					<div class="w-1/2 bg-[#00000032] rounded-[12px] h-full p-4 overflow-auto">
-						<h2 class="font-black text-3xl mb-2">About ${app.name}</h2>
-						<p class="text-white text-base">${app.description || "No description available."}</p>
-						<ul class="text-white text-base">
-							<li><strong>Version:</strong> ${app.version || "1.0.0"}</li>
-							<li><strong>Developer:</strong> ${app.developer || "Unknown"}</li>
-							<li><strong>License:</strong> ${app.license || "N/A"}</li>
-							<li><strong>Scanned:</strong> ${app.scanned || "N/A"}</li>
-							<li><strong>Size:</strong> ${app.size || "N/A"}</li>
-							<ul>
-								<h2 class="font-black text-3xl mb-2">Requirements:</h2>
-								<li><strong>OS: ${(app.requirements && app.requirements.os) || "Any"}</strong></li>
-								<li><strong>Proxy: ${(app.requirements && app.requirements.proxy) || "Any"}</strong></li>
-							</ul>
-						</ul>
-					</div>
-					<div class="w-1/2 bg-[#00000032] rounded-[12px] h-full p-4 overflow-auto">
-						<h2 class="font-black text-3xl mb-2">Images</h2>
-						<div class="flex flex-wrap gap-4">
-							${
-								app.images
-									? app.images
-											.map(
-												img => `
-								<div class="w-full">
-									<img src="${img}" alt="App Image" class="w-full h-[200px] rounded-[12px] object-cover" />
-								</div>
-							`,
-											)
-											.join("")
-									: "<p class='text-white'>No images available.</p>"
-							}
-						</div>
-					</div>
-				</div>
-			`;
+			icnUrl = URL.createObjectURL(blob2);
 			break;
 		case "Xen":
 			break;
+	}
+	window.toInstall = app;
+	document.querySelector(".app-prev").innerHTML = `
+		<h1 class="font-black text-3xl" onclick="document.querySelector('.app-prev').classList.remove('flex'); document.querySelector('.app-prev').classList.add('hidden'); document.querySelector('.main').classList.remove('hidden'); document.querySelector('.main').classList.add('flex');">${typeof currRepo === "object" ? currRepo.name : currRepo} → ${app.name}</h1>
+		<div class="featured flex w-[97%] h-[175px] bg-[#00000032] rounded-[22px] p-2 items-center gap-6 relative bg-no-repeat bg-[url('${icnUrl || "/tb.svg"}')] bg-center bg-cover">
+			<div class="info flex flex-col justify-end text-white absolute left-6 bottom-6">
+				<h3 class="text-2xl font-bold mb-2">${app.name}</h3>
+				<h4 class="text-[16px] text-[#ffffff75]">By ${app.developer || "Unknown"}</h4>
+			</div>
+			<div class="info flex flex-col justify-end text-white absolute right-6 bottom-6">
+				${
+					isInstalled
+						? `
+					<button class="uns-btn bg-[#4d4d4d] text-white rounded-lg p-1.5" onclick="uninstall('${type}')">Uninstall</button>
+				`
+						: `
+					<button class="ins-btn bg-[#5DD881] text-black rounded-lg p-1.5">Install</button>
+				`
+				}
+			</div>
+		</div>
+		<div class="flex w-[97%] h-[45%] mt-6 gap-6">
+			<div class="w-1/2 bg-[#00000032] rounded-[12px] h-full p-4 overflow-auto">
+				<h2 class="font-black text-3xl mb-2">About ${app.name}</h2>
+				<p class="text-white text-base">${app.description || "No description available."}</p>
+				<ul class="text-white text-base">
+					<li><strong>Version:</strong> ${app.version || "1.0.0"}</li>
+					<li><strong>Developer:</strong> ${app.developer || "Unknown"}</li>
+					<li><strong>License:</strong> ${app.license || "N/A"}</li>
+					<li><strong>Scanned:</strong> ${app.scanned || "N/A"}</li>
+					<li><strong>Size:</strong> ${app.size || "N/A"}</li>
+					<ul>
+						<h2 class="font-black text-3xl mb-2">Requirements:</h2>
+						<li><strong>OS: ${(app.requirements && app.requirements.os) || "Any"}</strong></li>
+						<li><strong>Proxy: ${(app.requirements && app.requirements.proxy) || "Any"}</strong></li>
+					</ul>
+				</ul>
+				</div>
+				<div class="w-1/2 bg-[#00000032] rounded-[12px] h-full p-4 overflow-auto">
+					<h2 class="font-black text-3xl mb-2">Images</h2>
+					<div class="flex flex-wrap gap-4">
+						${
+							app.images
+								? app.images
+										.map(
+											img => `
+							<div class="w-full">
+								<img src="${img}" alt="App Image" class="w-full h-[200px] rounded-[12px] object-cover" />
+							</div>
+						`,
+										)
+										.join("")
+								: "<p class='text-white'>No images available.</p>"
+						}
+					</div>
+				</div>
+			</div>
+		</div>
+	`;
+
+	if (!isInstalled) {
+		const installBtn = document.querySelector(".ins-btn");
+		installBtn.addEventListener("click", async function () {
+			installBtn.disabled = true;
+			installBtn.textContent = "Installing...";
+			installBtn.classList.remove("bg-[#5DD881]", "text-black");
+			installBtn.classList.add("bg-[#4d4d4d]", "text-white");
+			const success = await install(type);
+			if (success) {
+				installBtn.outerHTML = `<button class="uns-btn bg-[#4d4d4d] text-white rounded-lg p-1.5" onclick="uninstall('${type}')">Uninstall</button>`;
+			} else {
+				installBtn.disabled = false;
+				installBtn.textContent = "Install";
+				installBtn.classList.remove("bg-[#4d4d4d]", "text-white");
+				installBtn.classList.add("bg-[#5DD881]", "text-black");
+			}
+		});
 	}
 }
 
@@ -356,21 +354,223 @@ function addRepo() {
 
 /**
  * Installs the requested app
- * @param {Object} app - The app to install
  * @param {string} type - The type of app (Terbium, tb-PWA, Anura, Xen)
+ * @returns {Promise<boolean>} - Returns true if the installation was successful, false otherwise
  */
-async function install(app, type) {
+async function install(type) {
+	const app = window.toInstall;
+	if (app.requirements) {
+		if (app.requirements.os && app.requirements.os.replace("v", "") !== window.parent.tb.system.version()) {
+			window.parent.tb.notification.Toast({
+				message: `Failed to install ${app.name}. Your version of Terbium does not meet the minimum requirements.`,
+				application: "App Store",
+				iconSrc: "/fs/apps/system/app store.tapp/icon.svg",
+				time: 5000,
+			});
+			return false;
+		} else if (app.requirements.proxy && app.requirements.proxy !== window.parent.tb.proxy.get()) {
+			window.parent.tb.notification.Toast({
+				message: `Failed to install ${app.name}. The current selected proxy does not meet the minimum requirements.`,
+				application: "App Store",
+				iconSrc: "/fs/apps/system/app store.tapp/icon.svg",
+				time: 5000,
+			});
+			return false;
+		}
+	}
 	switch (type) {
 		case "Terbium":
-			break;
+			try {
+				await window.parent.tb.system.download(app["pkg-download"], `/apps/system/${app.name}.zip`);
+				await unzip(`/apps/system/${app.name}.zip`, `/apps/system/${app.name}.tapp/`);
+				await window.parent.tb.fs.promises.unlink(`/apps/system/${app.name}.zip`);
+				const appConf = await window.parent.tb.fs.promises.readFile(`/apps/system/${app.name}.tapp/.tbconfig`, "utf8");
+				const appData = JSON.parse(appConf);
+				await window.parent.tb.launcher.addApp({
+					title:
+						typeof appData.wmArgs.title === "object"
+							? {
+									text: appData.wmArgs.title.text,
+									weight: appData.wmArgs.title.weight,
+									html: appData.wmArgs.title.html,
+								}
+							: appData.wmArgs.title,
+					name: appData.title,
+					icon: `/fs/apps/system/${app.name}.tapp/${appData.icon}`,
+					src: `/fs/apps/system/${app.name}.tapp/${appData.wmArgs.src}`,
+					size: {
+						width: appData.wmArgs.size.width,
+						height: appData.wmArgs.size.height,
+					},
+					single: appData.wmArgs.single,
+					resizable: appData.wmArgs.resizable,
+					controls: appData.wmArgs.controls,
+					message: appData.wmArgs.message,
+					snapable: appData.wmArgs.snapable,
+				});
+				try {
+					let apps = JSON.parse(await Filer.fs.promises.readFile(`/apps/installed.json`, "utf8"));
+					apps.push({
+						name: app.name,
+						user: await window.parent.tb.user.username(),
+						config: `/apps/system/${app.name}.tapp/.tbconfig`,
+					});
+					await Filer.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(apps));
+				} catch {
+					await Filer.fs.promises.writeFile(
+						`/apps/installed.json`,
+						JSON.stringify([
+							{
+								name: app.name,
+								user: await window.parent.tb.user.username(),
+								config: `/apps/system/${app.name}.tapp/.tbconfig`,
+							},
+						]),
+					);
+				}
+				window.parent.tb.notification.Toast({
+					message: `${app.name} has been installed!`,
+					application: "App Store",
+					iconSrc: "/fs/apps/system/app store.tapp/icon.svg",
+					time: 5000,
+				});
+				return true;
+			} catch (e) {
+				console.error("Error installing the app:", e);
+				await new Filer.fs.Shell().promises.rm(`/apps/system/${app.name}.tapp`, { recursive: true });
+				window.parent.tb.notification.Toast({
+					message: `Failed to install ${app.name}. Check the console for details.`,
+					application: "App Store",
+					iconSrc: "/fs/apps/system/app store.tapp/icon.svg",
+					time: 5000,
+				});
+				return false;
+			}
 		case "tb-PWA":
+			const web_apps = JSON.parse(await window.parent.tb.fs.promises.readFile("/apps/web_apps.json", "utf8")).apps;
+			web_apps.push(app.name.toLowerCase());
+			await window.parent.tb.fs.promises.writeFile("/apps/web_apps.json", JSON.stringify(web_apps));
+			await window.parent.tb.launcher.addApp({
+				title: app["wmArgs"]["title"],
+				name: app.name,
+				icon: app.icon,
+				src: app["wmArgs"]["src"],
+				size: {
+					width: app["wmArgs"]["size"]["width"],
+					height: app["wmArgs"]["size"]["height"],
+				},
+				single: app["wmArgs"]["single"],
+				resizable: app["wmArgs"]["resizable"],
+				controls: app["wmArgs"]["controls"],
+				message: app["wmArgs"]["message"],
+				proxy: app["wmArgs"]["proxy"],
+				snapable: app["wmArgs"]["snapable"],
+			});
+			try {
+				let apps = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/installed.json`, "utf8"));
+				apps.push({
+					name: app.name,
+					user: await window.parent.tb.user.username(),
+					config: `/apps/user/${await window.parent.tb.user.username()}/${app.name}/index.json`,
+				});
+				await window.parent.tb.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(apps));
+			} catch {
+				await window.parent.tb.fs.promises.writeFile(
+					`/apps/installed.json`,
+					JSON.stringify([
+						{
+							name: app.name,
+							user: await window.parent.tb.user.username(),
+							config: `/apps/user/${await window.parent.tb.user.username()}/${app.name}/index.json`,
+						},
+					]),
+				);
+			}
+			window.parent.tb.notification.Toast({
+				message: `${app.name} has been installed!`,
+				application: "App Store",
+				iconSrc: "/fs/apps/system/app store.tapp/icon.svg",
+				time: 5000,
+			});
+			return true;
+		case "tb-liq":
 			break;
 		case "Anura":
+			console.log("krip walk")
 			break;
 		case "Xen":
 			throw new Error("Xen repo not implemented yet.");
 	}
 }
+
+/**
+ * Unzips the requested file to the target dir
+ * @param {string} path
+ * @param {string} target
+ */
+async function unzip(path, target) {
+	const response = await fetch("/fs/" + path);
+	const zipFileContent = await response.arrayBuffer();
+	if (!(await dirExists(target))) {
+		await Filer.fs.promises.mkdir(target, { recursive: true });
+	}
+	const compressedFiles = window.parent.tb.fflate.unzipSync(new Uint8Array(zipFileContent));
+	for (const [relativePath, content] of Object.entries(compressedFiles)) {
+		const fullPath = `${target}/${relativePath}`;
+		const pathParts = fullPath.split("/");
+		let currentPath = "";
+		for (let i = 0; i < pathParts.length; i++) {
+			currentPath += pathParts[i] + "/";
+			if (i === pathParts.length - 1 && !relativePath.endsWith("/")) {
+				try {
+					console.log(`touch ${currentPath.slice(0, -1)}`);
+					await Filer.fs.promises.writeFile(currentPath.slice(0, -1), Filer.Buffer.from(content));
+				} catch {
+					console.log(`Cant make ${currentPath.slice(0, -1)}`);
+				}
+			} else if (!(await dirExists(currentPath))) {
+				try {
+					console.log(`mkdir ${currentPath}`);
+					await Filer.fs.promises.mkdir(currentPath);
+				} catch {
+					console.log(`Cant make ${currentPath}`);
+				}
+			}
+		}
+		if (relativePath.endsWith("/")) {
+			try {
+				console.log(`mkdir fp ${fullPath}`);
+				await Filer.fs.promises.mkdir(fullPath);
+			} catch {
+				console.log(`Cant make ${fullPath}`);
+			}
+		}
+	}
+	return "Done!";
+}
+
+/**
+ * Resolves if a directory exists
+ * @param {string} path
+ * @returns {Promise<Boolean>}
+ */
+const dirExists = async path => {
+	return new Promise(resolve => {
+		Filer.fs.stat(path, (err, stats) => {
+			if (err) {
+				if (err.code === "ENOENT") {
+					resolve(false);
+				} else {
+					console.error(err);
+					resolve(false);
+				}
+			} else {
+				const exists = stats.type === "DIRECTORY";
+				resolve(exists);
+			}
+		});
+	});
+};
 
 window.addEventListener("load", async () => {
 	await loadRepo("https://raw.githubusercontent.com/TerbiumOS/tb-repo/refs/heads/main/manifest.json");
