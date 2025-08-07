@@ -70,6 +70,7 @@ window.addEventListener("message", async e => {
 			}
 		}
 	}
+	window.removeEventListener("message", this);
 });
 
 function updateScroll(type, e) {

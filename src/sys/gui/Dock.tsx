@@ -31,6 +31,8 @@ export type TStartItem = {
 	className?: string;
 	src?: string;
 	proxy?: boolean;
+	size?: { width: number; height: number };
+	snapable?: boolean;
 };
 
 interface IDockProps {
@@ -329,6 +331,9 @@ const Dock: FC<IDockProps> = ({ pinned }) => {
 								icon={item.icon}
 								pid={undefined}
 								src={item.src}
+								size={item.size}
+								proxy={item.proxy}
+								snapable={item.snapable}
 								onClick={() => {
 									item.onClick?.(new MouseEvent("click"));
 									windowStore.addWindow({
@@ -362,6 +367,10 @@ const Dock: FC<IDockProps> = ({ pinned }) => {
 												key={index}
 												title={item.title}
 												icon={item.icon}
+												src={item.src}
+												size={item.size}
+												proxy={item.proxy}
+												snapable={item.snapable}
 												onClick={(e: MouseEvent) => {
 													if (e.button === 0) item.onClick?.(new MouseEvent("click"));
 													windowStore.addWindow({
@@ -574,9 +583,9 @@ const DockItem: FC<TDockItem> = ({ className, icon, title, src, onClick, onConte
 		};
 	}, [currWID, winfocused]);
 	return (
-		// @ts-expect-error
 		<dock-item
 			ref={dockItemRef}
+			// @ts-expect-error
 			wid={wid}
 			class={
 				className
@@ -674,8 +683,8 @@ const DockItem: FC<TDockItem> = ({ className, icon, title, src, onClick, onConte
 const PinnedDockItem: FC<TDockItem> = ({ className, icon, title, src, onClick, onContextMenu, size, snapable, proxy }) => {
 	const windowStore = useWindowStore();
 	return (
-		// @ts-expect-error
 		<dock-item
+			// @ts-expect-error
 			class={className ? className + " cursor-pointer p-1 hover:bg-[#ffffff28] rounded-md duration-100 ease-in select-none" : "cursor-pointer p-1 hover:bg-[#ffffff28] rounded-md duration-100 ease-in select-none"}
 			onContextMenu={() => {
 				return;
@@ -734,7 +743,7 @@ const PinnedDockItem: FC<TDockItem> = ({ className, icon, title, src, onClick, o
 	);
 };
 
-export const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, className, src }) => {
+export const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, className, src, proxy, size, snapable }) => {
 	// @ts-expect-error
 	const chars = typeof title === "string" ? title.split("") : title?.text.split("");
 	const [resolvedIcon, setResolvedIcon] = useState<string | boolean | undefined>(false);
@@ -820,6 +829,12 @@ export const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, classN
 										icon: typeof icon === "string" ? icon : undefined,
 										isPinnable: true,
 										src: src,
+										proxy: proxy,
+										snapable: snapable,
+										size: {
+											width: size?.width ?? 600,
+											height: size?.height ?? 400,
+										},
 									};
 								}
 								window.tb.desktop.dock.pin(configData);
@@ -932,6 +947,12 @@ export const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, classN
 												icon: typeof icon === "string" ? icon : undefined,
 												isPinnable: true,
 												src: src,
+												proxy: proxy,
+												snapable: snapable,
+												size: {
+													width: size?.width ?? 600,
+													height: size?.height ?? 400,
+												},
 											};
 										}
 										window.tb.desktop.dock.pin(configData);

@@ -87,24 +87,35 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 		const prox = async () => {
 			if (config.proxy === true) {
 				const settings: UserSettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, "utf8"));
+				setSrc("about:blank");
 				console.log(settings.proxy);
 				if (settings.proxy === "Ultraviolet") {
 					setSrc(`${window.location.origin}/uv/service/${await window.tb.proxy.encode(config.src, "XOR")}`);
 				} else {
 					setSrc(`${window.location.origin}/service/${await window.tb.proxy.encode(config.src, "XOR")}`);
 				}
+				Object.assign(srcRef.current?.contentWindow as typeof window, {
+					tb: window.parent.tb,
+					anura: window.parent.anura,
+					AliceWM: window.parent.AliceWM,
+					LocalFS: window.parent.LocalFS,
+					ExternalApp: window.parent.ExternalApp,
+					ExternalLib: window.parent.ExternalLib,
+					Filer: window.parent.Filer,
+				});
+			} else {
+				Object.assign(srcRef.current?.contentWindow as typeof window, {
+					tb: window.parent.tb,
+					anura: window.parent.anura,
+					AliceWM: window.parent.AliceWM,
+					LocalFS: window.parent.LocalFS,
+					ExternalApp: window.parent.ExternalApp,
+					ExternalLib: window.parent.ExternalLib,
+					Filer: window.parent.Filer,
+				});
 			}
 		};
 		prox();
-		Object.assign(srcRef.current?.contentWindow as typeof window, {
-			tb: window.parent.tb,
-			anura: window.parent.anura,
-			AliceWM: window.parent.AliceWM,
-			LocalFS: window.parent.LocalFS,
-			ExternalApp: window.parent.ExternalApp,
-			ExternalLib: window.parent.ExternalLib,
-			Filer: window.parent.Filer,
-		});
 	}, [srcRef, src]);
 	useEffect(() => {
 		const reload = (e: CustomEvent) => {
