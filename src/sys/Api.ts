@@ -6,7 +6,7 @@ import { LocalFS } from "./liquor/api/LocalFS";
 import { ExternalApp } from "./liquor/coreapps/ExternalApp";
 import { ExternalLib } from "./liquor/libs/ExternalLib";
 import { registry } from "./apis/Registry";
-import { type MediaProps, type cmprops, type dialogProps, type launcherProps, type NotificationProps, type COM, type User, type WindowConfig, fileExists, dirExists, UserSettings, SysSettings } from "./types";
+import { type MediaProps, type cmprops, type dialogProps, type launcherProps, type NotificationProps, type COM, type User, type WindowConfig, fileExists, UserSettings, SysSettings } from "./types";
 import { System } from "./apis/System";
 import { setMusicFn, setVideoFn, isExistingFn, hideFn } from "./apis/Mediaisland";
 import { XOR } from "./apis/Xor";
@@ -488,16 +488,49 @@ export default async function Api() {
 				return system.version("string");
 			},
 			openApp: async (pkg: string) => {
-				const exists = JSON.parse(await Filer.fs.promises.readFile("//apps/web_apps.json", "utf8")).apps.includes(pkg) && fileExists("//apps/web_apps.json");
-				if (exists) {
-					window.tb.window.create(JSON.parse(await Filer.fs.promises.readFile(`//apps/user/${await window.tb.user.username()}/${pkg}/index.json`, "utf8")).wmArgs);
+				const apps = JSON.parse(await window.tb.fs.promises.readFile("/apps/installed.json", "utf8"));
+				const app = apps.find((a: any) => a.name.toLowerCase() === pkg.toLowerCase());
+				if (!app) throw new Error(`App "${pkg}" not found`);
+				let type: "anura" | "terbium";
+				if (app.config.endsWith("manifest.json") || app.config.endsWith(`${pkg}.json`)) {
+					type = "anura";
 				} else {
-					if (await dirExists(`/apps/system/${pkg}/`)) {
-						window.tb.window.create(JSON.parse(await Filer.fs.promises.readFile(`/apps/system/${pkg}/.tbconfig`, "utf8")).wmArgs);
-					} else if (await dirExists(`/apps/user/${await window.tb.user.username()}/${pkg}/`)) {
-						window.tb.window.create(JSON.parse(await Filer.fs.promises.readFile(`/apps/user/${await window.tb.user.username()}/${pkg}/.tbconfig`, "utf8")).wmArgs);
-					} else throw new Error("Application not found");
+					type = "terbium";
 				}
+				let config: any;
+				if (type === "anura") {
+					let aPath = app.config;
+					if (aPath.endsWith("manifest.json")) {
+						aPath = aPath.replace(/manifest\.json$/, "");
+						config = JSON.parse(await window.tb.fs.promises.readFile(app.config, "utf8"));
+					} else if (aPath.endsWith(`${pkg}.json`)) {
+						config = JSON.parse(await window.tb.fs.promises.readFile(app.config, "utf8")).manifest;
+						aPath = aPath.replace(new RegExp(`${pkg}\\.json$`), "");
+					}
+					const src = config.index || config.src || "index.html";
+					config.title = config.name;
+					config.src = src.startsWith(".") || src.startsWith("/") ? `/fs${aPath}${src.replace(/^\.\//, "")}` : `/fs${aPath}${src}`;
+					config.icon = config.icon ? (config.icon.startsWith(".") || config.icon.startsWith("/") ? `/fs${aPath}${config.icon.replace(/^\.\//, "")}` : `/fs${aPath}${config.icon}`) : undefined;
+				} else {
+					const conf: WindowConfig = JSON.parse(await window.tb.fs.promises.readFile(app.config, "utf8")).conf || JSON.parse(await window.tb.fs.promises.readFile(app.config, "utf8")).config;
+					const aPath = app.config.replace(/[^/]+$/, "");
+					let src = conf.src || "index.html";
+					if (src.startsWith("./")) {
+						src = `/fs${aPath}${src.slice(2)}`;
+					} else if (!src.startsWith("/")) {
+						src = `/fs${aPath}${src}`;
+					}
+					conf.src = src;
+					let icon = conf.icon || "icon.png";
+					if (icon.startsWith("./")) {
+						icon = `/fs${aPath}${icon.slice(2)}`;
+					} else if (!icon.startsWith("/")) {
+						icon = `/fs${aPath}${icon}`;
+					}
+					conf.icon = icon;
+					config = conf;
+				}
+				window.tb.window.create(config);
 			},
 			download: async (url: string, location: string) => {
 				try {
@@ -514,12 +547,12 @@ export default async function Api() {
 			},
 			exportfs: async () => {
 				let zip: { [key: string]: Uint8Array } = {};
-				async function addzip(inp: string, basePath = "") {
+				async function addzip(inp: string, aPath = "") {
 					const files = await Filer.fs.promises.readdir(inp);
 					for (const file of files) {
 						const fullPath = `${inp}/${file}`;
 						const stats = await Filer.fs.promises.stat(fullPath);
-						const zipPath = `${basePath}${file}`;
+						const zipPath = `${aPath}${file}`;
 						if (stats.isDirectory()) {
 							await addzip(fullPath, `${zipPath}/`);
 						} else {

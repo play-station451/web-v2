@@ -144,9 +144,14 @@ async function loadApp(app, type) {
 	document.querySelector(".main").classList.add("hidden");
 	let icnUrl;
 	let isInstalled = false;
+	let uptodate = true;
 	const installedApps = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/installed.json`, "utf8"));
 	if (installedApps.some(a => a.name === app.name)) {
 		isInstalled = true;
+		const config = JSON.parse(await window.parent.tb.fs.promises.readFile(`${installedApps.find(a => a.name === app.name).config}`, "utf8"));
+		if (app.version && config.version && app.version !== config.version) {
+			uptodate = false;
+		}
 	}
 	if (app.wmArgs) {
 		type = "tb-PWA";
@@ -177,15 +182,7 @@ async function loadApp(app, type) {
 				<h4 class="text-[16px] text-[#ffffff75]">By ${app.developer || "Unknown"}</h4>
 			</div>
 			<div class="info flex flex-col justify-end text-white absolute right-6 bottom-6">
-				${
-					isInstalled
-						? `
-					<button class="uns-btn bg-[#4d4d4d] text-white rounded-lg p-1.5" onclick="uninstall('${type}')">Uninstall</button>
-				`
-						: `
-					<button class="ins-btn bg-[#5DD881] text-black rounded-lg p-1.5">Install</button>
-				`
-				}
+				${isInstalled ? (uptodate ? `<button class="uns-btn bg-[#4d4d4d] text-white rounded-lg p-1.5">Uninstall</button>` : `<button class="upd-btn bg-[#5DD881] text-black rounded-lg p-1.5">Update</button>`) : `<button class="ins-btn bg-[#5DD881] text-black rounded-lg p-1.5">Install</button>`}
 			</div>
 		</div>
 		<div class="flex w-[97%] h-[45%] mt-6 gap-6">
@@ -228,23 +225,43 @@ async function loadApp(app, type) {
 	`;
 
 	const addBtns = () => {
-		const installBtn = document.querySelector(".ins-btn");
+		const insBtn = document.querySelector(".ins-btn");
+		const updBtn = document.querySelector(".upd-btn");
 		const unsBtn = document.querySelector(".uns-btn");
-		if (installBtn) {
-			installBtn.addEventListener("click", async function handler() {
-				installBtn.disabled = true;
-				installBtn.textContent = "Installing...";
-				installBtn.classList.remove("bg-[#5DD881]", "text-black");
-				installBtn.classList.add("bg-[#4d4d4d]", "text-white");
+		if (insBtn) {
+			insBtn.addEventListener("click", async function handler() {
+				insBtn.disabled = true;
+				insBtn.textContent = "Installing...";
+				insBtn.classList.remove("bg-[#5DD881]", "text-black");
+				insBtn.classList.add("bg-[#4d4d4d]", "text-white");
 				const success = await install(app, type);
 				if (success) {
-					installBtn.outerHTML = `<button class="uns-btn bg-[#4d4d4d] text-white rounded-lg p-1.5">Uninstall</button>`;
+					insBtn.outerHTML = `<button class="uns-btn bg-[#4d4d4d] text-white rounded-lg p-1.5">Uninstall</button>`;
 					addBtns();
 				} else {
-					installBtn.disabled = false;
-					installBtn.textContent = "Install";
-					installBtn.classList.remove("bg-[#4d4d4d]", "text-white");
-					installBtn.classList.add("bg-[#5DD881]", "text-black");
+					insBtn.disabled = false;
+					insBtn.textContent = "Install";
+					insBtn.classList.remove("bg-[#4d4d4d]", "text-white");
+					insBtn.classList.add("bg-[#5DD881]", "text-black");
+				}
+			});
+		}
+		if (updBtn) {
+			updBtn.addEventListener("click", async function handler() {
+				updBtn.disabled = true;
+				updBtn.textContent = "Updating...";
+				updBtn.classList.remove("bg-[#5DD881]", "text-black");
+				updBtn.classList.add("bg-[#4d4d4d]", "text-white");
+				await uninstall(app, type);
+				const success = await install(app, type);
+				if (success) {
+					updBtn.outerHTML = `<button class="uns-btn bg-[#4d4d4d] text-white rounded-lg p-1.5">Uninstall</button>`;
+					addBtns();
+				} else {
+					updBtn.disabled = false;
+					updBtn.textContent = "Update";
+					updBtn.classList.remove("bg-[#4d4d4d]", "text-white");
+					updBtn.classList.add("bg-[#5DD881]", "text-black");
 				}
 			});
 		}

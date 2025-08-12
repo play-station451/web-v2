@@ -865,6 +865,8 @@ export const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, classN
 												}
 											} else if (src?.startsWith("/fs/apps/system/")) {
 												appPath = `/apps/system/${appName.toLowerCase()}.tapp`;
+											} else if (src?.includes("/apps/anura/")) {
+												appPath = `/apps/anura/${appName.toLowerCase()}`;
 											} else {
 												appPath = `/apps/user/${await window.tb.user.username()}/${appName}`;
 											}
@@ -1004,6 +1006,8 @@ export const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, classN
 												}
 											} else if (src?.startsWith("/fs/apps/system/")) {
 												appPath = `/apps/system/${appName.toLowerCase()}.tapp`;
+											} else if (src?.includes("/apps/anura/")) {
+												appPath = `/apps/anura/${appName.toLowerCase()}`;
 											} else {
 												appPath = `/apps/user/${await window.tb.user.username()}/${appName}`;
 											}

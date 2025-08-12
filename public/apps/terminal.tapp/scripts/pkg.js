@@ -8,20 +8,33 @@ async function pkg(args) {
 		"pkg search <package-name>: Search for an app matching <package-name> in the repo.",
 		"pkg repo: Changes the Package Managers Fetch repo (Use -r to remove the repo you added)",
 	];
+	let repo = sessionStorage.getItem("pkg-repo") || JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/app store/repos.json`, "utf8"))[0].url;
+	let rType = sessionStorage.getItem("pkg-type") || "terbium";
 	switch (args._[0]) {
 		case "install":
 			if (args._[1]) {
-				const response = await tb.libcurl.fetch(localStorage.getItem("appRepo") || "https://raw.githubusercontent.com/TerbiumOS/app-repo/main/apps.json");
-				const repoData = await response.json();
+				const response = await tb.libcurl.fetch(repo);
+				let repoData = rType === "terbium" ? (await response.json()).apps : (await (await tb.libcurl.fetch(repo.replace("manifest.json", "list.json"))).json()).apps;
 				const packageName = args._[1];
 				const exactMatch = repoData.find(pkg => pkg.name.toLowerCase() === packageName);
 				if (exactMatch) {
 					displayOutput(`Installing ${exactMatch.name}...`);
+					if (exactMatch.requirements) {
+						if (exactMatch.requirements.os < window.parent.tb.system.version()) {
+							displayError(`This app requires terbium version: ${exactMatch.requirements.os} or later`);
+							createNewCommandInput();
+							return;
+						} else if (exactMatch.requirements.proxy !== (await window.parent.tb.proxy.get())) {
+							displayError(`This app requires ${exactMatch.requirements.proxy} as the default proxy.`);
+							createNewCommandInput();
+							return;
+						}
+					}
 					const installed = JSON.parse(await Filer.fs.promises.readFile("/apps/installed.json", "utf8"));
 					let type;
 					if ("pkg-download" in exactMatch) {
 						type = "TAPP";
-					} else if ("anura-pkg" in exactMatch) {
+					} else if ("anura-pkg" in exactMatch || rType === "anura") {
 						type = "anura";
 					} else {
 						type = "web";
@@ -35,6 +48,7 @@ async function pkg(args) {
 							if (userInput === "y") {
 								displayOutput("");
 								displayOutput(`Reinstalling ${exactMatch.name}...`);
+								await tb.launcher.removeApp(exactMatch.name);
 								await installApp(exactMatch, type, installed);
 								displayOutput(`${exactMatch.name} reinstalled successfully!`);
 								createNewCommandInput();
@@ -83,9 +97,13 @@ async function pkg(args) {
 							displayOutput(`${app.name} has been uninstalled.`);
 						}
 					} else if (configPath.endsWith("manifest.json")) {
-						await Filer.fs.promises.unlink(`/system/etc/anura/configs/${app.name}.json`);
-						await tb.sh.rm(configPath.replace("/manifest.json", "/"));
+						try {
+							await Filer.fs.promises.unlink(`/system/etc/anura/configs/${app.name}.json`);
+							await tb.sh.rm(configPath.replace("/manifest.json", "/"));
+						} catch {}
+						await tb.sh.rm(`/apps/anura/${app.name}`);
 						await tb.launcher.removeApp(app.name);
+						delete window.parent.anura.apps[app.package];
 						displayOutput(`${app.name} has been uninstalled.`);
 					} else if (configPath.endsWith(".tbconfig")) {
 						await tb.sh.rm(configPath.replace("/.tbconfig", "/"));
@@ -105,10 +123,21 @@ async function pkg(args) {
 			if (args._[1]) {
 				displayOutput("Checking for updates...");
 				const config = JSON.parse(await Filer.fs.promises.readFile(`/apps/system/${args._[1].toLowerCase()}.tapp/.tbconfig`, "utf8"));
-				const response = await tb.libcurl.fetch(localStorage.getItem("appRepo") || "https://raw.githubusercontent.com/TerbiumOS/app-repo/main/apps.json");
-				const repoData = await response.json();
+				const response = await tb.libcurl.fetch(repo);
+				let repoData = rType === "terbium" ? (await response.json()).apps : (await (await tb.libcurl.fetch(repo.replace("manifest.json", "list.json"))).json()).apps;
 				const packageName = args._[1];
 				const exactMatch = repoData.find(pkg => pkg.name.toLowerCase() === packageName);
+				if (exactMatch.requirements) {
+					if (exactMatch.requirements.os < window.parent.tb.system.version()) {
+						displayError(`This app requires terbium version: ${exactMatch.requirements.os} or later`);
+						createNewCommandInput();
+						return;
+					} else if (exactMatch.requirements.proxy !== (await window.parent.tb.proxy.get())) {
+						displayError(`This app requires ${exactMatch.requirements.proxy} as the default proxy.`);
+						createNewCommandInput();
+						return;
+					}
+				}
 				if (config.version !== exactMatch.version) {
 					displayOutput(`Updating ${exactMatch.name} from version ${config.version} to ${exactMatch.version}...`);
 					await tb.sh.promises.rm(`/apps/system/${args._[1].toLowerCase()}.tapp/`, { recursive: true });
@@ -134,8 +163,8 @@ async function pkg(args) {
 			break;
 		case "search":
 			if (args._[1]) {
-				const response = await tb.libcurl.fetch(localStorage.getItem("appRepo") || "https://raw.githubusercontent.com/TerbiumOS/app-repo/main/apps.json");
-				const repoData = await response.json();
+				const response = await tb.libcurl.fetch(repo);
+				let repoData = rType === "terbium" ? (await response.json()).apps : (await (await tb.libcurl.fetch(repo.replace("manifest.json", "list.json"))).json()).apps;
 				const searchTerm = args._[1].toLowerCase();
 				const exactMatch = repoData.find(pkg => pkg.name.toLowerCase() === searchTerm);
 				if (exactMatch) {
@@ -163,25 +192,58 @@ async function pkg(args) {
 			switch (args._[1]) {
 				case "r":
 				case "remove":
-					displayOutput("Changed Repository URL to the default repo");
-					localStorage.removeItem("appRepo");
+					let r = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/app store/repos.json`, "utf8"));
+					r = r.filter(r => r.url !== args._[2]);
+					await Filer.fs.promises.writeFile(`/apps/user/${sessionStorage.getItem("currAcc")}/app store/repos.json`, JSON.stringify(r));
+					displayOutput(`Removed ${args._[2]} from the repo list`);
 					createNewCommandInput();
 					break;
 				case "a":
 				case "add":
-					displayOutput("Changed Repository URL to: " + args._[2]);
-					localStorage.setItem("appRepo", args._[2]);
+					let newrepo = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/app store/repos.json`, "utf8"));
+					newrepo.push({ url: args._[2] });
+					await Filer.fs.promises.writeFile(`/apps/user/${sessionStorage.getItem("currAcc")}/app store/repos.json`, JSON.stringify(newrepo));
+					displayOutput(`Added ${args._[2]} to the repo list`);
+					createNewCommandInput();
+					break;
+				case "l":
+				case "list":
+					let repoList = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/app store/repos.json`, "utf8"));
+					displayOutput("Available Repositories:");
+					repoList.forEach(repo => {
+						displayOutput(` - ${repo.url}`);
+					});
+					createNewCommandInput();
+					break;
+				case "s":
+				case "set":
+					repo = args._[2];
+					try {
+						const response = await fetch(repo);
+						const jsonData = await response.json();
+						let repoType;
+						if ("repo" in jsonData) {
+							repoType = "terbium";
+						} else {
+							repoType = "anura";
+						}
+						sessionStorage.setItem("pkg-repo", repo);
+						sessionStorage.setItem("pkg-type", repoType);
+						displayOutput(`Set repo to ${repo} (type: ${repoType})`);
+					} catch (e) {
+						displayError(`Failed to fetch or detect repo type: ${e.message}`);
+					}
 					createNewCommandInput();
 					break;
 				default:
-					displayOutput("Usage: pkg repo <a/r> [repo-url]");
+					displayOutput("Usage: pkg repo <a/r/l/s> [repo-url]");
 					createNewCommandInput();
 					break;
 			}
 			break;
 		case "help":
 		default:
-			displayOutput(`TPKG v1.4.0 - June 2025`);
+			displayOutput(`TPKG v1.4.2 - August 2025`);
 			displayOutput(`Usage: pkg <command>`);
 			displayOutput(" ");
 			displayOutput("All commands:");
@@ -196,6 +258,7 @@ async function pkg(args) {
 }
 
 async function installApp(app, type) {
+	let repo = sessionStorage.getItem("pkg-repo") || JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/app store/repos.json`, "utf8"))[0].url;
 	switch (type) {
 		case "web":
 			let appPath = `/apps/user/${await window.parent.tb.user.username()}/${app.name}`;
@@ -310,20 +373,26 @@ async function installApp(app, type) {
 			}
 			break;
 		case "anura":
-			const aName = app.name.toLowerCase();
-			const APath = `/apps/anura/${appName}`;
-			const aDL = app["anura-pkg"];
+			console.log(app);
+			const aName = app.name || app.package;
+			const APath = `/apps/anura/${aName}`;
+			let aDL;
+			if ("anura-pkg" in app) {
+				aDL = app["anura-pkg"];
+			} else {
+				aDL = `${repo.replace("manifest.json", "")}/apps/${app.package}/${app.data}`;
+			}
 			try {
 				await tb.system.download(aDL, `${APath}.zip`);
 				const targetDirectory = `/apps/anura/${aName}/`;
-				await unzip(`/apps/${appName}.zip`, targetDirectory);
+				await unzip(`/apps/anura/${aName}.zip`, targetDirectory);
 				const appConf = await Filer.fs.promises.readFile(`/apps/anura/${aName}/manifest.json`, "utf8");
 				const appData = JSON.parse(appConf);
 				await window.parent.tb.launcher.addApp({
-					name: appData.wininfo.title,
+					name: appData.name,
 					title: appData.wininfo.title,
-					icon: `/fs/apps/anura/${aName}/${appData.icon}`,
-					src: `/fs/apps/anura/${aName}/${appData.index}`,
+					icon: `/fs/apps/anura/${app.name}/${appData.icon}`,
+					src: `/fs/apps/anura/${app.name}/${appData.index}`,
 					size: {
 						width: appData.wininfo.width,
 						height: appData.wininfo.height,
@@ -341,7 +410,7 @@ async function installApp(app, type) {
 					apps.push({
 						name: appData.name,
 						user: await window.parent.tb.user.username(),
-						config: `/apps/anura/${appName}/manifest.json`,
+						config: `/apps/anura/${aName}/manifest.json`,
 					});
 					await Filer.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(apps));
 				} catch {
@@ -351,13 +420,13 @@ async function installApp(app, type) {
 							{
 								name: appData.name,
 								user: await window.parent.tb.user.username(),
-								config: `/apps/anura/${appName}/manifest.json`,
+								config: `/apps/anura/${aName}/manifest.json`,
 							},
 						]),
 					);
 				}
 			} catch (e) {
-				displayError(`Failed to install ${appName} with reason: ${e.message}`);
+				displayError(`Failed to install ${aName} with reason: ${e.message}`);
 				return;
 			}
 			break;
