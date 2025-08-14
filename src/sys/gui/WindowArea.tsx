@@ -58,6 +58,7 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 	const [controls, setControls] = useState(config.controls);
 	const [src, setSrc] = useState(config.src);
 	const originalSize = useRef<{ width: number; height: number } | null>(null);
+	const [isSnapped, setIsSnapped] = useState(false);
 	const mobileCheck = async () => {
 		if ((await window.tb.platform.getPlatform()) === "mobile") {
 			setMaximized(true);
@@ -86,7 +87,7 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 		}
 		const prox = async () => {
 			if (config.proxy === true) {
-				const settings: UserSettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, "utf8"));
+				const settings: UserSettings = JSON.parse(await window.tb.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, "utf8"));
 				setSrc("about:blank");
 				console.log(settings.proxy);
 				if (settings.proxy === "Ultraviolet") {
@@ -344,6 +345,16 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 		}
 	};
 	useEffect(() => {
+		if (isDragging && isSnapped && originalSize.current && windowRef.current) {
+			windowRef.current.style.width = `${originalSize.current.width}px`;
+			windowRef.current.style.height = `${originalSize.current.height}px`;
+			setIsSnapped(false);
+			setSnapRegion(null);
+			onSnapDone?.();
+		}
+	}, [isDragging, isSnapped]);
+
+	useEffect(() => {
 		const snap = () => {
 			setIsMouseDown(false);
 			setIsDragging(false);
@@ -353,44 +364,40 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 					windowRef.current.style.width = "50%";
 					windowRef.current.style.height = "100%";
 					windowRef.current.style.top = "0";
+					setIsSnapped(true);
 				} else if (snapRegion === "right") {
 					windowRef.current.style.left = "50%";
 					windowRef.current.style.width = "50%";
 					windowRef.current.style.height = "100%";
 					windowRef.current.style.top = "0";
+					setIsSnapped(true);
 				} else if (snapRegion === "top") {
 					setMaximized(true);
+					setIsSnapped(true);
 				} else if (snapRegion === "top-left") {
 					windowRef.current.style.left = "0";
 					windowRef.current.style.top = "0";
 					windowRef.current.style.width = "50%";
 					windowRef.current.style.height = "50%";
+					setIsSnapped(true);
 				} else if (snapRegion === "top-right") {
 					windowRef.current.style.left = "50%";
 					windowRef.current.style.top = "0";
 					windowRef.current.style.width = "50%";
 					windowRef.current.style.height = "50%";
+					setIsSnapped(true);
 				} else if (snapRegion === "bottom-left") {
 					windowRef.current.style.left = "0";
 					windowRef.current.style.top = "50%";
 					windowRef.current.style.width = "50%";
 					windowRef.current.style.height = "50%";
+					setIsSnapped(true);
 				} else if (snapRegion === "bottom-right") {
 					windowRef.current.style.left = "50%";
 					windowRef.current.style.top = "50%";
 					windowRef.current.style.width = "50%";
 					windowRef.current.style.height = "50%";
-				} else {
-					if (originalSize.current) {
-						// Note from XSTARS, This is disabled until I can fix it in a few days
-						//windowRef.current.style.width = `${originalSize.current.width}px`;
-						//windowRef.current.style.height = `${originalSize.current.height}px`;
-					} else if (isResizing === false && isDragging) {
-						windowRef.current.style.left = `${x}`;
-						windowRef.current.style.width = `${width}`;
-						windowRef.current.style.height = `${height}`;
-						windowRef.current.style.top = `${y}`;
-					}
+					setIsSnapped(true);
 				}
 			}
 			setSnapRegion(null);
@@ -445,6 +452,7 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 					setY(newY);
 				}
 			}
+			originalSize.current = { width, height };
 		};
 
 		const onUp = () => {
@@ -606,8 +614,8 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 				}}
 			>
 				<div className="flex gap-2 items-center">
-					<img src={config.icon} alt="icon" className="w-5 h-5 pointer-events-none" draggable={false} />
-					<span ref={titleRef} className="font-[680] pointer-events-none">
+					<img src={config.icon} alt="icon" className="w-5 h-5 pointer-events-none select-none" draggable={false} />
+					<span ref={titleRef} className="font-[680] pointer-events-none select-none">
 						{title}
 					</span>
 					{titlebarhtml && <div ref={thtmlref} />}
@@ -890,14 +898,14 @@ const DesktopItems = () => {
 
 	useEffect(() => {
 		const addDesktopListener = async () => {
-			let desktopItems: string[] = await Filer.fs.promises.readdir(`/home/${user}/desktop`);
+			let desktopItems: string[] = await window.tb.fs.promises.readdir(`/home/${user}/desktop`);
 
 			const handleDesktopChange = async () => {
 				try {
-					const updatedItems = await Filer.fs.promises.readdir(`/home/${user}/desktop`);
+					const updatedItems = await window.tb.fs.promises.readdir(`/home/${user}/desktop`);
 					const addedItems = updatedItems.filter(item => !desktopItems.includes(item));
 					const removedItems = desktopItems.filter(item => !updatedItems.includes(item));
-					var desktopConfig = JSON.parse(await Filer.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
+					var desktopConfig = JSON.parse(await window.tb.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
 					if (addedItems.length > 0) {
 						const findLastItem = () => {
 							for (let i = desktopConfig.length - 1; i >= 0; i--) {
@@ -923,11 +931,11 @@ const DesktopItems = () => {
 						for (const item of addedItems) {
 							const itemExists = desktopConfig.some((config: any) => config.item === `/home/${user}/desktop/${item}`);
 							if (!itemExists) {
-								const type = (await Filer.fs.promises.lstat(`/home/${user}/desktop/${item}`)).type.toLowerCase();
+								const type = (await window.tb.fs.promises.lstat(`/home/${user}/desktop/${item}`)).type.toLowerCase();
 								if (type === "symlink") {
-									const isAppJson = (await Filer.fs.promises.readFile(await Filer.fs.promises.readlink(`/home/${user}/desktop/${item}`))).includes("config");
+									const isAppJson = (await window.tb.fs.promises.readFile(await window.tb.fs.promises.readlink(`/home/${user}/desktop/${item}`))).includes("config");
 									desktopConfig.push({
-										name: isAppJson ? JSON.parse(await Filer.fs.promises.readFile(await Filer.fs.promises.readlink(`/home/${user}/desktop/${item}`)))["config"].title : item,
+										name: isAppJson ? JSON.parse(await window.tb.fs.promises.readFile(await window.tb.fs.promises.readlink(`/home/${user}/desktop/${item}`)))["config"].title : item,
 										item: `/home/${user}/desktop/${item}`,
 										position: {
 											custom: false,
@@ -937,10 +945,10 @@ const DesktopItems = () => {
 									});
 								} else if (type === "file") {
 									const ext = item.split(".").pop();
-									const icons = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/file-icons.json"));
+									const icons = JSON.parse(await window.tb.fs.promises.readFile("/system/etc/terbium/file-icons.json"));
 									const iconName = ext ? icons["ext-to-name"][ext] : "Unknown";
 									const iconPath = iconName ? icons["name-to-path"][iconName] : "/system/etc/terbium/file-icons/Unknown.svg";
-									const iconData = await Filer.fs.promises.readFile(iconPath, "utf8");
+									const iconData = await window.tb.fs.promises.readFile(iconPath, "utf8");
 
 									desktopConfig.push({
 										name: item,
@@ -965,7 +973,7 @@ const DesktopItems = () => {
 					}
 
 					desktopItems = updatedItems;
-					await Filer.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(desktopConfig, null, 4));
+					await window.tb.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(desktopConfig, null, 4));
 				} catch (error) {
 					console.error("Error while reading directory:", error);
 				}
@@ -981,9 +989,9 @@ const DesktopItems = () => {
 	useEffect(() => {
 		const getItems = async () => {
 			var allItems: any[] = [];
-			const items = JSON.parse(await Filer.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
+			const items = JSON.parse(await window.tb.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
 			for (const item of items) {
-				const type = (await Filer.fs.promises.lstat(item.item)).type.toLowerCase();
+				const type = (await window.tb.fs.promises.lstat(item.item)).type.toLowerCase();
 				const position = item.position;
 				if (type === "symlink") {
 					allItems.push({
@@ -995,14 +1003,14 @@ const DesktopItems = () => {
 							top: position.top,
 							left: position.left,
 						},
-						config: JSON.parse(await Filer.fs.promises.readFile(await Filer.fs.promises.readlink(item.item)))["config"],
+						config: JSON.parse(await window.tb.fs.promises.readFile(await window.tb.fs.promises.readlink(item.item)))["config"],
 					});
 				} else if (type === "file") {
 					const ext = item.name.split(".").pop();
-					const icons = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/file-icons.json"));
+					const icons = JSON.parse(await window.tb.fs.promises.readFile("/system/etc/terbium/file-icons.json"));
 					const iconName = ext ? icons["ext-to-name"][ext] : "Unknown";
 					const iconPath = iconName ? icons["name-to-path"][iconName] : "/system/etc/terbium/file-icons/Unknown.svg";
-					const iconData = await Filer.fs.promises.readFile(iconPath, "utf8");
+					const iconData = await window.tb.fs.promises.readFile(iconPath, "utf8");
 					allItems.push({
 						name: item.name,
 						type: "file",
@@ -1173,7 +1181,7 @@ const DesktopItems = () => {
 
 	const savePos = async (item: string, left: number, top: number) => {
 		try {
-			const desktopConfig = JSON.parse(await Filer.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
+			const desktopConfig = JSON.parse(await window.tb.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
 			const itemIndex = desktopConfig.findIndex((config: any) => config.item === item);
 			if (itemIndex !== -1) {
 				const currentLeft = desktopConfig[itemIndex].position.left;
@@ -1182,7 +1190,7 @@ const DesktopItems = () => {
 					desktopConfig[itemIndex].position.left = Math.round(left);
 					desktopConfig[itemIndex].position.top = Math.round(top);
 					desktopConfig[itemIndex].position.custom = true;
-					await Filer.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(desktopConfig, null, 4));
+					await window.tb.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(desktopConfig, null, 4));
 					console.log("Saved app position");
 				}
 			}
@@ -1208,7 +1216,7 @@ const DesktopItems = () => {
 						id="desktop-item"
 						className="group relative size-max min-w-16 min-h-16 flex flex-col items-center justify-center p-2 text-sm font-medium text-wrap select-none"
 						onDoubleClick={async () => {
-							let handlers = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"))["fileAssociatedApps"];
+							let handlers = JSON.parse(await window.tb.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"))["fileAssociatedApps"];
 							handlers = Object.entries(handlers).filter(([type, app]) => {
 								return !(type === "text" && app === "text-editor") && !(type === "image" && app === "media-viewer") && !(type === "video" && app === "media-viewer") && !(type === "audio" && app === "media-viewer");
 							});
@@ -1261,7 +1269,7 @@ const DesktopItems = () => {
 												title: "Select a application",
 												filter: ".tapp",
 												onOk: async (val: any) => {
-													const app = JSON.parse(await Filer.fs.promises.readFile(`${val}/.tbconfig`, "utf8"));
+													const app = JSON.parse(await window.tb.fs.promises.readFile(`${val}/.tbconfig`, "utf8"));
 													createWindow({ ...app, message: { type: "process", path: item.item } });
 												},
 											});
@@ -1306,9 +1314,9 @@ const DesktopItems = () => {
 									{
 										text: "Delete Shortcut",
 										click: async () => {
-											let idx = JSON.parse(await Filer.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
+											let idx = JSON.parse(await window.tb.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
 											idx = idx.filter((entry: any) => entry.name !== item.name);
-											await Filer.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(idx, null, 4));
+											await window.tb.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(idx, null, 4));
 											window.dispatchEvent(new Event("upd-desktop"));
 										},
 									},
@@ -1376,9 +1384,9 @@ const DesktopItems = () => {
 									{
 										text: "Delete Shortcut",
 										click: async () => {
-											let idx = JSON.parse(await Filer.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
+											let idx = JSON.parse(await window.tb.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
 											idx = idx.filter((entry: any) => entry.name !== item.name);
-											await Filer.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(idx, null, 4));
+											await window.tb.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(idx, null, 4));
 											window.dispatchEvent(new Event("upd-desktop"));
 										},
 									},
@@ -1441,12 +1449,12 @@ const DesktopItems = () => {
 									{
 										text: "Delete Shortcut",
 										click: async () => {
-											const stat = await Filer.fs.promises.stat(`/home/${user}/desktop/${item.item}`);
+											const stat = await window.tb.fs.promises.stat(`/home/${user}/desktop/${item.item}`);
 											if (stat.isDirectory()) {
 												// @ts-expect-error
-												await new Filer.fs.Shell().promises.rm(`/home/${user}/desktop/${item.item}`, { recursive: true });
+												await new window.tb.fs.Shell().promises.rm(`/home/${user}/desktop/${item.item}`, { recursive: true });
 											} else {
-												await Filer.fs.promises.unlink(`/home/${user}/desktop/${item.item}`);
+												await window.tb.fs.promises.unlink(`/home/${user}/desktop/${item.item}`);
 											}
 											window.dispatchEvent(new Event("upd-desktop"));
 										},
@@ -1550,8 +1558,8 @@ const WindowArea: React.FC<WindowAreaProps> = ({ className }) => {
 									title: "Enter the new name of the folder",
 									onOk: async (val: any) => {
 										const user = sessionStorage.getItem("currAcc");
-										await Filer.fs.promises.mkdir(`/home/${user}/desktop/${val}`);
-										const desktopConfig = JSON.parse(await Filer.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
+										await window.tb.fs.promises.mkdir(`/home/${user}/desktop/${val}`);
+										const desktopConfig = JSON.parse(await window.tb.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
 										const getLastItem = () => {
 											for (let i = desktopConfig.length - 1; i >= 0; i--) {
 												if (!desktopConfig[i].position.custom) {
@@ -1581,7 +1589,7 @@ const WindowArea: React.FC<WindowAreaProps> = ({ className }) => {
 												left: leftPos,
 											},
 										});
-										await Filer.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(desktopConfig, null, 4));
+										await window.tb.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(desktopConfig, null, 4));
 										window.dispatchEvent(new Event("upd-desktop"));
 									},
 								});
@@ -1594,8 +1602,8 @@ const WindowArea: React.FC<WindowAreaProps> = ({ className }) => {
 									title: "Enter the new name of the file",
 									onOk: async (val: any) => {
 										const user = sessionStorage.getItem("currAcc");
-										await Filer.fs.promises.writeFile(`/home/${user}/desktop/${val}`, "", "utf8");
-										const desktopConfig = JSON.parse(await Filer.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
+										await window.tb.fs.promises.writeFile(`/home/${user}/desktop/${val}`, "", "utf8");
+										const desktopConfig = JSON.parse(await window.tb.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
 										const getLastItem = () => {
 											for (let i = desktopConfig.length - 1; i >= 0; i--) {
 												if (!desktopConfig[i].position.custom) {
@@ -1625,7 +1633,7 @@ const WindowArea: React.FC<WindowAreaProps> = ({ className }) => {
 												left: leftPos,
 											},
 										});
-										await Filer.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(desktopConfig, null, 4));
+										await window.tb.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(desktopConfig, null, 4));
 										window.dispatchEvent(new Event("upd-desktop"));
 									},
 								});
@@ -1636,7 +1644,7 @@ const WindowArea: React.FC<WindowAreaProps> = ({ className }) => {
 							click: async () => {
 								const make = async (item: any) => {
 									const user = sessionStorage.getItem("currAcc");
-									const desktopConfig = JSON.parse(await Filer.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
+									const desktopConfig = JSON.parse(await window.tb.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
 									const getLastItem = () => {
 										for (let i = desktopConfig.length - 1; i >= 0; i--) {
 											if (!desktopConfig[i].position.custom) {
@@ -1666,11 +1674,11 @@ const WindowArea: React.FC<WindowAreaProps> = ({ className }) => {
 									if (aname.includes(".tapp")) {
 										let tconf: any;
 										if (await fileExists(`${item}/.tbconfig`)) {
-											tconf = JSON.parse(await Filer.fs.promises.readFile(`${item}/.tbconfig`, "utf8"));
+											tconf = JSON.parse(await window.tb.fs.promises.readFile(`${item}/.tbconfig`, "utf8"));
 										} else {
-											tconf = JSON.parse(await Filer.fs.promises.readFile(`${item}/index.json`, "utf8"));
+											tconf = JSON.parse(await window.tb.fs.promises.readFile(`${item}/index.json`, "utf8"));
 										}
-										await Filer.fs.promises.writeFile(
+										await window.tb.fs.promises.writeFile(
 											`${item}/desktopcfg.json`,
 											JSON.stringify({
 												name: aname.replace(".tapp", ""),
@@ -1682,7 +1690,7 @@ const WindowArea: React.FC<WindowAreaProps> = ({ className }) => {
 												icon: `/fs/${item}/${tconf.icon}`,
 											}),
 										);
-										await Filer.fs.promises.symlink(`${item}/desktopcfg.json`, `/home/${user}/desktop/${aname.replace(".tapp", "")}.lnk`, "file");
+										await window.tb.fs.promises.symlink(`${item}/desktopcfg.json`, `/home/${user}/desktop/${aname.replace(".tapp", "")}.lnk`, "file");
 										desktopConfig.push({
 											name: aname.replace(".tapp", ""),
 											item: `/home/${user}/desktop/${aname.replace(".tapp", "")}.lnk`,
@@ -1703,7 +1711,7 @@ const WindowArea: React.FC<WindowAreaProps> = ({ className }) => {
 											},
 										});
 									}
-									await Filer.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(desktopConfig, null, 4));
+									await window.tb.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(desktopConfig, null, 4));
 									window.dispatchEvent(new Event("upd-desktop"));
 								};
 								await window.tb.dialog.Select({
