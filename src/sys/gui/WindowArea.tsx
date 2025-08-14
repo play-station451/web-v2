@@ -522,15 +522,17 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 					backgroundImage: "url(/assets/img/grain.png)",
 				}}
 			></div>
-			<div
-				ref={focuserRef}
-				className={`absolute rounded-lg ${config.focused ? "inset-x-2 top-[calc(40px+0.5rem)] bottom-2 pointer-events-none opacity-0" : "inset-x-[1px] top-[40px] bottom-[1px] backdrop-blur-[4px] opacity-100"} duration-150`}
-				onMouseDown={() => {
-					windowStore.arrange(wid);
-					// @ts-ignore
-					setZIndex(windowStore.getWindow(wid)?.zIndex);
-				}}
-			></div>
+			{isSnapped ? null : (
+				<div
+					ref={focuserRef}
+					className={`absolute rounded-lg ${config.focused ? "inset-x-2 top-[calc(40px+0.5rem)] bottom-2 pointer-events-none opacity-0" : "inset-x-[1px] top-[40px] bottom-[1px] backdrop-blur-[4px] opacity-100"} duration-150`}
+					onMouseDown={() => {
+						windowStore.arrange(wid);
+						// @ts-ignore
+						setZIndex(windowStore.getWindow(wid)?.zIndex);
+					}}
+				></div>
+			)}
 			<div className="absolute left-0 right-0 h-[6px] cursor-n-resize" data-resizer="top" onMouseDown={() => handleMouseDown("top")} />
 			<div className="absolute left-0 top-[6px] bottom-[6px] w-[6px] cursor-w-resize" data-resizer="left" onMouseDown={() => handleMouseDown("left")} />
 			<div className="absolute right-0 top-[6px] bottom-[6px] w-[6px] cursor-e-resize" data-resizer="right" onMouseDown={() => handleMouseDown("right")} />
