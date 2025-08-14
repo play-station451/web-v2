@@ -839,6 +839,7 @@ export default async function Api() {
 						wid: win.wid,
 						icon: win.icon,
 						pid: win.pid,
+						src: win.src,
 					};
 				});
 				return list;
