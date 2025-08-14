@@ -27,7 +27,7 @@
 
 > <span style="font-family: url('https://fonts.googleapis.com/css2?family=Roboto&display=swap'); color: #ffd900;">⚠</span> <span style="color: #ffd900;">NOTE:</span> Terbium **WILL NOT** build on versions of Node older than version 20.
 
-To get started its pretty easy you need either npm or pnpm which can be installed by running: `npm i -g pnpm` and then just need to the run following command
+To get started it's pretty easy, you need either npm, or pnpm, which can be installed by running: `npm i -g pnpm` and then you just need to the run following command:
 
 ```bash
 pnpm i && pnpm start # Replace pnpm with npm if your not going to use pnpm
@@ -35,16 +35,16 @@ pnpm i && pnpm start # Replace pnpm with npm if your not going to use pnpm
 
 and visit [http://localhost:3000](http://localhost:3000) you should be good to go!
 
-If you are developing/modifying terbium you can just run `pnpm run dev`, **DO NOT** use the development server for Production use instead just run `pnpm start`. For any further backend configuration visit the `.env` file to configure the backend a bit.
+If you are developing/modifying terbium you can just run `pnpm run dev`, **DO NOT** use the development server for Production use. Instead, just run `pnpm start`. For any further backend configuration visit the `.env` file to configure the backend a bit.
 
 > <span style="font-family: none; color: #ffd900;">⚠</span> <span style="color: #ffd900;">Warning</span><br>
-> If you are going to static host Terbium you will need to change the wisp server and you would need to follow those steps. Refer to this [document](./docs/static-hosting.md) for more information
+> If you are going to static host Terbium, you will need to change the wisp server, and you would need to follow those steps. Refer to this [document](./docs/static-hosting.md) for more information.
 
 ### <span style="color: #32ae62;">Documentation</span>
 
-If you wish to develop or just learn more about terbiums components and stuff feel free to read out [Documentation](/docs/README.md)
+If you wish to develop or just learn more about Terbium's components and stuff, feel free to read our [Documentation](/docs/README.md)
 
-If your looking to see what Anura APIs and features are supported in terbium, refer to: [here](/docs/anura-compat.md), if your looking to see what Electron API's are supported in terbium refer to: [here](/docs/lemonade-compat.md)
+If you're looking to see what Anura APIs and features are supported in terbium, refer to: [here](/docs/anura-compat.md), if you're looking to see what Electron API's are supported in terbium refer to: [here](/docs/lemonade-compat.md)
 
 ### <span style="color: #32ae62;">Contributors</span>
 
