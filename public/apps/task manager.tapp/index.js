@@ -97,7 +97,6 @@ async function getTasks() {
 	let mem;
 	if ("measureUserAgentSpecificMemory" in window.parent.performance) {
 		mem = await window.parent.performance.measureUserAgentSpecificMemory();
-		console.log(mem);
 	} else {
 		mem = { bytes: 0, breakdown: [] };
 	}

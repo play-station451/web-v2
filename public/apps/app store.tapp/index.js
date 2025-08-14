@@ -588,6 +588,9 @@ async function install(app, type) {
 					application: "App Store",
 					iconSrc: "/fs/apps/system/app store.tapp/icon.svg",
 					time: 5000,
+					onOk: () => {
+						window.parent.tb.system.openApp(app.name);
+					},
 				});
 				return true;
 			} catch (e) {
@@ -646,6 +649,9 @@ async function install(app, type) {
 				application: "App Store",
 				iconSrc: "/fs/apps/system/app store.tapp/icon.svg",
 				time: 5000,
+				onOk: () => {
+					window.parent.tb.system.openApp(app.name);
+				},
 			});
 			return true;
 		case "tb-liq":
@@ -702,6 +708,9 @@ async function install(app, type) {
 					application: "App Store",
 					iconSrc: "/fs/apps/system/app store.tapp/icon.svg",
 					time: 5000,
+					onOk: () => {
+						window.parent.tb.system.openApp(app.name);
+					},
 				});
 				return true;
 			} catch (e) {

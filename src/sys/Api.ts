@@ -512,7 +512,7 @@ export default async function Api() {
 					config.src = src.startsWith(".") || src.startsWith("/") ? `/fs${aPath}${src.replace(/^\.\//, "")}` : `/fs${aPath}${src}`;
 					config.icon = config.icon ? (config.icon.startsWith(".") || config.icon.startsWith("/") ? `/fs${aPath}${config.icon.replace(/^\.\//, "")}` : `/fs${aPath}${config.icon}`) : undefined;
 				} else {
-					const conf: WindowConfig = JSON.parse(await window.tb.fs.promises.readFile(app.config, "utf8")).conf || JSON.parse(await window.tb.fs.promises.readFile(app.config, "utf8")).config;
+					const conf: WindowConfig = JSON.parse(await window.tb.fs.promises.readFile(app.config, "utf8")).wmArgs || JSON.parse(await window.tb.fs.promises.readFile(app.config, "utf8")).config;
 					const aPath = app.config.replace(/[^/]+$/, "");
 					let src = conf.src || "index.html";
 					if (src.startsWith("./")) {
