@@ -86,11 +86,14 @@ export function TServer() {
 		});
 	}
 
-	app.use("*", serveStatic({ 
-		root: "./dist",
-		onNotFound: (path, c) => {}
-	}));
-	
+	app.use(
+		"*",
+		serveStatic({
+			root: "./dist",
+			onNotFound: (path, c) => {},
+		}),
+	);
+
 	app.use("*", async (c, next) => {
 		await next();
 		if (c.req.url.endsWith(".cjs")) {
@@ -101,34 +104,37 @@ export function TServer() {
 	app.use("/libcurl/*", serveStatic({ root: libcurlPath }));
 	app.use("/baremux/*", serveStatic({ root: baremuxPath }));
 	app.use("/epoxy/*", serveStatic({ root: epoxyPath }));
-	
+
 	wisp.options.dns_method = "resolve";
 	wisp.options.dns_servers = ["1.1.1.3", "1.0.0.3"];
 	wisp.options.dns_result_order = "ipv4first";
 
 	const port = parseInt(process.env.PORT || "8080");
-	
+
 	// Configure CORS
-	app.use("/*", cors({
-		origin: `http://localhost:${port}`,
-		allowMethods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
-		credentials: true,
-	}));
+	app.use(
+		"/*",
+		cors({
+			origin: `http://localhost:${port}`,
+			allowMethods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
+			credentials: true,
+		}),
+	);
 
 	const server = serve({
 		fetch: app.fetch,
 		port,
 		createServer: () => {
 			const httpServer = createServer();
-			
+
 			httpServer.on("upgrade", (req, socket, head) => {
 				if (req.url?.endsWith("/wisp/")) {
 					wisp.routeRequest(req, socket, head);
 				}
 			});
-			
+
 			return httpServer;
-		}
+		},
 	});
 
 	const manifest = fs.readFileSync(path.join(__dirname, "package.json"), "utf-8");
