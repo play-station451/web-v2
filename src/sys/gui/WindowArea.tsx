@@ -1038,43 +1038,45 @@ const DesktopItems = () => {
 
 	const onMouseDown = (e: React.MouseEvent<HTMLDivElement>, index: number) => {
 		let holdTimeout: NodeJS.Timeout | null = null;
+		let renamingIndex: number | null = null;
 		const startDragging = () => {
 			setDragradius(true);
 			setDragging(true);
 			draggedItemIndex.current = index;
 		};
 
-		const saveName = async (name: string) => {
-			if (selectedRef.current) {
+		const saveName = async () => {
+			if (selectedRef.current && renamingIndex !== null) {
 				const spanElement = selectedRef.current.querySelector("span");
 				if (spanElement) {
 					const newName = spanElement.innerText;
-					const oldName = items[index].name;
-					const itemPath = items[index].item;
+					const oldName = items[renamingIndex].name;
+					const itemPath = items[renamingIndex].item;
 					const newPath = itemPath.replace(oldName, newName);
 					if (selectedRef.current?.dataset.type === "shortcut") {
-						const desktopItems = JSON.parse(await Filer.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
+						const desktopItems = JSON.parse(await window.tb.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
 						const itemIndex = desktopItems.findIndex((item: any) => item.item === itemPath);
 						if (itemIndex !== -1) {
 							desktopItems[itemIndex].name = newName;
 							desktopItems[itemIndex].item = newPath;
-							await Filer.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(desktopItems, null, 4));
+							await window.tb.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(desktopItems, null, 4));
 							window.dispatchEvent(new Event("upd-desktop"));
 						}
 					} else {
-						await Filer.fs.promises.rename(itemPath, newPath);
-						const desktopItems = JSON.parse(await Filer.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
+						await window.tb.fs.promises.rename(itemPath, newPath);
+						const desktopItems = JSON.parse(await window.tb.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
 						const itemIndex = desktopItems.findIndex((item: any) => item.item === itemPath);
 						if (itemIndex !== -1) {
 							desktopItems[itemIndex].name = newName;
 							desktopItems[itemIndex].item = newPath;
-							await Filer.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(desktopItems, null, 4));
+							await window.tb.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(desktopItems, null, 4));
 							window.dispatchEvent(new Event("upd-desktop"));
 							selectedRef.current = null;
 						}
 					}
 				}
 			}
+			renamingIndex = null;
 		};
 
 		if (selectedRef.current && selectedRef.current === e.currentTarget) {
@@ -1091,26 +1093,29 @@ const DesktopItems = () => {
 					spanElement.addEventListener("keydown", async e => {
 						if (e.key === "Enter") {
 							e.preventDefault();
-							saveName(spanElement.innerText);
+							await saveName();
 						}
 					});
 					spanElement.focus();
+					renamingIndex = index;
 				}
-				document.addEventListener("mousedown", e => {
+				const mouseDownHandler = async (e: MouseEvent) => {
 					if (selectedRef.current && !selectedRef.current.contains(e.target as Node)) {
 						setSelected(null);
 						const spanElement = selectedRef.current.querySelector("span");
 						if (spanElement) {
-							saveName(spanElement.innerText);
+							await saveName();
 							spanElement.contentEditable = "false";
 							spanElement.blur();
 							selectedRef.current = null;
 						}
 					}
-				});
+				};
+				document.addEventListener("mousedown", mouseDownHandler, { once: true });
 			}
 		} else {
 			selectedRef.current = e.currentTarget;
+			renamingIndex = index;
 		}
 
 		holdTimeout = setTimeout(startDragging, 300);
