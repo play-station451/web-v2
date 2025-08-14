@@ -522,6 +522,23 @@ So you're looking to use Terbium APIs. Well, you're in the right place! Terbium 
       });
       ```
 
+### Node
+  - **WebContainer**
+    - Description: The current webContainer instance for the Node Subsystem, Refer to [here](https://webcontainers.io/api) for Documentation.
+  
+  - **servers**
+    - Description: The Map of ports running on the Node Subsystem
+
+  - **isReady**
+    - Description: Returns weither or not the WebContainer is booted or not.
+    - Returns: boolean
+
+  - **start**
+    - Description: Boots the WebContainer
+ 
+  - **stop**
+    - Description: Stops the WebContainer
+
 ### Platform
   - **getPlatform**
     - Description: Gets the current platform the user is using

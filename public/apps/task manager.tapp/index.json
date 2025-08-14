@@ -1,8 +1,8 @@
 {
-    "name": "Task Manager",
-    "config": {
-        "title": "Task Manager",
-        "icon": "/fs/apps/system/task manager.tapp/icon.svg",
-        "src": "/fs/apps/system/task manager.tapp/index.html"
-    }
+	"name": "Task Manager",
+	"config": {
+		"title": "Task Manager",
+		"icon": "/fs/apps/system/task manager.tapp/icon.svg",
+		"src": "/fs/apps/system/task manager.tapp/index.html"
+	}
 }

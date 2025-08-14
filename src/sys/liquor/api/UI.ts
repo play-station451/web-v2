@@ -1,7 +1,7 @@
 import { Theme } from "./Theme";
 
 export class AnuraUI {
-    /**
+	/**
 	 * This map contains all the built-in components that have been registered.
 	 */
 	builtins = new Map<string, any>();
@@ -18,23 +18,16 @@ export class AnuraUI {
 	 * @param component - The name of the component to register.
 	 * @param element - A function component that returns an HTMLElement.
 	 */
-	async registerComponent(
-		component: string,
-		element: HTMLDivElement,
-	): Promise<void> {
+	async registerComponent(component: string, element: HTMLDivElement): Promise<void> {
 		this.builtins.set(component, element);
 	}
-/**
+	/**
 	 * This function allows you to register a component from an external library.
 	 * @param lib - The name of the library to import the component from.
 	 * @param component - The name of the component to register.
 	 * @param version - (Optional) The version of the library to import the component from.
 	 */
-	async registerExternalComponent(
-		lib: string,
-		component: string,
-		version?: string,
-	): Promise<any> {
+	async registerExternalComponent(lib: string, component: string, version?: string): Promise<any> {
 		if (version) {
 			lib += "@" + version;
 		}
@@ -44,10 +37,7 @@ export class AnuraUI {
 			name: component,
 		});
 
-		window.anura.settings.set(
-			"anura.ui.components",
-			Array.from(this.components.entries()),
-		);
+		window.anura.settings.set("anura.ui.components", Array.from(this.components.entries()));
 	}
 
 	/**
@@ -81,17 +71,13 @@ export class AnuraUI {
 		return this.components.has(component) || this.builtins.has(component);
 	}
 
-    async use(
-		components: string[] | string | "*" = [],
-	): Promise<{ [key: string]: any }> {
+	async use(components: string[] | string | "*" = []): Promise<{ [key: string]: any }> {
 		const result: {
 			[key: string]: any;
 		} = {};
 
 		if (components === "*") {
-			components = Array.from(this.components.keys()).concat(
-				Array.from(this.builtins.keys()),
-			);
+			components = Array.from(this.components.keys()).concat(Array.from(this.builtins.keys()));
 		}
 
 		if (typeof components === "string") {
@@ -105,11 +91,11 @@ export class AnuraUI {
 		return result;
 	}
 
-    /**
+	/**
 	 * Install internal components
 	 */
-    init() {
-        const components = window.anura.settings.get("anura.ui.components");
+	init() {
+		const components = window.anura.settings.get("anura.ui.components");
 
 		if (components) {
 			try {
@@ -119,6 +105,6 @@ export class AnuraUI {
 			}
 		}
 
-        // API stub, Rest will not be implemented
-    }
+		// API stub, Rest will not be implemented
+	}
 }

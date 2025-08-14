@@ -21,7 +21,11 @@
           <path fill-rule="evenodd" d="M16.28 11.47a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 01-1.06-1.06L14.69 12 7.72 5.03a.75.75 0 011.06-1.06l7.5 7.5z" clip-rule="evenodd" />
         </svg>
       </div>
-      <input class="nav-input dir focus-within:outline-none" type="text" />
+      <div style="display: flex; flex-direction: row; gap: 4px;">
+        <div class="nav-input drive-modal" style="display: none; flex-direction: row; gap: 3px;">
+        </div>
+      </div>
+      <input class="nav-input dir focus-within:outline-none" type="text">
       <div class="relative flex">
         <input class="nav-input search focus-within:outline-none max-w-48" type="text" placeholder="Search" />
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="clear-search absolute size-6 right-1 top-1/2 -translate-y-1/2 stroke-[currentColor] stroke-[1px] opacity-0 pointer-events-none duration-150">

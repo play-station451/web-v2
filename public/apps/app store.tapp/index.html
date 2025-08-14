@@ -4,21 +4,69 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Terbium App Store</title>
-    <link rel="stylesheet" href="./index.css">
+    <style>
+        @font-face {
+	        font-family: Inter;
+	        src: url("/fonts/Inter.ttf");
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            color: #fff;
+            font-family: Inter;
+            font-weight: bold;
+        }
+
+        ::-webkit-scrollbar {
+	        width: 8px;
+	        height: 100%;
+        }
+
+        ::-webkit-scrollbar-thumb {
+	        background-color: #ffffff28;
+	        border-radius: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+	        background-color: #ffffff10;
+	        border-radius: 8px;
+        }
+    </style>
     <script src="/assets/libs/filer.min.js"></script>
     <script src="/assets/libs/tailwind.min.js"></script>
+    <script src="./index.js"></script>
 </head>
     <body>
-        <main class="appContainer"></main>
-        <main class="details-page">
-            <button class="nav-button">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-                </svg>
-                <h3>Home</h3>
-            </button>
-            <div class="details"></div>
-        </main>
-        <script src="./index.js"></script>
+        <div class="fixed top-[5px] left-[5px] h-[calc(100vh-20px)] w-[200px] bg-[#00000022] rounded-lg flex flex-col gap-[7px] p-2">
+            <div class="flex flex-col h-full">
+                <div class="flex flex-col gap-[7px] flex-1 repo-list overflow-y-auto"></div>
+                <div class="repo-card flex flex-row items-center bg-[#00000032] rounded-lg h-[50px] p-1 gap-1 mt-auto" onClick="addRepo()">
+                    <h3 class="text-white text-base font-black">Add Repo</h3>
+                </div>
+            </div>
+        </div>
+        <div class="main flex flex-col items-center absolute left-[215px] top-0 right-0 min-h-screen gap-1">
+            <h1 class="font-black text-3xl">Featured App of the Day</h1>
+            <div class="featured flex w-[97%] bg-[#00000032] rounded-[22px] p-2 items-center gap-6 relative bg-no-repeat bg-center bg-cover" style="height:175px;">
+                <div class="info flex flex-col justify-end text-white absolute left-6 bottom-6">
+                    <h3 class="text-2xl font-bold mb-2">Loading...</h3>
+                    <h4 class="text-[16px] mb-1 text-[#ffffff75]">Loading...</h4>
+                    <h4 class="text-[16px] text-[#ffffff75]">Loading...</h4>
+                </div>
+            </div>
+            <div class="flex flex-row justify-center items-center w-full my-4">
+                <div class="app-togg bg-[#5DD88122] text-white font-black p-1 px-6 rounded-[22px] mr-2" onclick="view('apps')">Apps</div>
+                <div class="pwa-togg bg-[#00000022] text-white font-black p-1 px-6 rounded-[22px] ml-2" onclick="view('pwa')">PWAs</div>
+            </div>
+            <div class="apps-list flex-col all-apps grid grid-cols-4 gap-1.5 w-full h-full ml-[-10px] overflow-y-auto">
+            </div>
+            <div class="pwa-list hidden flex-col all-apps grid-cols-4 gap-1.5 w-full h-full ml-[-10px] overflow-y-auto">
+            </div>
+        </div>
+        <div class="app-prev hidden flex-col absolute left-[215px] top-0 right-0 h-full gap-1 overflow-y-auto">
+        </div>
     </body>
 </html>

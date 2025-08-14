@@ -1,5 +1,6 @@
-function clear() {
-    window.postMessage("clear", '*')
+function clear(term) {
+	term.clear();
+	createNewCommandInput();
 }
 
-clear()
+clear(term);

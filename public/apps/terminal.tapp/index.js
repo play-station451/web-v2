@@ -1,306 +1,362 @@
-const Filer = window.Filer;
-const fs = new Filer.FileSystem();
-const sh = new fs.Shell();
-const outputElement = document.getElementById("output");
-let inputElement
-let terminal = document.querySelector("#terminal")
-const userPromptElement = document.getElementById("user-prompt");
-const recentcmds = JSON.parse(sessionStorage.getItem('terminalRecents')) || [];
-let currentIndex = recentcmds.length - 1;
+import parser from "yargs-parser";
+import http from "iso-http";
+import git from "git";
+import * as webdav from "/fs/apps/system/files.tapp/webdav.js";
 
-if (!Array.isArray(recentcmds)) {
-  console.warn('Invalid data');
-  recentcmds = [];
+/**
+ * @typedef {import("yargs-parser").Arguments} argv
+ */
+/**
+ * @typedef {function(string, argv)} commandHandler
+ */
+/**
+ * @typedef {Object} appInfo
+ * @property {string} name The name of the app
+ * @property {string} description The description of the app
+ * @property {string} usage How to use the app from the CLI
+ */
+
+// This is just to resove the terbium system api's
+const tb = window.tb || window.parent.tb || {};
+
+window.http = http;
+window.gitfetch = git;
+window.webdav = webdav;
+
+/**
+ * Converts a hex color to an RGB string
+ * @param {string} hex The hex color to convert
+ * @returns {{r: number, g: number, b: number} | null} The RGB object for use in accent, or null if invalid
+ */
+function htorgb(hex) {
+	hex = hex.replace("#", "");
+	if (hex.length === 3) {
+		hex = hex
+			.split("")
+			.map(h => h + h)
+			.join("");
+	}
+	if (hex.length !== 6) return null;
+	const bigint = parseInt(hex, 16);
+	return {
+		r: (bigint >> 16) & 255,
+		g: (bigint >> 8) & 255,
+		b: bigint & 255,
+	};
 }
 
-function executeCommand(command) {
-  const [commandName, ...commandArgs] = command.split(" ");
-  let inString = false;
-  let args = [];
-  let currentArg = "";
-  commandArgs.forEach(arg => {
-    if(arg.startsWith('"')) {
-      inString = true;
-      currentArg = arg.substring(1);
-    } else if(arg.endsWith('"')) {
-      inString = false;
-      currentArg += " " + arg.substring(0, arg.length - 1);
-      args.push(currentArg);
-      currentArg = "";
-    } else if(inString) {
-      currentArg += " " + arg;
-    } else {
-      args.push(arg);
-    }
-  })
+/**
+ * Command that has been captured from the start of the other command prompt ending and after the newline carriage
+ */
+let accCommand = "";
 
-  const scriptPaths = [
-    `http://localhost:3001/apps/terminal.tapp/scripts/${commandName.toLowerCase()}.js`,
-    /*
-    `/fs/scripts/${commandName.toLowerCase()}.js`
-    `./scripts/${commandName.toLowerCase()}.js`
-    */
-  ];
-  fetchScript(scriptPaths).then(scriptContent => {
-    if (scriptContent) {
-      try {
-        new Function("args", scriptContent)(args);
-        if (args) {
-          recentcmds.push(`${commandName} ${args}`)
-        } else {
-          recentcmds.push(`${commandName}`)
-        }
-        sessionStorage.setItem('terminalRecents', JSON.stringify(recentcmds))
-      } catch (error) {
-        displayError(`${commandName.toLowerCase()}: ${error.message}`);
-        inputElement.setAttribute("disabled", true);
-        createNewCommandInput();
-      }
-    } else {
-      displayError(`Command not found: ${command}`);
-      inputElement.setAttribute("disabled", true);
-      createNewCommandInput();
-    }
-  });
+/**
+ * Flag to control whether the terminal should process commands
+ */
+let isProcessingCommands = true;
+tb.setCommandProcessing = status => {
+	isProcessingCommands = status;
+};
+/**
+ * Last few commands that have been executed
+ */
+let commandHistory = [];
+let historyIndex = -1;
+let path = `/home/${sessionStorage.getItem("currAcc")}/`;
+const HISTORY_LIMIT = 1000;
+const HISTORY_FILE = ".bash_history";
+
+const term = new Terminal();
+document.addEventListener("DOMContentLoaded", async () => {
+	term.open(document.getElementById("term"));
+	term.writeln(`TerbiumOS [Version: ${tb.system.version()}]`);
+	term.writeln(`Type 'help' for a list of commands.`);
+	term.setOption("theme", {
+		background: "#000000",
+		cursor: "#ffffff",
+		selection: "#444444",
+	});
+	term.setOption("cursorBlink", true);
+	window.term = term;
+
+	// Load command history
+	await loadHistory();
+
+	term.write("\r\n");
+	await writePowerline();
+	term.onData(async char => {
+		if (!isProcessingCommands) return;
+
+		// Handle arrow keys for history navigation
+		// Up arrow
+		if (char === "\x1b[A") {
+			if (historyIndex > 0 && commandHistory.length > 0) {
+				// Clear current line
+				term.write("\r\x1b[K");
+				await writePowerline();
+
+				historyIndex--;
+				accCommand = commandHistory[historyIndex];
+				term.write(accCommand);
+			}
+			return;
+		}
+		// Down arrow
+		if (char === "\x1b[B") {
+			// Clear current line
+			term.write("\r\x1b[K");
+			await writePowerline();
+
+			if (historyIndex < commandHistory.length - 1) {
+				historyIndex++;
+				accCommand = commandHistory[historyIndex];
+				term.write(accCommand);
+			} else {
+				historyIndex = commandHistory.length;
+				accCommand = "";
+			}
+			return;
+		}
+		// Left arrow
+		if (char === "\x7f") {
+			if (accCommand.length > 0) {
+				accCommand = accCommand.slice(0, -1);
+				term.write("\b \b");
+			}
+			return;
+		}
+		if (char === "\r") {
+			term.writeln("");
+			const input = accCommand.trim();
+			if (input.length > 0) {
+				// Save to history
+				await saveToHistory(input);
+
+				const [cmd, ...rawArgs] = input.split(" ");
+				const argv = parser(rawArgs);
+				argv._raw = rawArgs.join(" ");
+				await handleCommand(cmd, argv);
+			} else {
+				await writePowerline();
+			}
+			accCommand = "";
+			return;
+		}
+		if (char >= " " && char <= "~") {
+			accCommand += char;
+			term.write(char);
+		}
+	});
+	term.onLineFeed(() => {
+		// Reset because of a newline carriage
+		accCommand = "";
+		historyIndex = commandHistory.length;
+	});
+	term.focus();
+});
+
+/**
+ * Resizes the terminal to fit the window
+ * @returns {void}
+ */
+function resizeTerm() {
+	const cols = Math.floor(window.innerWidth / term._core._renderService.dimensions.actualCellWidth);
+	const rows = Math.floor(window.innerHeight / term._core._renderService.dimensions.actualCellHeight);
+	term.resize(cols, rows);
+}
+setTimeout(resizeTerm, 50);
+window.addEventListener("resize", resizeTerm);
+
+/**
+ * The command handler, which executes the commands in `scripts/`
+ * @param {string} name The command name
+ * @param {argv} args The command's respective args (from yargs-parser)
+ * @returns {Promise<void>}
+ */
+async function handleCommand(name, args) {
+	/**
+	 * The URLs to try to fetch the scripts from
+	 * @type {string[]}
+	 */
+	const scriptPaths = [`/fs/apps/system/terminal.tapp/scripts/${name.toLowerCase()}.js`, `/apps/terminal.tapp/scripts/${name.toLowerCase()}.js`];
+	/**
+	 * @type {appInfo}
+	 */
+	const appInfo = await getAppInfo();
+	if (appInfo === null) {
+		displayError("Failed to fetch app info, cannot execute command");
+		createNewCommandInput();
+		return;
+	}
+	// A sanity check to ensure the command exists and is defined properly
+	if (!appInfo.includes(name)) {
+		displayError(`Command '${name}' not found! Type 'help' for a list of commands.`);
+		createNewCommandInput();
+		return;
+	}
+	/**
+	 * @type {Response}
+	 */
+	let scriptRes;
+	try {
+		scriptRes = await fetch(scriptPaths[0]);
+	} catch {
+		try {
+			scriptRes = await fetch(scriptPathss[1]);
+		} catch (error) {
+			displayError(`Failed to fetch script: ${error.message}`);
+			createNewCommandInput();
+			return;
+		}
+	}
+	try {
+		const script = await scriptRes.text();
+		const fn = new Function("args", "displayOutput", "createNewCommandInput", "displayError", "term", "path", "terbium", script);
+		fn(args, displayOutput, createNewCommandInput, displayError, term, path, window.parent.tb);
+	} catch (error) {
+		displayError(`Failed to execute command '${name}': ${error.message}`);
+		createNewCommandInput();
+		return;
+	}
 }
 
-function fetchScript(scriptPaths) {
-  return Promise.all(
-    scriptPaths.map(scriptPath =>
-      fetch(scriptPath).then(response =>
-        response.ok ? response.text() : null
-      ).catch(error => {
-        if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-          return null;
-        } else {
-          throw error;
-        }
-      })
-    )
-  ).then(scriptContents => scriptContents.find(content => content !== null));
+window.addEventListener("updPath", e => {
+	path = e.detail;
+});
+
+/**
+ * Fetches the app info from the `info.json` file
+ * @param {boolean} justNames Whether to return just the app names or the full app info
+ * @returns {Promise<string[]|appInfo>} The app names or the full app info
+ */
+async function getAppInfo(justNames = true) {
+	/**
+	 * @type {Response}
+	 */
+	const appInfoResUsr = await fetch(`/fs/apps/user/${await tb.user.username()}/terminal/info.json`);
+	/**
+	 * @type {Response}
+	 */
+	const appInfoResSys = await fetch(`/fs/apps/system/terminal.tapp/scripts/info.json`);
+
+	/**
+	 * @type {Response}
+	 */
+	let appInfo;
+	try {
+		let appInfoUsr = await appInfoResUsr.json();
+		let appInfoSys = await appInfoResSys.json();
+		if (!Array.isArray(appInfoUsr)) appInfoUsr = appInfoUsr ? [appInfoUsr] : [];
+		if (!Array.isArray(appInfoSys)) appInfoSys = appInfoSys ? [appInfoSys] : [];
+		appInfo = [...appInfoUsr, ...appInfoSys];
+	} catch (error) {
+		displayError(`Failed to parse one or more info.json files: ${error.message}`);
+		createNewCommandInput();
+		return null;
+	}
+
+	if (justNames) return appInfo.map(app => app.name);
+	return appInfo;
 }
 
+/**
+ * Displays a styled message to the terminal
+ * @param {string} message The message to display, can include %c for styling
+ * @param {...string} styles CSS style strings for each %c in the message
+ * @returns {Promise<void>}
+ */
+async function displayOutput(message, ...styles) {
+	if (message.includes("%c")) {
+		const parts = message.split(/(%c)/);
+		let styled = "";
+		let styleIndex = 0;
+		for (let i = 0; i < parts.length; i++) {
+			if (parts[i] === "%c") {
+				const text = parts[++i] || "";
+				const style = styles[styleIndex++] || "";
+				const colorMatch = style.match(/color:\s*(#[0-9a-fA-F]{3,6})/);
+				if (colorMatch) {
+					const rgb = await htorgb(colorMatch[1]);
+					if (rgb) {
+						styled += `\x1b[38;2;${rgb.r};${rgb.g};${rgb.b}m${text}\x1b[0m`;
+					} else {
+						styled += text;
+					}
+				} else {
+					styled += text;
+				}
+			} else {
+				styled += parts[i];
+			}
+		}
+		term.writeln(styled);
+	} else {
+		term.writeln(message);
+	}
+}
+/**
+ * Writes the powerline prompt to the terminal
+ * @returns {Promise<void>}
+ */
+async function writePowerline() {
+	const username = await tb.user.username();
+	const userSettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${username}/settings.json`, "utf8"));
+	const accent = await htorgb(userSettings.accent);
+	const hostname = JSON.parse(await Filer.fs.promises.readFile("//system/etc/terbium/settings.json"))["host-name"];
+
+	term.write(`\x1b[38;2;${accent.r};${accent.g};${accent.b}m${username}@${hostname}\x1b[39m ~ ${path}\x1b[0m: `);
+}
+/**
+ * Creates new command line with a styled prompt
+ * @returns {Promise<void>}
+ */
+async function createNewCommandInput() {
+	term.write("\r\n");
+	await writePowerline();
+	// Reset history index for new command being prompted
+	historyIndex = commandHistory.length;
+}
+
+/**
+ * Logs an error message to terminal
+ * @param {string} message The error message that will be displayed on the output
+ */
 function displayError(message) {
-  const errorText = document.createElement("div");
-  errorText.textContent = message;
-  errorText.className = "error-text";
-  outputElement.appendChild(errorText);
+	term.writeln(`\x1b[31mERR: ${message}\x1b[0m`);
 }
 
-function displayOutput(message, ...styles) {
-  const output = document.createElement('div');
-  let messageParts = message.split("%c");
-  if (message.startsWith('(%^')) {
-    const match = message.match(/\(%\^(\d+)\)/);
-    if (match) {
-      const spacerAmount = parseInt(match[1]);
-      const spacer = '&nbsp;'.repeat(spacerAmount);
-      output.innerHTML += `<span style="white-space: pre;">${spacer}</span>`;
-    }
-  }
-
-  if (message.includes("%c")) {
-    for (let i = 1; i < messageParts.length; i++) {
-      const part = messageParts[i];
-      if (part !== '') {
-        const style = i - 1 < styles.length ? styles[i - 1] : '';
-        const formattedMessage = `<span style="${style}">${part}</span>`;
-        output.innerHTML += formattedMessage;
-      }
-    }
-  } else {
-    output.textContent = message;
-  }
-
-  outputElement.appendChild(output);
+/**
+ * Load the current history from the bash history file
+ * @returns {Promise<void>}
+ */
+async function loadHistory() {
+	try {
+		const username = await tb.user.username();
+		const historyPath = `/home/${username}/${HISTORY_FILE}`;
+		const data = await Filer.fs.promises.readFile(historyPath, "utf8");
+		commandHistory = data.split("\n").filter(cmd => cmd.trim() !== "");
+	} catch {}
+	historyIndex = commandHistory.length;
 }
+/**
+ * Saves a command to the bash history file
+ * @param {string} command The command to save to history
+ * @returns {Promise<void>}
+ */
+async function saveToHistory(command) {
+	if (!command.trim()) return;
 
-const createNewCommandInput = async () => {
-  if(inputElement !== undefined) inputElement.setAttribute("disabled", true);
-  const newCommandInputContainer = document.createElement("div");
-  newCommandInputContainer.className = "user-input";
-  const newCommandInput = document.createElement("input");
-  newCommandInput.id = "input";
-  newCommandInput.type = "text";
-  document.querySelectorAll(".user-input").forEach((input) => {
-    input.classList.remove("current")
-  })
-  newCommandInput.setAttribute("autocomplete", "off");
-  newCommandInput.setAttribute("autocorrect", "off");
-  newCommandInput.setAttribute("autocapitalize", "off");
-  newCommandInput.setAttribute("spellcheck", "false");
-  newCommandInput.style.pointerEvents = "none";
-  newCommandInput.style.marginLeft = "4px";
-  newCommandInputContainer.classList.add("current");
-  const userPrompt = document.createElement("div");
-  let userhost;
-  let accent = "#32ae62"
-  let settings = JSON.parse(await Filer.fs.promises.readFile(`/home/${sessionStorage.getItem('currAcc')}/settings.json`, "utf8"))
-  if(settings["accent"]) {
-    accent = settings["accent"]
-  }
-  userhost = `<span style="color: ${accent}">${await tb.user.username()}@${JSON.parse(await Filer.fs.promises.readFile("//system/etc/terbium/settings.json"))["host-name"]}</span>`
-  userPrompt.innerHTML = `${userhost}:${terminal.getAttribute("path") ? `<span style="color: #4070f2;">${terminal.getAttribute("path")}</span>` : `<span style="color: #4070f2;"`}$`;
-  userPrompt.style.width = "max-content";
-  newCommandInputContainer.appendChild(userPrompt);
-  newCommandInputContainer.appendChild(newCommandInput);
-  outputElement.appendChild(newCommandInputContainer);
-  let userPromptWidth = parseInt(userPrompt.offsetWidth) + 14;
-  userPrompt.style.width = userPromptWidth + "px";
-  newCommandInput.style.width = "calc(100% - " + userPromptWidth + "px)";
-  userPrompt.style.color = "#ffffff";
-  userPrompt.style.width = "max-content";
-  inputElement = newCommandInput;
-  inputElement.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      const command = inputElement.value;
-      executeCommand(command);
-    } if (e.ctrlKey && e.key === "l") {
-      e.preventDefault();
-      const outputChildren = Array.from(outputElement.children);
-      outputChildren.forEach(child => {
-        if (!child.classList.contains("current") && !child.classList.contains("initial-message")) {
-          outputElement.removeChild(child);
-        }
-      });
-    }
-  });
-  inputElement.focus();
+	commandHistory.push(command);
+	if (commandHistory.length > HISTORY_LIMIT) {
+		commandHistory.shift();
+	}
+	historyIndex = commandHistory.length;
+
+	try {
+		const username = await tb.user.username();
+		const historyPath = `/home/${username}/${HISTORY_FILE}`;
+		await Filer.fs.promises.writeFile(historyPath, commandHistory.join("\n"));
+	} catch (error) {
+		console.error("Failed to save history", error);
+	}
 }
-
-window.addEventListener("load", () => {
-  const initialMessage = document.createElement("div");
-  initialMessage.classList.add("initial-message");
-  initialMessage.textContent = `TerbiumOS [Version ${parent.window.tb.system.version()}]`;
-  initialMessage.style.color = "#ffffff";
-  initialMessage.style.fontSize = "14px";
-  initialMessage.style.fontFamily = "Inter"
-  initialMessage.style.fontWeight = "700";
-  outputElement.appendChild(initialMessage);
-  createNewCommandInput();
-  terminal.setAttribute("path", "~")
-})
-
-window.addEventListener("message", (e) => {
-  let data;
-  try {
-    data = JSON.parse(e.data);
-  } catch (error) {
-    data = e.data;
-  }
-
-  if(data === "focus") {
-    inputElement.focus();
-  }
-  if(data === "clear") {
-    createNewCommandInput();
-    const outputChildren = Array.from(outputElement.children);
-    outputChildren.forEach(child => {
-      if (!child.classList.contains("current") && !child.classList.contains("initial-message")) {
-        outputElement.removeChild(child);
-      }
-    });
-  }
-})
-
-class clipboard {
-  constructor() {
-    this.text = "";
-    this.#clearSelection();
-  }
-  #clearSelection() {
-    let selection = window.getSelection();
-    if(selection.toString() !== "") {
-      selection.removeAllRanges();
-    }
-  }
-  copy(text) {
-    this.text = text;
-    if(navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(this.text);
-    } else {
-      document.execCommand("copy");
-    }
-  }
-  paste() {
-    if(navigator.clipboard.readText) {
-      navigator.clipboard.readText().then(text => {
-        inputElement.value += text;
-      })
-    }
-  }
-  cut(text) {
-    this.copy(text);
-    if(inputElement.value.includes(text)) {
-      inputElement.value = inputElement.value.replace(text, "");
-    }
-  }
-}
-
-window.addEventListener("keydown", async (e) => {
-  if (e.key === "ArrowUp") {
-    if (currentIndex > 0) {
-      currentIndex--;
-      inputElement.value = recentcmds[currentIndex] || '';
-    }
-  } else if (e.key === "ArrowDown") {
-    if (currentIndex < recentcmds.length) {
-      currentIndex++;
-      inputElement.value = recentcmds[currentIndex] || '';
-    } else {
-      inputElement.value = '';
-    }
-  } else if (e.key === "Tab") {
-    e.preventDefault();
-    let command = inputElement.value;
-    if(command.includes("help")) {
-      let [_, commandName] = command.split("help ");
-      if(commandName === "") {
-        fetch(`/fs/apps/user/${await tb.user.username()}/terminal/info.json`)
-        .then(response => response.json())
-        .then(scriptList => {
-          scriptList.forEach(script => {
-            if(script.name.startsWith(commandName)) {
-              inputElement.value = `help ${script.name}`;
-            }
-          })
-        });
-      } else {
-        fetch(`/fs/apps/user/${await tb.user.username()}/terminal/info.json`)
-        .then(response => response.json())
-        .then(scriptList => {
-          scriptList.forEach(script => {
-            if(script.name.startsWith(commandName)) {
-              inputElement.value = `help ${script.name}`;
-            }
-          })
-        });
-      }
-    } else if(!command.includes(" ")) {
-      fetch(`/fs/apps/user/${await tb.user.username()}/terminal/info.json`)
-        .then(response => response.json())
-        .then(scriptList => {
-          const [commandName, ...commandArgs] = inputElement.value.split(" ");
-          if(commandArgs.length === 0) {
-            const possibleCommands = [];
-            scriptList.forEach(script => {
-              if(script.name.startsWith(commandName)) {
-                possibleCommands.push(script.name);
-              }
-            })
-            if(possibleCommands.length === 1) {
-              inputElement.value = possibleCommands[0];
-            }
-          }
-        });
-    }
-  }
-})
-
-window.addEventListener("click", (e) => {
-  if(e.button === 0) {
-    if(window.getSelection().toString() === "") {
-      inputElement.focus();
-    }
-  }
-})

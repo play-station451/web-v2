@@ -1,154 +1,154 @@
 interface ThemeProps {
-    foreground: string;
-    secondaryForeground: string;
-    border: string;
-    darkBorder: string;
-    background: string | any;
-    secondaryBackground: string;
-    darkBackground: string;
-    accent: string | any;
+	foreground: string;
+	secondaryForeground: string;
+	border: string;
+	darkBorder: string;
+	background: string | any;
+	secondaryBackground: string;
+	darkBackground: string;
+	accent: string | any;
 }
 let settings: ThemeProps;
 
 (async () => {
-    try {
-        const data = await Filer.fs.promises.readFile("/system/etc/anura/theme.json", "utf8");
-        settings = JSON.parse(data);
-    } catch (err) {
-        console.error("Error reading theme settings:", err);
-    }
+	try {
+		const data = await Filer.fs.promises.readFile("/system/etc/anura/theme.json", "utf8");
+		settings = JSON.parse(data);
+	} catch (err) {
+		if (localStorage.getItem("setup")) console.warn("Error reading theme settings:", err);
+	}
 })();
 
 export class Theme implements ThemeProps {
-    get foreground() {
-        return settings.foreground;
-    }
+	get foreground() {
+		return settings.foreground;
+	}
 
-    set foreground(value) {
-        Filer.fs.readFile("/system/etc/anura/theme.json", (err: Error | null, data: Uint8Array) => {
-            if (err) {
-                console.error(err);
-                return;
-            }
-            const settings: ThemeProps = JSON.parse(data.toString());
-            settings.foreground = value;
-            Filer.fs.writeFile("/system/etc/anura/theme.json", JSON.stringify(settings));
-        });
-    }
+	set foreground(value) {
+		Filer.fs.readFile("/system/etc/anura/theme.json", (err: Error | null, data: Uint8Array) => {
+			if (err) {
+				console.error(err);
+				return;
+			}
+			const settings: ThemeProps = JSON.parse(data.toString());
+			settings.foreground = value;
+			Filer.fs.writeFile("/system/etc/anura/theme.json", JSON.stringify(settings));
+		});
+	}
 
-    get secondaryForeground() {
-        return settings.secondaryForeground;
-    }
+	get secondaryForeground() {
+		return settings.secondaryForeground;
+	}
 
-    set secondaryForeground(value) {
-        Filer.fs.readFile("/system/etc/anura/theme.json", (err: Error | null, data: Uint8Array) => {
-            if (err) {
-                console.error(err);
-                return;
-            }
-            const settings: ThemeProps = JSON.parse(data.toString());
-            settings.secondaryForeground = value;
-            Filer.fs.writeFile("/system/etc/anura/theme.json", JSON.stringify(settings));
-        });
-    }
+	set secondaryForeground(value) {
+		Filer.fs.readFile("/system/etc/anura/theme.json", (err: Error | null, data: Uint8Array) => {
+			if (err) {
+				console.error(err);
+				return;
+			}
+			const settings: ThemeProps = JSON.parse(data.toString());
+			settings.secondaryForeground = value;
+			Filer.fs.writeFile("/system/etc/anura/theme.json", JSON.stringify(settings));
+		});
+	}
 
-    get border() {
-        return settings.border
-    }
+	get border() {
+		return settings.border;
+	}
 
-    set border(value) {
-        Filer.fs.readFile("/system/etc/anura/theme.json", (err: Error | null, data: Uint8Array) => {
-            if (err) {
-                console.error(err);
-                return;
-            }
-            const settings: ThemeProps = JSON.parse(data.toString());
-            settings.border = value;
-            Filer.fs.writeFile("/system/etc/anura/theme.json", JSON.stringify(settings));
-        });
-    }
+	set border(value) {
+		Filer.fs.readFile("/system/etc/anura/theme.json", (err: Error | null, data: Uint8Array) => {
+			if (err) {
+				console.error(err);
+				return;
+			}
+			const settings: ThemeProps = JSON.parse(data.toString());
+			settings.border = value;
+			Filer.fs.writeFile("/system/etc/anura/theme.json", JSON.stringify(settings));
+		});
+	}
 
-    get darkBorder() {
-        return settings.darkBorder;
-    }
+	get darkBorder() {
+		return settings.darkBorder;
+	}
 
-    set darkBorder(value) {
-        Filer.fs.readFile("/system/etc/anura/theme.json", (err: Error | null, data: Uint8Array) => {
-            if (err) {
-                console.error(err);
-                return;
-            }
-            const settings: ThemeProps = JSON.parse(data.toString());
-            settings.darkBorder = value;
-            Filer.fs.writeFile("/system/etc/anura/theme.json", JSON.stringify(settings));
-        });
-    }
+	set darkBorder(value) {
+		Filer.fs.readFile("/system/etc/anura/theme.json", (err: Error | null, data: Uint8Array) => {
+			if (err) {
+				console.error(err);
+				return;
+			}
+			const settings: ThemeProps = JSON.parse(data.toString());
+			settings.darkBorder = value;
+			Filer.fs.writeFile("/system/etc/anura/theme.json", JSON.stringify(settings));
+		});
+	}
 
-    get background() {
-        return settings.background;
-    }
+	get background() {
+		return settings.background;
+	}
 
-    set background(value) {
-        Filer.fs.readFile("/system/etc/anura/theme.json", (err: Error | null, data: Uint8Array) => {
-            if (err) {
-                console.error(err);
-                return;
-            }
-            const settings: ThemeProps = JSON.parse(data.toString());
-            settings.background = value;
-            Filer.fs.writeFile("/system/etc/anura/theme.json", JSON.stringify(settings));
-        });
-    }
+	set background(value) {
+		Filer.fs.readFile("/system/etc/anura/theme.json", (err: Error | null, data: Uint8Array) => {
+			if (err) {
+				console.error(err);
+				return;
+			}
+			const settings: ThemeProps = JSON.parse(data.toString());
+			settings.background = value;
+			Filer.fs.writeFile("/system/etc/anura/theme.json", JSON.stringify(settings));
+		});
+	}
 
-    get secondaryBackground() {
-        return settings.secondaryBackground;
-    }
+	get secondaryBackground() {
+		return settings.secondaryBackground;
+	}
 
-    set secondaryBackground(value) {
-        Filer.fs.readFile("/system/etc/anura/theme.json", (err: Error | null, data: Uint8Array) => {
-            if (err) {
-                console.error(err);
-                return;
-            }
-            const settings: ThemeProps = JSON.parse(data.toString());
-            settings.secondaryBackground = value;
-            Filer.fs.writeFile("/system/etc/anura/theme.json", JSON.stringify(settings));
-        });
-    }
+	set secondaryBackground(value) {
+		Filer.fs.readFile("/system/etc/anura/theme.json", (err: Error | null, data: Uint8Array) => {
+			if (err) {
+				console.error(err);
+				return;
+			}
+			const settings: ThemeProps = JSON.parse(data.toString());
+			settings.secondaryBackground = value;
+			Filer.fs.writeFile("/system/etc/anura/theme.json", JSON.stringify(settings));
+		});
+	}
 
-    get darkBackground() {
-        return settings.darkBackground;
-    }
+	get darkBackground() {
+		return settings.darkBackground;
+	}
 
-    set darkBackground(value) {
-        Filer.fs.readFile("/system/etc/anura/theme.json", (err: Error | null, data: Uint8Array) => {
-            if (err) {
-                console.error(err);
-                return;
-            }
-            const settings: ThemeProps = JSON.parse(data.toString());
-            settings.darkBackground = value;
-            Filer.fs.writeFile("/system/etc/anura/theme.json", JSON.stringify(settings));
-        });
-    }
+	set darkBackground(value) {
+		Filer.fs.readFile("/system/etc/anura/theme.json", (err: Error | null, data: Uint8Array) => {
+			if (err) {
+				console.error(err);
+				return;
+			}
+			const settings: ThemeProps = JSON.parse(data.toString());
+			settings.darkBackground = value;
+			Filer.fs.writeFile("/system/etc/anura/theme.json", JSON.stringify(settings));
+		});
+	}
 
-    get accent() {
-        return settings.accent;
-    }
+	get accent() {
+		return settings.accent;
+	}
 
-    set accent(value) {
-        Filer.fs.readFile("/system/etc/anura/theme.json", (err: Error | null, data: Uint8Array) => {
-            if (err) {
-                console.error(err);
-                return;
-            }
-            const settings: ThemeProps = JSON.parse(data.toString());
-            settings.accent = value;
-            Filer.fs.writeFile("/system/etc/anura/theme.json", JSON.stringify(settings));
-        });
-    }
+	set accent(value) {
+		Filer.fs.readFile("/system/etc/anura/theme.json", (err: Error | null, data: Uint8Array) => {
+			if (err) {
+				console.error(err);
+				return;
+			}
+			const settings: ThemeProps = JSON.parse(data.toString());
+			settings.accent = value;
+			Filer.fs.writeFile("/system/etc/anura/theme.json", JSON.stringify(settings));
+		});
+	}
 
-    cssPropMap: Record<keyof ThemeProps, string[]> = {
+	cssPropMap: Record<keyof ThemeProps, string[]> = {
 		background: ["--theme-bg", "--material-bg"],
 		border: ["--theme-border", "--material-border"],
 		darkBorder: ["--theme-dark-border"],
@@ -159,12 +159,12 @@ export class Theme implements ThemeProps {
 		accent: ["--theme-accent", "--matter-helper-theme"],
 	};
 
-    state: ThemeProps = settings;
+	state: ThemeProps = settings;
 
-    css(): string {
+	css(): string {
 		const lines = [];
 		lines.push(":root {");
-        for (const key in this.state) {
+		for (const key in this.state) {
 			for (const prop of this.cssPropMap[key as keyof ThemeProps]) {
 				lines.push(`  ${prop}: ${this.state[key as keyof ThemeProps]};`);
 			}
@@ -173,14 +173,7 @@ export class Theme implements ThemeProps {
 		return lines.join("\n");
 	}
 
-    reset() {
-        this.foreground = "#ffffff",
-        this.secondaryForeground = "#ffffff38",
-        this.border = "#ffffff28",
-        this.darkBorder = "#333333",
-        this.background = "#0e0e0e",
-        this.secondaryBackground = "#383838",
-        this.darkBackground = "#161616",
-        this.accent = "#32ae62"
-    }
+	reset() {
+		(this.foreground = "#ffffff"), (this.secondaryForeground = "#ffffff38"), (this.border = "#ffffff28"), (this.darkBorder = "#333333"), (this.background = "#0e0e0e"), (this.secondaryBackground = "#383838"), (this.darkBackground = "#161616"), (this.accent = "#32ae62");
+	}
 }
