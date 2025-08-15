@@ -1,5 +1,3 @@
-const Filer = window.Filer;
-
 function openFile(data) {
 	const textarea = document.querySelector("textarea");
 	textarea.value = data;
@@ -38,16 +36,16 @@ window.addEventListener("contextmenu", e => {
 //     updateLineNumbers();
 // })
 
-window.addEventListener("message", async e => {
+window.addEventListener("message", async function load(e) {
 	let data;
 	try {
 		data = JSON.parse(e.data);
 	} catch (err) {
 		data = e.data;
 	}
-	if (data.type === "process" && data.path) {
+	if (data && data.type === "process" && data.path) {
 		if (!data.path.includes("http")) {
-			let file = await Filer.fs.promises.readFile(data.path, "utf8");
+			let file = await window.parent.tb.fs.promises.readFile(data.path, "utf8");
 			if (typeof file === "object") file = JSON.stringify(file);
 			document.body.setAttribute("path", data.path);
 			openFile(file);
@@ -70,7 +68,7 @@ window.addEventListener("message", async e => {
 			}
 		}
 	}
-	window.removeEventListener("message", this);
+	window.removeEventListener("message", load);
 });
 
 function updateScroll(type, e) {
@@ -119,14 +117,14 @@ textarea.addEventListener("keydown", async e => {
 					});
 				}
 			} else {
-				Filer.fs.promises.writeFile(path, textarea.value);
+				window.parent.tb.fs.promises.writeFile(path, textarea.value);
 			}
 		} else {
 			await tb.dialog.SaveFile({
 				title: "Save Text File",
 				filename: `untitled.${ext}`,
 				onOk: async txt => {
-					Filer.fs.writeFile(`${txt}`, textarea.value, err => {
+					window.parent.tb.fs.writeFile(`${txt}`, textarea.value, err => {
 						if (err) return alert(err);
 					});
 				},

@@ -19,19 +19,14 @@ tb_island.addControl({
 					text: "Open",
 					click: async () => {
 						const textarea = document.querySelector("textarea");
-						if (document.body.getAttribute("path") && document.body.getAttribute("path") !== "undefined") {
-							Filer.fs.promises.writeFile(document.body.getAttribute("path"), textarea.value);
-						} else {
-							await tb.dialog.SaveFile({
-								title: "Save Text File",
-								filename: "untitled.txt",
-								onOk: async txt => {
-									Filer.fs.writeFile(`${txt}`, textarea.value, err => {
-										if (err) return alert(err);
-									});
-								},
-							});
-						}
+						await tb.dialog.FileBrowser({
+							title: "Open Text File",
+							filename: "untitled.txt",
+							onOk: async file => {
+								document.body.setAttribute("path", file);
+								textarea.value = await tb.fs.promises.readFile(file, "utf8");
+							},
+						});
 					},
 				},
 				{
@@ -39,13 +34,13 @@ tb_island.addControl({
 					click: async () => {
 						const textarea = document.querySelector("textarea");
 						if (document.body.getAttribute("path") && document.body.getAttribute("path") !== "undefined") {
-							Filer.fs.promises.writeFile(document.body.getAttribute("path"), textarea.value);
+							tb.fs.promises.writeFile(document.body.getAttribute("path"), textarea.value);
 						} else {
 							await tb.dialog.SaveFile({
 								title: "Save Text File",
 								filename: "untitled.txt",
 								onOk: async txt => {
-									Filer.fs.writeFile(`${txt}`, textarea.value, err => {
+									tb.fs.writeFile(`${txt}`, textarea.value, err => {
 										if (err) return alert(err);
 									});
 								},

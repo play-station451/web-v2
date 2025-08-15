@@ -62,7 +62,6 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 	const mobileCheck = async () => {
 		if ((await window.tb.platform.getPlatform()) === "mobile") {
 			setMaximized(true);
-			setControls(["minimize", "close"]);
 		}
 	};
 	mobileCheck();

@@ -1,4 +1,4 @@
-const Filer = window.Filer;
+const Filer = window.parent.tb;
 
 window.addEventListener("load", async () => {
 	parent.postMessage(JSON.stringify({ type: "ready" }), "*");

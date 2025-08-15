@@ -300,9 +300,9 @@ async function displayOutput(message, ...styles) {
  */
 async function writePowerline() {
 	const username = await tb.user.username();
-	const userSettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${username}/settings.json`, "utf8"));
+	const userSettings = JSON.parse(await window.parent.tb.fs.promises.readFile(`/home/${username}/settings.json`, "utf8"));
 	const accent = await htorgb(userSettings.accent);
-	const hostname = JSON.parse(await Filer.fs.promises.readFile("//system/etc/terbium/settings.json"))["host-name"];
+	const hostname = JSON.parse(await window.parent.tb.fs.promises.readFile("//system/etc/terbium/settings.json"))["host-name"];
 
 	term.write(`\x1b[38;2;${accent.r};${accent.g};${accent.b}m${username}@${hostname}\x1b[39m ~ ${path}\x1b[0m: `);
 }
@@ -333,7 +333,7 @@ async function loadHistory() {
 	try {
 		const username = await tb.user.username();
 		const historyPath = `/home/${username}/${HISTORY_FILE}`;
-		const data = await Filer.fs.promises.readFile(historyPath, "utf8");
+		const data = await window.parent.tb.fs.promises.readFile(historyPath, "utf8");
 		commandHistory = data.split("\n").filter(cmd => cmd.trim() !== "");
 	} catch {}
 	historyIndex = commandHistory.length;
@@ -355,7 +355,7 @@ async function saveToHistory(command) {
 	try {
 		const username = await tb.user.username();
 		const historyPath = `/home/${username}/${HISTORY_FILE}`;
-		await Filer.fs.promises.writeFile(historyPath, commandHistory.join("\n"));
+		await window.parent.tb.fs.promises.writeFile(historyPath, commandHistory.join("\n"));
 	} catch (error) {
 		console.error("Failed to save history", error);
 	}

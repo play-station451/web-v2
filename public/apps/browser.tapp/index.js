@@ -1,4 +1,4 @@
-const Filer = window.Filer.fs;
+const Filer = window.parent.tb.fs;
 const IS_URL = /^(https?:\/\/)?(www\.)?([-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}|localhost)\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/;
 const create_new_id = () => {
 	const id = Math.random().toString(36).substr(2, 9);
@@ -238,12 +238,7 @@ function newTab() {
 			Filer.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/browser/userscripts.json`).then(async data => {
 				const dat = JSON.parse(data);
 				for (const script of dat) {
-					function getPat(url, pattern) {
-						let regexStr = pattern.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*");
-						regexStr = "^" + regexStr + "$";
-						return new RegExp(regexStr).test(url);
-					}
-					if (getPat(urlbar.value, script.match) === "true") {
+					if (urlbar.value.includes(script.match)) {
 						const user_script = document.createElement("script");
 						console.log("Script: %a\nScript path: %b", script.name, script.file);
 						user_script.type = "text/javascript";

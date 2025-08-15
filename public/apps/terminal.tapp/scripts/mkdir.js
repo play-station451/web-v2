@@ -9,7 +9,7 @@ async function mkdir(args) {
 		try {
 			const match = path.match(/\/mnt\/([^\/]+)\//);
 			const davName = match ? match[1].toLowerCase() : "";
-			const davInstances = JSON.parse(await Filer.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
+			const davInstances = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
 			const dav = davInstances.find(d => d.name.toLowerCase() === davName);
 			const client = window.webdav.createClient(dav.url, {
 				username: dav.user,
@@ -26,7 +26,7 @@ async function mkdir(args) {
 		}
 	} else {
 		try {
-			await Filer.fs.promises.mkdir(path + args._raw);
+			await window.parent.tb.fs.promises.mkdir(path + args._raw);
 			createNewCommandInput();
 		} catch (error) {
 			if (error.code === "ENOENT") {

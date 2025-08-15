@@ -12,8 +12,8 @@ import Power from "./Power";
 const Shell = () => {
 	const [time, setTime] = useState<number>(0);
 	useEffect(() => {
-		// @ts-expect-error
 		const int = setInterval(() => {
+			// @ts-expect-error
 			setTime(getTime());
 		}, 100);
 		return () => clearInterval(int);
