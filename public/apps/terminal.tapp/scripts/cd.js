@@ -35,7 +35,7 @@ function cd(args) {
 	}
 
 	const checkPath = finalPath.length > 2 ? finalPath.slice(0, -1) : finalPath;
-	Filer.fs.stat(checkPath, (err, stats) => {
+	window.parent.tb.fs.stat(checkPath, (err, stats) => {
 		if (err) {
 			if (destination.includes("/mnt/") || checkPath.includes("/mnt/")) {
 				window.dispatchEvent(

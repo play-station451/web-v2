@@ -7,7 +7,7 @@ async function rmdir(args) {
 	if (path.includes("/mnt/")) {
 		displayError("TNSM rmdir: Removing directories from mounted drives is not supported by the webdav library at this time.");
 	} else {
-		tb.sh.rm(`${path}/${args._raw}`, err => {
+		window.parent.tb.sh.rm(`${path}/${args._raw}`, err => {
 			if (err) {
 				displayError(`rmdir: ${err.message}`);
 				createNewCommandInput();

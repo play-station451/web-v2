@@ -17,7 +17,7 @@ async function ls(args) {
 		displayOutput(centerText(`TerbiumOS Network Storage Manager v1.0.1`, header.length));
 		displayOutput(header);
 		displayOutput(separator);
-		const davInstances = JSON.parse(await Filer.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
+		const davInstances = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
 		for (const dav of davInstances) {
 			let mounted;
 			try {
@@ -39,7 +39,7 @@ async function ls(args) {
 		try {
 			const match = args._raw.match(/\/mnt\/([^\/]+)\//) || path.match(/\/mnt\/([^\/]+)\//);
 			const davName = match ? match[1].toLowerCase() : "";
-			const davInstances = JSON.parse(await Filer.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
+			const davInstances = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
 			const dav = davInstances.find(d => d.name.toLowerCase() === davName);
 			const client = window.webdav.createClient(dav.url, {
 				username: dav.user,

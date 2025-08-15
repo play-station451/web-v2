@@ -32,9 +32,9 @@ async function git(args) {
 
 			displayOutput(`Cloning into '${args._[1].split(/(\\|\/)/g).pop()}'...`);
 			const targetDir = args._[2] ?? `${currentPath}/${args._[1].split(/(\\|\/)/g).pop()}`;
-			await Filer.fs.promises.mkdir(targetDir, { recursive: true });
+			await window.parent.tb.fs.promises.mkdir(targetDir, { recursive: true });
 			await gitfetch.clone({
-				fs: window.parent.Filer.fs,
+				fs: window.parent.tb.fs,
 				http: http,
 				dir: targetDir,
 				corsProxy: "https://cors.isomorphic-git.org",
@@ -61,7 +61,7 @@ async function git(args) {
 				},
 			});
 			await gitfetch.setConfig({
-				fs: window.parent.Filer.fs,
+				fs: window.parent.tb.fs,
 				dir: targetDir,
 				path: "user.name",
 				value: await window.parent.tb.user.username(),
@@ -76,9 +76,9 @@ async function git(args) {
 			}
 
 			displayOutput(`Initializing empty Git repository in ${path}/.git/...`);
-			await Filer.fs.promises.mkdir(`${path}/.git`, { recursive: true });
+			await window.parent.tb.fs.promises.mkdir(`${path}/.git`, { recursive: true });
 			await gitfetch.init({
-				fs: window.parent.Filer.fs,
+				fs: window.parent.tb.fs,
 				http: http,
 				dir: path,
 				bare: false,
@@ -97,7 +97,7 @@ async function git(args) {
 			const targetDir = currentPath + args._[2];
 			try {
 				await gitfetch.checkout({
-					fs: window.parent.Filer.fs,
+					fs: window.parent.tb.fs,
 					dir: targetDir,
 					ref: branchName,
 					onMessage: e => {
@@ -120,7 +120,7 @@ async function git(args) {
 			const targetDir = currentPath + args._[2];
 			try {
 				await gitfetch.add({
-					fs: window.parent.Filer.fs,
+					fs: window.parent.tb.fs,
 					dir: targetDir,
 					filepath: filePath,
 				});
@@ -141,7 +141,7 @@ async function git(args) {
 			const targetDir = currentPath + args._[2];
 			try {
 				await gitfetch.remove({
-					fs: window.parent.Filer.fs,
+					fs: window.parent.tb.fs,
 					dir: targetDir,
 					filepath: filePath,
 				});
@@ -158,7 +158,7 @@ async function git(args) {
 		} else if (args._raw.includes("pull")) {
 			try {
 				const result = await gitfetch.pull({
-					fs: window.parent.Filer.fs,
+					fs: window.parent.tb.fs,
 					http: http,
 					dir: path,
 					corsProxy: "https://cors.isomorphic-git.org",
@@ -182,7 +182,7 @@ async function git(args) {
 					onOk: async ({ username, password }) => {
 						try {
 							const gitResult = await gitfetch.push({
-								fs: window.parent.Filer.fs,
+								fs: window.parent.tb.fs,
 								http: http,
 								dir: path,
 								corsProxy: "https://cors.isomorphic-git.org",
@@ -231,7 +231,7 @@ async function git(args) {
 			const remoteUrl = args._[2];
 			try {
 				await gitfetch.fetch({
-					fs: window.parent.Filer.fs,
+					fs: window.parent.tb.fs,
 					http: http,
 					dir: targetDir,
 					url: remoteUrl,
@@ -251,7 +251,7 @@ async function git(args) {
 			const commitMessage = args._[2] || "Blank Commit";
 			try {
 				await gitfetch.commit({
-					fs: window.parent.Filer.fs,
+					fs: window.parent.tb.fs,
 					http: http,
 					dir: path,
 					corsProxy: "https://cors.isomorphic-git.org",

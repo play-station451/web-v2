@@ -1,7 +1,7 @@
 async function help(args) {
 	if (args.length > 0) {
 		const scriptName = args[0];
-		const scriptList = JSON.parse(await Filer.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/terminal/info.json`, "utf8"));
+		const scriptList = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/terminal/info.json`, "utf8"));
 		const script = scriptList.find(script => script.name === scriptName);
 		if (script) {
 			displayOutput(`${script.name}: ${script.usage ? `${script.usage}` : ""}`);

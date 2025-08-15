@@ -30,7 +30,7 @@ async function pkg(args) {
 							return;
 						}
 					}
-					const installed = JSON.parse(await Filer.fs.promises.readFile("/apps/installed.json", "utf8"));
+					const installed = JSON.parse(await window.parent.tb.fs.promises.readFile("/apps/installed.json", "utf8"));
 					let type;
 					if ("pkg-download" in exactMatch) {
 						type = "TAPP";
@@ -78,27 +78,29 @@ async function pkg(args) {
 		case "remove":
 			if (args._[1]) {
 				const packageName = args._[1];
-				let installed = JSON.parse(await Filer.fs.promises.readFile("/apps/installed.json", "utf8"));
+				let installed = JSON.parse(await window.parent.tb.fs.promises.readFile("/apps/installed.json", "utf8"));
 				const appIndex = installed.findIndex(app => app.name.toLowerCase() === packageName);
 				if (appIndex !== -1) {
 					const app = installed[appIndex];
 					installed.splice(appIndex, 1);
-					await Filer.fs.promises.writeFile("/apps/installed.json", JSON.stringify(installed, null, 2), "utf8");
+					await window.parent.tb.fs.promises.writeFile("/apps/installed.json", JSON.stringify(installed, null, 2), "utf8");
 					displayOutput(`Uninstalling ${app.name}...`);
 					const configPath = app.config;
 					console.log(configPath);
 					if (configPath.endsWith("index.json")) {
-						let webApps = JSON.parse(await Filer.fs.promises.readFile("/apps/web_apps.json", "utf8"));
-						const waIndex = webApps.findIndex(webApp => webApp.name.toLowerCase() === app.name.toLowerCase());
-						if (waIndex !== -1) {
-							webApps.splice(waIndex, 1);
-							await Filer.fs.promises.writeFile("/apps/web_apps.json", JSON.stringify(webApps, null, 2), "utf8");
-							await tb.launcher.removeApp(app.name);
-							displayOutput(`${app.name} has been uninstalled.`);
+						let webApps = JSON.parse(await window.parent.tb.fs.promises.readFile("/apps/web_apps.json", "utf8"));
+						if (Array.isArray(webApps.apps)) {
+							const waIndex = webApps.apps.findIndex(webApp => webApp.name && webApp.name.toLowerCase() === app.name.toLowerCase());
+							if (waIndex !== -1) {
+								webApps.apps.splice(waIndex, 1);
+								await window.parent.tb.fs.promises.writeFile("/apps/web_apps.json", JSON.stringify(webApps, null, 2), "utf8");
+								await tb.launcher.removeApp(app.name);
+								displayOutput(`${app.name} has been uninstalled.`);
+							}
 						}
 					} else if (configPath.endsWith("manifest.json")) {
 						try {
-							await Filer.fs.promises.unlink(`/system/etc/anura/configs/${app.name}.json`);
+							await window.parent.tb.fs.promises.unlink(`/system/etc/anura/configs/${app.name}.json`);
 							await tb.sh.rm(configPath.replace("/manifest.json", "/"));
 						} catch {}
 						await tb.sh.rm(`/apps/anura/${app.name}`);
@@ -122,7 +124,7 @@ async function pkg(args) {
 		case "update":
 			if (args._[1]) {
 				displayOutput("Checking for updates...");
-				const config = JSON.parse(await Filer.fs.promises.readFile(`/apps/system/${args._[1].toLowerCase()}.tapp/.tbconfig`, "utf8"));
+				const config = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/system/${args._[1].toLowerCase()}.tapp/.tbconfig`, "utf8"));
 				const response = await tb.libcurl.fetch(repo);
 				let repoData = rType === "terbium" ? (await response.json()).apps : (await (await tb.libcurl.fetch(repo.replace("manifest.json", "list.json"))).json()).apps;
 				const packageName = args._[1];
@@ -153,7 +155,7 @@ async function pkg(args) {
 			break;
 		case "list":
 			displayOutput("Installed Packages for this system:");
-			const installed = JSON.parse(await Filer.fs.promises.readFile("/apps/installed.json", "utf8"));
+			const installed = JSON.parse(await window.parent.tb.fs.promises.readFile("/apps/installed.json", "utf8"));
 			for (const app of installed) {
 				displayOutput(`${app.name} - ${app.user}`);
 			}
@@ -194,7 +196,7 @@ async function pkg(args) {
 				case "remove":
 					let r = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/app store/repos.json`, "utf8"));
 					r = r.filter(r => r.url !== args._[2]);
-					await Filer.fs.promises.writeFile(`/apps/user/${sessionStorage.getItem("currAcc")}/app store/repos.json`, JSON.stringify(r));
+					await window.parent.tb.fs.promises.writeFile(`/apps/user/${sessionStorage.getItem("currAcc")}/app store/repos.json`, JSON.stringify(r));
 					displayOutput(`Removed ${args._[2]} from the repo list`);
 					createNewCommandInput();
 					break;
@@ -202,7 +204,7 @@ async function pkg(args) {
 				case "add":
 					let newrepo = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/app store/repos.json`, "utf8"));
 					newrepo.push({ url: args._[2] });
-					await Filer.fs.promises.writeFile(`/apps/user/${sessionStorage.getItem("currAcc")}/app store/repos.json`, JSON.stringify(newrepo));
+					await window.parent.tb.fs.promises.writeFile(`/apps/user/${sessionStorage.getItem("currAcc")}/app store/repos.json`, JSON.stringify(newrepo));
 					displayOutput(`Added ${args._[2]} to the repo list`);
 					createNewCommandInput();
 					break;
@@ -273,12 +275,12 @@ async function installApp(app, type) {
 				wmArgs: app.wmArgs,
 			};
 			if (!(await dirExists(appPath))) {
-				await Filer.fs.promises.mkdir(appPath);
+				await window.parent.tb.fs.promises.mkdir(appPath);
 			}
-			await Filer.fs.promises.writeFile(`${appPath}/index.json`, JSON.stringify(appIndex));
-			let apps = JSON.parse(await Filer.fs.promises.readFile("/apps/web_apps.json", "utf8"));
+			await window.parent.tb.fs.promises.writeFile(`${appPath}/index.json`, JSON.stringify(appIndex));
+			let apps = JSON.parse(await window.parent.tb.fs.promises.readFile("/apps/web_apps.json", "utf8"));
 			apps["apps"].push(app["pkg-name"]);
-			await Filer.fs.promises.writeFile("/apps/web_apps.json", JSON.stringify(apps));
+			await window.parent.tb.fs.promises.writeFile("/apps/web_apps.json", JSON.stringify(apps));
 			await window.parent.tb.launcher.addApp({
 				title: app["wmArgs"]["title"],
 				name: app.name,
@@ -296,15 +298,15 @@ async function installApp(app, type) {
 				snapable: app["wmArgs"]["snapable"],
 			});
 			try {
-				let apps = JSON.parse(await Filer.fs.promises.readFile(`/apps/installed.json`, "utf8"));
+				let apps = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/installed.json`, "utf8"));
 				apps.push({
 					name: app.name,
 					user: await window.parent.tb.user.username(),
 					config: `/apps/user/${await window.parent.tb.user.username()}/${app.name}/index.json`,
 				});
-				await Filer.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(apps));
+				await window.parent.tb.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(apps));
 			} catch {
-				await Filer.fs.promises.writeFile(
+				await window.parent.tb.fs.promises.writeFile(
 					`/apps/installed.json`,
 					JSON.stringify([
 						{
@@ -324,7 +326,7 @@ async function installApp(app, type) {
 				await tb.system.download(downloadUrl, `${DLPath}.zip`);
 				const targetDirectory = `/apps/system/${appName}.tapp/`;
 				await unzip(`/apps/${appName}.zip`, targetDirectory);
-				const appConf = await Filer.fs.promises.readFile(`/apps/system/${appName}.tapp/.tbconfig`, "utf8");
+				const appConf = await window.parent.tb.fs.promises.readFile(`/apps/system/${appName}.tapp/.tbconfig`, "utf8");
 				const appData = JSON.parse(appConf);
 				await window.parent.tb.launcher.addApp({
 					title:
@@ -348,17 +350,17 @@ async function installApp(app, type) {
 					message: appData.wmArgs.message,
 					snapable: appData.wmArgs.snapable,
 				});
-				await Filer.fs.promises.unlink(`${DLPath}.zip`);
+				await window.parent.tb.fs.promises.unlink(`${DLPath}.zip`);
 				try {
-					let apps = JSON.parse(await Filer.fs.promises.readFile(`/apps/installed.json`, "utf8"));
+					let apps = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/installed.json`, "utf8"));
 					apps.push({
 						name: appName,
 						user: await window.parent.tb.user.username(),
 						config: `/apps/system/${appName}.tapp/.tbconfig`,
 					});
-					await Filer.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(apps));
+					await window.parent.tb.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(apps));
 				} catch {
-					await Filer.fs.promises.writeFile(
+					await window.parent.tb.fs.promises.writeFile(
 						`/apps/installed.json`,
 						JSON.stringify({
 							name: appName,
@@ -386,7 +388,7 @@ async function installApp(app, type) {
 				await tb.system.download(aDL, `${APath}.zip`);
 				const targetDirectory = `/apps/anura/${aName}/`;
 				await unzip(`/apps/anura/${aName}.zip`, targetDirectory);
-				const appConf = await Filer.fs.promises.readFile(`/apps/anura/${aName}/manifest.json`, "utf8");
+				const appConf = await window.parent.tb.fs.promises.readFile(`/apps/anura/${aName}/manifest.json`, "utf8");
 				const appData = JSON.parse(appConf);
 				await window.parent.tb.launcher.addApp({
 					name: appData.name,
@@ -404,17 +406,17 @@ async function installApp(app, type) {
 					icon: appData.icon,
 					id: appData.package,
 				};
-				await Filer.fs.promises.unlink(`${APath}.zip`);
+				await window.parent.tb.fs.promises.unlink(`${APath}.zip`);
 				try {
-					let apps = JSON.parse(await Filer.fs.promises.readFile(`/apps/installed.json`, "utf8"));
+					let apps = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/installed.json`, "utf8"));
 					apps.push({
 						name: appData.name,
 						user: await window.parent.tb.user.username(),
 						config: `/apps/anura/${aName}/manifest.json`,
 					});
-					await Filer.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(apps));
+					await window.parent.tb.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(apps));
 				} catch {
-					await Filer.fs.promises.writeFile(
+					await window.parent.tb.fs.promises.writeFile(
 						`/apps/installed.json`,
 						JSON.stringify([
 							{
@@ -437,7 +439,7 @@ async function unzip(path, target) {
 	const response = await fetch("/fs/" + path);
 	const zipFileContent = await response.arrayBuffer();
 	if (!(await dirExists(target))) {
-		await Filer.fs.promises.mkdir(target, { recursive: true });
+		await window.parent.tb.fs.promises.mkdir(target, { recursive: true });
 	}
 	const compressedFiles = window.parent.tb.fflate.unzipSync(new Uint8Array(zipFileContent));
 	for (const [relativePath, content] of Object.entries(compressedFiles)) {
@@ -450,7 +452,7 @@ async function unzip(path, target) {
 				try {
 					console.log(`touch ${currentPath.slice(0, -1)}`);
 					displayOutput(`touch ${currentPath.slice(0, -1)}`);
-					await Filer.fs.promises.writeFile(currentPath.slice(0, -1), Filer.Buffer.from(content));
+					await window.parent.tb.fs.promises.writeFile(currentPath.slice(0, -1), Filer.Buffer.from(content));
 				} catch {
 					displayOutput(`Cant make ${currentPath.slice(0, -1)}`);
 					console.log(`Cant make ${currentPath.slice(0, -1)}`);
@@ -459,7 +461,7 @@ async function unzip(path, target) {
 				try {
 					console.log(`mkdir ${currentPath}`);
 					displayOutput(`mkdir ${currentPath}`);
-					await Filer.fs.promises.mkdir(currentPath);
+					await window.parent.tb.fs.promises.mkdir(currentPath);
 				} catch {
 					console.log(`Cant make ${currentPath}`);
 					displayOutput(`Cant make ${currentPath}`);
@@ -469,7 +471,7 @@ async function unzip(path, target) {
 		if (relativePath.endsWith("/")) {
 			try {
 				console.log(`mkdir fp ${fullPath}`);
-				await Filer.fs.promises.mkdir(fullPath);
+				await window.parent.tb.fs.promises.mkdir(fullPath);
 			} catch {
 				console.log(`Cant make ${fullPath}`);
 			}
@@ -480,7 +482,7 @@ async function unzip(path, target) {
 
 const dirExists = async path => {
 	return new Promise(resolve => {
-		Filer.fs.stat(path, (err, stats) => {
+		window.parent.tb.fs.stat(path, (err, stats) => {
 			if (err) {
 				if (err.code === "ENOENT") {
 					resolve(false);
