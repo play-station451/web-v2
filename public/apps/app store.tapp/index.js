@@ -67,6 +67,12 @@ async function loadRepo(url) {
 			);
 			const pwaCards = appCards1.filter(card => card.hasWmArgs).map(card => card.html);
 			const appCards = appCards1.filter(card => !card.hasWmArgs).map(card => card.html);
+			if (pwaCards.length === 0) {
+				pwaCards.push(`<h1 class="text-white text-xl font-bold w-full text-center">There are no PWA apps available in this repo</h1>`);
+			}
+			if (appCards.length === 0) {
+				appCards.push(`<h1 class="text-white text-xl font-bold w-full text-center">There are no app card apps available in this repo</h1>`);
+			}
 			document.querySelector(".pwa-list").innerHTML = pwaCards.join("");
 			document.querySelector(".apps-list").innerHTML = appCards.join("");
 			document.querySelectorAll(".app-card").forEach(card => {
@@ -116,6 +122,12 @@ async function loadRepo(url) {
 			);
 			const pwaCards2 = appCards2.filter(card => card.hasWmArgs).map(card => card.html);
 			const appCards_2 = appCards2.filter(card => !card.hasWmArgs).map(card => card.html);
+			if (pwaCards2.length === 0) {
+				pwaCards2.push(`<h1 class="text-white text-xl font-bold w-full text-center">There are no PWA apps available in this repo</h1>`);
+			}
+			if (appCards_2.length === 0) {
+				appCards_2.push(`<h1 class="text-white text-xl font-bold w-full text-center">There are no app card apps available in this repo</h1>`);
+			}
 			document.querySelector(".pwa-list").innerHTML = pwaCards2.join("");
 			document.querySelector(".apps-list").innerHTML = appCards_2.join("");
 			document.querySelectorAll(".app-card").forEach(card => {
@@ -624,6 +636,8 @@ async function install(app, type) {
 				proxy: app["wmArgs"]["proxy"],
 				snapable: app["wmArgs"]["snapable"],
 			});
+			await window.parent.tb.fs.promises.mkdir(`/apps/user/${await window.parent.tb.user.username()}/${app.name}`);
+			await window.parent.tb.fs.promises.writeFile(`/apps/user/${await window.parent.tb.user.username()}/${app.name}/index.json`, JSON.stringify(app));
 			try {
 				let apps = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/installed.json`, "utf8"));
 				apps.push({
@@ -761,12 +775,12 @@ async function uninstall(app, type) {
 			const web_apps = JSON.parse(await window.parent.tb.fs.promises.readFile("/apps/web_apps.json", "utf8"));
 			const index = web_apps.apps.indexOf(app.name.toLowerCase());
 			if (index > -1) {
-				web_apps.splice(index, 1);
+				web_apps.apps.splice(index, 1);
 			}
 			await window.parent.tb.fs.promises.writeFile("/apps/web_apps.json", JSON.stringify(web_apps));
 			window.parent.tb.launcher.removeApp(app.name);
-			await window.parent.tb.fs.promises.unlink(`/apps/user/${sessionStorage.getItem("currAcc")}/${app.name}/index.json`);
-			await window.parent.tb.fs.promises.rmdir(`/apps/user/${sessionStorage.getItem("currAcc")}/${app.name}`, { recursive: true });
+			await window.parent.tb.fs.promises.unlink(`/apps/user/${await window.parent.tb.user.username()}/${app.name}/index.json`);
+			await window.parent.tb.sh.promises.rm(`/apps/user/${await window.parent.tb.user.username()}/${app.name}`, { recursive: true });
 			try {
 				let installedApps = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/installed.json`, "utf8"));
 				installedApps = installedApps.filter(a => a.name !== app.name);
@@ -774,7 +788,6 @@ async function uninstall(app, type) {
 			} catch {
 				throw new Error("Failed to update the installed app list");
 			}
-			window.parent.tb.launcher.removeApp(app.name);
 			window.parent.tb.notification.Toast({
 				message: `Successfully uninstalled ${app.name}.`,
 				application: "App Store",

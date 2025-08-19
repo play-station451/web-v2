@@ -254,20 +254,19 @@ const Dock: FC<IDockProps> = ({ pinned }) => {
 							onBlur={() => {
 								setSearchActive(false);
 							}}
-							onInput={(e: any) => {
-								if (e.target.value.length > 0) {
+							onInput={(e: React.FormEvent<HTMLInputElement>) => {
+								if (e.currentTarget.value.length > 0) {
 									setSearchHasText(true);
 								} else {
 									setSearchHasText(false);
 								}
-								const query = e.target.value.toLowerCase();
+								const query = e.currentTarget.value.toLowerCase();
 								const systemApps = systemAppsRef.current;
 								const pinnedApps = pinnedAppsRef.current;
-								if (systemApps !== null && pinnedApps !== null) {
+								console.log(systemApps, pinnedApps);
+								if (systemApps !== null) {
 									const systemAppsChildren = systemApps.children;
-									const pinnedAppsChildren = pinnedApps.children;
 									let systemAppsMatch = 0;
-									let pinnedAppsMatch = 0;
 									for (let i = 0; i < systemAppsChildren.length; i++) {
 										const child: Element = systemAppsChildren[i];
 										if (child.textContent && child.textContent.toLowerCase().includes(query)) {
@@ -285,27 +284,37 @@ const Dock: FC<IDockProps> = ({ pinned }) => {
 											}, 150);
 										}
 									}
-									for (let i = 0; i < pinnedAppsChildren.length; i++) {
-										const child: Element = pinnedAppsChildren[i];
-										if (child.textContent && child.textContent.toLowerCase().includes(query)) {
-											child.classList.remove("hidden");
-											setTimeout(() => {
-												child.classList.remove("opacity-0");
-												child.classList.remove("-translate-x-2");
-											}, 150);
-											pinnedAppsMatch++;
-										} else {
-											child.classList.add("-translate-x-2");
-											child.classList.add("opacity-0");
-											setTimeout(() => {
-												child.classList.add("hidden");
-											}, 150);
+									if (pinnedApps !== null) {
+										const pinnedAppsChildren = pinnedApps.children;
+										let pinnedAppsMatch = 0;
+										for (let i = 0; i < pinnedAppsChildren.length; i++) {
+											const child: Element = pinnedAppsChildren[i];
+											if (child.textContent && child.textContent.toLowerCase().includes(query)) {
+												child.classList.remove("hidden");
+												setTimeout(() => {
+													child.classList.remove("opacity-0");
+													child.classList.remove("-translate-x-2");
+												}, 150);
+												pinnedAppsMatch++;
+											} else {
+												child.classList.add("-translate-x-2");
+												child.classList.add("opacity-0");
+												setTimeout(() => {
+													child.classList.add("hidden");
+												}, 150);
+											}
 										}
-									}
-									if (systemAppsMatch === 0 && pinnedAppsMatch === 0) {
-										setSearchMatch(true);
+										if (systemAppsMatch === 0 && pinnedAppsMatch === 0) {
+											setSearchMatch(true);
+										} else {
+											setSearchMatch(false);
+										}
 									} else {
-										setSearchMatch(false);
+										if (systemAppsMatch === 0) {
+											setSearchMatch(true);
+										} else {
+											setSearchMatch(false);
+										}
 									}
 								}
 							}}

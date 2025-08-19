@@ -54,13 +54,13 @@ export async function BuildApps() {
 		fs.existsSync(outputJsonPath) || fs.writeFileSync(outputJsonPath, "[]", "utf-8"),
 		fs.writeFileSync(outputJsonPath, JSON.stringify(result, null, 2), "utf-8"),
 		consola.success(`Aggregated JSON saved to ${outputJsonPath}`);
-	exec("gitxx rev-parse HEAD", (error, stdout, stderr) => {
+	exec("git rev-parse HEAD", (error, stdout, stderr) => {
 		if (error || stderr) {
 			consola.error("Failed to get git commit hash");
 			fs.writeFileSync(path.join(__dirname, "./src/hash.json"), JSON.stringify({ hash: "2b14b5", repository: "terbiumos/web-v2" }, null, 2), "utf-8");
 		} else {
 			const hash = stdout.trim();
-			exec("gitxx remote get-url origin", (remoteError, remoteStdout, remoteStderr) => {
+			exec("git remote get-url origin", (remoteError, remoteStdout, remoteStderr) => {
 				const repoUrl = remoteStdout.trim();
 				const data = { hash, repository: repoUrl.replace("https://github.com/", "") };
 				if (remoteError || remoteStderr) {
@@ -151,7 +151,7 @@ export async function CreateEnv() {
 
 export async function Updater() {
 	consola.start("Checking for updates...");
-	exec("gitxx remote get-url origin", async (remoteError, remoteStdout, remoteStderr) => {
+	exec("git remote get-url origin", async (remoteError, remoteStdout, remoteStderr) => {
 		if (remoteError || remoteStderr) {
 			consola.error("Failed to get local repository URL");
 			return;
@@ -166,7 +166,7 @@ export async function Updater() {
 				});
 				if (res) {
 					consola.info("Downloading new version...");
-					exec("gitxx pull", async (remoteError, remoteStdout, remoteStderr) => {
+					exec("git pull", async (remoteError, remoteStdout, remoteStderr) => {
 						if (remoteError || remoteStderr) {
 							consola.error("Failed to update Terbium, Please update manually");
 							open(`${remoteStdout.trim()}/releases/latest`);

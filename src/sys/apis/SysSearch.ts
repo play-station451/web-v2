@@ -4,7 +4,7 @@ import { fileStat, isFilePathString } from "./utils/file";
 type TSearchTerm = string | object | File | ArrayBuffer | Blob | null;
 
 export const searchFiles = async (searchTerm: TSearchTerm): Promise<boolean | any[]> => {
-	const sh = new Filer.fs.Shell();
+	const sh = new window.tb.fs.Shell();
 	const searchResults: any[] = [];
 	const searchTermString = typeof searchTerm === "string" ? searchTerm : JSON.stringify(searchTerm);
 	const files = await sh.promises.find("/", { name: `*${searchTermString}` });
@@ -54,11 +54,11 @@ export const searchApps = async (searchTerm: TSearchTerm): Promise<boolean | { d
 	let searchTermString = typeof searchTerm === "string" ? searchTerm.toLowerCase() : JSON.stringify(searchTerm).toLowerCase();
 	if (searchTermString.endsWith(".tapp")) searchTermString = searchTermString.replace(".tapp", "");
 
-	let installed = JSON.parse(await Filer.fs.promises.readFile("/apps/installed.json", "utf8"));
+	let installed = JSON.parse(await window.tb.fs.promises.readFile("/apps/installed.json", "utf8"));
 	const searchResults: any[] = [];
 	for (const app of installed) {
 		if (app.name && app.name.toLowerCase().includes(searchTermString)) {
-			let cfg = JSON.parse(await Filer.fs.promises.readFile(app.config, "utf8"));
+			let cfg = JSON.parse(await window.tb.fs.promises.readFile(app.config, "utf8"));
 			let icon: string | null = null;
 			let appDir = app.config.replace(/\/[^\/]+\.json$|\/[^\/]+\.tbconfig$/i, "");
 

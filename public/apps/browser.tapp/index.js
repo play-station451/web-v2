@@ -141,8 +141,8 @@ function newTab() {
 				case "about:newtab":
 					activeTabContent.src = "/apps/browser.tapp/newtab.html";
 					break;
-				case "about:extensions":
-					activeTabContent.src = "/apps/browser.tapp/extensions.html";
+				case "about:userscripts":
+					activeTabContent.src = "/apps/browser.tapp/userscripts.html";
 					break;
 				default:
 					const input = url;
@@ -400,9 +400,9 @@ document.querySelector(".navigate-back").addEventListener("click", () => {
 
 document.querySelector(".ext-btn").addEventListener("click", () => {
 	const activeTabContent = document.querySelector(".tab-content.active");
-	activeTabContent.contentWindow.location.href = "/apps/browser.tapp/extensions.html";
+	activeTabContent.contentWindow.location.href = "/apps/browser.tapp/userscripts.html";
 	const activeUrlbar = document.querySelector(".urlbar.active");
-	activeUrlbar.value = "about:extensions";
+	activeUrlbar.value = "about:userscripts";
 });
 
 document.querySelector(".navigate-forward").addEventListener("click", () => {
