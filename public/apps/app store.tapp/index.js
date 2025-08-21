@@ -167,7 +167,7 @@ async function loadApp(app, type) {
 			break;
 		case "Anura":
 		case "tb-liq":
-			let icn2
+			let icn2;
 			if (currRepo.url) {
 				icn2 = await window.parent.tb.libcurl.fetch(`${currRepo.url.replace("manifest.json", "")}/apps/${app.package}/${app.icon}`);
 			} else {
