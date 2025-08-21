@@ -179,7 +179,15 @@ async function loadApp(app, type) {
 			break;
 		case "Anura":
 		case "tb-liq":
-			const icn2 = await window.parent.tb.libcurl.fetch(`${currRepo.url.replace("manifest.json", "")}/apps/${app.package}/${app.icon}`);
+			let icn2;
+			if (currRepo.url) {
+				icn2 = await window.parent.tb.libcurl.fetch(`${currRepo.url.replace("manifest.json", "")}/apps/${app.package}/${app.icon}`);
+			} else {
+				icn2 = await window.parent.tb.libcurl.fetch(app.icon);
+			}
+			if (!icn2.ok) {
+				icn2 = await window.parent.tb.libcurl.fetch("https://terbiumon.top/favicon.ico");
+			}
 			const blob2 = await icn2.blob();
 			icnUrl = URL.createObjectURL(blob2);
 			break;
@@ -461,7 +469,7 @@ async function addRepo() {
 				const list = await window.parent.tb.libcurl.fetch(value.replace("manifest.json", "list.json"));
 				if (list.ok) {
 					repos.push({
-						name: name || meta.name || "Unknown",
+						name: meta.name || "Unknown",
 						url: value,
 						icon: "https://anura.pro/icon.png",
 					});
