@@ -180,7 +180,7 @@ tb_island.addControl({
 								onOk: async res2 => {
 									await tb.dialog.WebAuth({
 										title: "Enter the credentials for the Dav Drive",
-										onOk: async ({ username, password }) => {
+										onOk: async (username, password) => {
 											const davjson = JSON.parse(await Filer.fs.promises.readFile(`/apps/user/${await tb.user.username()}/files/davs.json`, "utf8"));
 											davjson.push({
 												name: res1,
@@ -215,12 +215,12 @@ tb_island.addControl({
 						defaultValue: "",
 						onOk: async response => {
 							const davjson = JSON.parse(await Filer.fs.promises.readFile(`/apps/user/${await tb.user.username()}/files/davs.json`, "utf8"));
-							const index = davjson.findIndex(entry => entry.name === response);
+							const index = davjson.findIndex(entry => entry.name.toLowerCase() === response.toLowerCase());
 							if (index !== -1) {
 								davjson.splice(index, 1);
 								await Filer.fs.promises.writeFile(`/apps/user/${await tb.user.username()}/files/davs.json`, JSON.stringify(davjson, null, 2));
 								const config = JSON.parse(await Filer.fs.promises.readFile(`/apps/user/${await tb.user.username()}/files/config.json`, "utf8"));
-								delete config.drives[response];
+								delete config.drives[response.toLowerCase()];
 								await Filer.fs.promises.writeFile(`/apps/user/${await tb.user.username()}/files/config.json`, JSON.stringify(config, null, 2));
 								await tb.notification.Toast({
 									application: "System",
