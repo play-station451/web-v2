@@ -79,8 +79,8 @@ export async function init() {
 				src: "/fs/apps/system/terminal.tapp/index.html",
 				size: {
 					width: 612,
-					height: 400
-				}
+					height: 400,
+				},
 			},
 			{
 				title: "Files",
@@ -89,7 +89,7 @@ export async function init() {
 				src: "/fs/apps/system/files.tapp/index.html",
 				size: {
 					width: 600,
-					height: 500
+					height: 500,
 				},
 			},
 			{
