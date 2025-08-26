@@ -213,7 +213,7 @@ async function loadApp(app, type) {
 					<li><strong>Version:</strong> ${app.version || "1.0.0"}</li>
 					<li><strong>Developer:</strong> ${app.developer || "Unknown"}</li>
 					<li><strong>License:</strong> ${app.license || "N/A"}</li>
-					<li><strong>Scanned:</strong> ${app.scanned || "N/A"}</li>
+					<li><strong>Scanned:</strong> ${app.scanned ? `<a href="${app.scanned}" target="_blank" rel="noopener noreferrer" class="text-[#ffffff]">${new URL(app.scanned).hostname.replace(/^www\./, "")}</a>` : "N/A"}</li>
 					<li><strong>Size:</strong> ${app.size || "N/A"}</li>
 					<ul>
 						<h2 class="font-black text-3xl mb-2">Requirements:</h2>
