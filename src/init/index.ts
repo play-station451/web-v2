@@ -65,91 +65,7 @@ export async function init() {
 		await Filer.promises.mkdir("/system/var/terbium");
 		await Filer.promises.writeFile("/system/etc/terbium/hash.cache", hash);
 		let startApps = {
-			system_apps: [
-				{
-					title: "Terminal",
-					icon: "/fs/apps/system/terminal.tapp/icon.svg",
-					src: "/fs/apps/system/terminal.tapp/index.html",
-					size: {
-						width: 400,
-						height: 400,
-					},
-				},
-				{
-					title: "Files",
-					icon: "/fs/apps/system/files.tapp/icon.svg",
-					src: "/fs/apps/system/files.tapp/index.html",
-					size: {
-						width: 600,
-						height: 500,
-					},
-				},
-				{
-					title: "Settings",
-					icon: "/fs/apps/system/settings.tapp/icon.svg",
-					src: "/fs/apps/system/settings.tapp/index.html",
-					single: true,
-				},
-				{
-					title: {
-						text: "App Store",
-						html: '<div style="display: flex; flex-direction: row; justify-content: center; align-items: center; height: 32px; z-index: 999999;"><div style="width:350px; display:flex; justify-content:center;"><input class="app-search bg-white/15 border-0 outline-none text-white py-1 px-2 rounded-lg transition-all duration-150 ease-in-out font-semibold" type="search" placeholder="Search for apps" style="width:100%;" /></div></div>',
-					},
-					icon: "/fs/apps/system/app store.tapp/icon.svg",
-					src: "/fs/apps/system/app store.tapp/index.html",
-					size: {
-						width: 775,
-						height: 500,
-					},
-				},
-				{
-					title: "Browser",
-					icon: "/apps/browser.tapp/icon.svg",
-					src: "/apps/browser.tapp/index.html",
-				},
-				{
-					title: "Feedback",
-					icon: "/fs/apps/system/feedback.tapp/icon.svg",
-					src: "https://forms.gle/m664xxmrugWQADQt9",
-					proxy: true,
-					size: {
-						width: 600,
-						height: 500,
-					},
-				},
-				{
-					title: "Media Viewer",
-					icon: "/fs/apps/system/media viewer.tapp/icon.svg",
-					src: "/fs/apps/system/media viewer.tapp/index.html",
-				},
-				{
-					title: "Calculator",
-					icon: "/fs/apps/system/calculator.tapp/icon.svg",
-					src: "/fs/apps/system/calculator.tapp/index.html",
-					snapable: false,
-					maximizable: false,
-					size: {
-						width: 338,
-						height: 556,
-					},
-					controls: ["minimize", "close"],
-				},
-				{
-					title: "About",
-					icon: "/fs/apps/system/about.tapp/icon.svg",
-					src: "/fs/apps/system/about.tapp/index.html",
-				},
-				{
-					title: "Text Editor",
-					icon: "/fs/apps/system/text editor.tapp/icon.svg",
-					src: "/fs/apps/system/text editor.tapp/index.html",
-				},
-				{
-					title: "Task Manager",
-					icon: "/fs/apps/system/task manager.tapp/icon.svg",
-					src: "/fs/apps/system/task manager.tapp/index.html",
-				},
-			],
+			system_apps: apps.map(app => app.config),
 			pinned_apps: [],
 		};
 		await Filer.promises.writeFile("/system/var/terbium/start.json", JSON.stringify(startApps));
@@ -161,18 +77,27 @@ export async function init() {
 				icon: "/fs/apps/system/terminal.tapp/icon.svg",
 				isPinnable: true,
 				src: "/fs/apps/system/terminal.tapp/index.html",
+				size: {
+					width: 612,
+					height: 400
+				}
 			},
 			{
 				title: "Files",
 				icon: "/fs/apps/system/files.tapp/icon.svg",
 				isPinnable: true,
 				src: "/fs/apps/system/files.tapp/index.html",
+				size: {
+					width: 600,
+					height: 500
+				},
 			},
 			{
 				title: "Settings",
 				icon: "/fs/apps/system/settings.tapp/icon.svg",
 				isPinnable: true,
 				src: "/fs/apps/system/settings.tapp/index.html",
+				single: true,
 			},
 			{
 				title: "Feedback",

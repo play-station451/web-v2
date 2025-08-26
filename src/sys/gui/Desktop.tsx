@@ -68,7 +68,7 @@ const Desktop: FC<IDesktopProps> = ({ desktop, onContextMenu }) => {
 			// @ts-expect-error
 			window.removeEventListener("windows-prev", showWinPrev);
 		};
-	}, [showNotif, winPrev]);
+	}, [showNotif, winPrev, pinned]);
 
 	return (
 		<div

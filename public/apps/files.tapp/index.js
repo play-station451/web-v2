@@ -48,6 +48,9 @@ const forward = async () => {
 
 document.getElementById("back").addEventListener("click", back);
 document.getElementById("forward").addEventListener("click", forward);
+document.getElementById("reload").addEventListener("click", () => {
+	openPath(document.querySelector(".nav-input.dir").value);
+});
 
 const emptyTrash = async () => {
 	await window.parent.tb.fs.promises.readdir("/system/trash").then(async files => {
