@@ -9,8 +9,8 @@
     <script src="/assets/libs/filer.min.js"></script>
     <script>
         const main = async () => {
-            const favs = JSON.parse(await Filer.fs.promises.readFile(`/apps/user/${await window.parent.tb.user.username()}/browser/favorites.json`, "utf8"))
-            const settings = await Filer.fs.promises.readFile(`/home/${await window.parent.tb.user.username()}/settings.json`, "XOR")
+            const favs = JSON.parse(await window.parent.parent.tb.fs.promises.readFile(`/apps/user/${await window.parent.tb.user.username()}/browser/favorites.json`, "utf8"))
+            const settings = await window.parent.parent.tb.fs.promises.readFile(`/home/${await window.parent.tb.user.username()}/settings.json`, "XOR")
             const favsDiv = document.getElementById("favs");
             for (const item of favs) {
                 console.log(item);
