@@ -39,8 +39,6 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 	const titleRef = useRef<HTMLSpanElement>(null);
 	const thtmlref = useRef<HTMLDivElement>(null);
 
-	const [wid] = useState(config.wid);
-	const [pid] = useState(config.pid);
 	const [zIndex, setZIndex] = useState(config.zIndex);
 	const [isMouseDown, setIsMouseDown] = useState(false);
 	const [isDragging, setIsDragging] = useState(false);
@@ -52,7 +50,6 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 	const [maximized, setMaximized] = useState(false);
 	const [minimized, setMinimized] = useState(false);
 	const [title] = useState(typeof config.title === "string" ? config.title : config.title?.text);
-	const [message, setMessage] = useState(config.message);
 	const [snapRegion, setSnapRegion] = useState<string | null>(null);
 	const [isResizing, setIsResizing] = useState<boolean>(false);
 	const [controls, setControls] = useState(config.controls);
@@ -137,7 +134,7 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 		const max = (e: CustomEvent) => {
 			if (e.detail === config.pid) {
 				setMaximized(true);
-				windowStore.arrange(wid);
+				windowStore.arrange(config.wid);
 			}
 		};
 		const min = (e: CustomEvent) => {
@@ -184,9 +181,9 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 		};
 		const selWin = (e: CustomEvent) => {
 			if (e.detail === config.wid) {
-				windowStore.arrange(wid);
+				windowStore.arrange(config.wid);
 				// @ts-ignore
-				setZIndex(windowStore.getWindow(wid)?.zIndex);
+				setZIndex(windowStore.getWindow(config.wid)?.zIndex);
 				setMinimized(false);
 				setTimeout(() => {
 					windowRef.current?.classList.remove("duration-150");
@@ -233,7 +230,7 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 					{
 						text: "Close",
 						click: () => {
-							windowStore.removeWindow(wid);
+							windowStore.removeWindow(config.wid);
 							clearInfo();
 						},
 					},
@@ -476,26 +473,12 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 		setIsMouseDown(true);
 	};
 
-	useEffect(() => {
-		const listenForMessage = (e: any) => {
-			setMessage(e.data);
-			srcRef.current?.contentWindow!.postMessage(config.message, "*");
-		};
-		window.addEventListener("message", listenForMessage as EventListener);
-
-		return () => {
-			window.removeEventListener("message", listenForMessage as EventListener);
-		};
-	}, []);
-
 	return (
-		// @ts-ignore
 		<div
 			ref={windowRef}
+			id={config.wid}
 			// @ts-ignore
-			message={message}
-			id={wid}
-			pid={pid}
+			pid={config.pid}
 			className={`
             ${className ? className : ""}
             absolute
@@ -526,9 +509,9 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 					ref={focuserRef}
 					className={`absolute rounded-lg ${config.focused ? "inset-x-2 top-[calc(40px+0.5rem)] bottom-2 pointer-events-none opacity-0" : "inset-x-[1px] top-[40px] bottom-[1px] backdrop-blur-[4px] opacity-100"} duration-150`}
 					onMouseDown={() => {
-						windowStore.arrange(wid);
+						windowStore.arrange(config.wid);
 						// @ts-ignore
-						setZIndex(windowStore.getWindow(wid)?.zIndex);
+						setZIndex(windowStore.getWindow(config.wid)?.zIndex);
 					}}
 				></div>
 			)}
@@ -544,9 +527,9 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 				ref={regionRef}
 				className="region flex justify-between items-center bg-[#ffffff10] p-2 min-w-[224px] select-none"
 				onMouseDown={(e: React.MouseEvent) => {
-					windowStore.arrange(wid);
+					windowStore.arrange(config.wid);
 					// @ts-ignore
-					setZIndex(windowStore.getWindow(wid)?.zIndex);
+					setZIndex(windowStore.getWindow(config.wid)?.zIndex);
 					if ((e.target as HTMLElement).classList.contains("no-drag")) return;
 					const offsetX = e.clientX - windowRef.current!.offsetLeft;
 					const offsetY = e.clientY - windowRef.current!.offsetTop;
@@ -728,7 +711,7 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 											}
 											setTimeout(() => {
 												clearInfo();
-												windowStore.removeWindow(wid);
+												windowStore.removeWindow(config.wid);
 											}, 150);
 										}}
 									>
@@ -766,8 +749,8 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 										windowRef.current.style.transitionDuration = "";
 									}
 								}, 150);
-								windowStore.minimize(wid);
-								window.dispatchEvent(new CustomEvent("min-win", { detail: pid }));
+								windowStore.minimize(config.wid);
+								window.dispatchEvent(new CustomEvent("min-win", { detail: config.pid }));
 								setMinimized(true);
 							}}
 						>
@@ -842,7 +825,7 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 								}
 								setTimeout(() => {
 									clearInfo();
-									windowStore.removeWindow(wid);
+									windowStore.removeWindow(config.wid);
 								}, 150);
 							}}
 						>

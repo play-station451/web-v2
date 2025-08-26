@@ -1,3 +1,7 @@
+import * as webdav from "/fs/apps/system/files.tapp/webdav.js";
+
+window.webdav = webdav;
+
 function openFile(data) {
 	const textarea = document.querySelector("textarea");
 	textarea.value = data;
@@ -52,14 +56,28 @@ window.addEventListener("message", async function load(e) {
 			// updateLineNumbers();
 		} else {
 			try {
-				const response = await fetch(data.path, {
-					method: "GET",
-					credentials: "include",
+				const davInstances = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
+				const davUrl = data.path.split("/dav/")[0] + "/dav/";
+				const dav = davInstances.find(d => d.url.toLowerCase().includes(davUrl));
+				if (!dav) throw new Error("No matching dav instance found");
+				const client = window.webdav.createClient(dav.url, {
+					username: dav.username,
+					password: dav.password,
+					authType: window.webdav.AuthType.Password,
 				});
-				if (!response.ok) throw new Error("Failed to fetch file from WebDAV");
-				const file = await response.text();
+				let filePath;
+				if (data.path.startsWith("http")) {
+					const match = data.path.match(/^https?:\/\/[^\/]+\/dav\/([^\/]+\/)?(.+)$/);
+					filePath = match ? "/" + match[2] : data.path;
+				} else {
+					filePath = data.path.replace(davUrl, "/");
+				}
+				const response = await client.getFileContents(filePath);
 				document.body.setAttribute("path", data.path);
-				openFile(file);
+				document.body.setAttribute("isDav", "true");
+				const decoder = new TextDecoder("utf-8");
+				const text = decoder.decode(response);
+				openFile(text);
 			} catch (err) {
 				window.tb.dialog.Alert({
 					title: "Failed to read dav file",
@@ -99,21 +117,30 @@ textarea.addEventListener("keydown", async e => {
 		}
 		const path = document.body.getAttribute("path");
 		if (path && path !== "undefined") {
-			if (path.startsWith("http")) {
+			if (document.body.getAttribute("isDav") === "true") {
 				try {
-					const response = await fetch(path, {
-						method: "PUT",
-						credentials: "include",
-						headers: {
-							"Content-Type": "text/plain",
-						},
-						body: textarea.value,
+					const davInstances = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
+					const davUrl = path.split("/dav/")[0] + "/dav/";
+					const dav = davInstances.find(d => d.url.toLowerCase().includes(davUrl));
+					if (!dav) throw new Error("No matching dav instance found");
+					const client = window.webdav.createClient(dav.url, {
+						username: dav.username,
+						password: dav.password,
+						authType: window.webdav.AuthType.Password,
 					});
-					if (!response.ok) throw new Error("Failed to save file to WebDAV");
+					let filePath;
+					if (path.startsWith("http")) {
+						const match = path.match(/^https?:\/\/[^\/]+\/dav\/([^\/]+\/)?(.+)$/);
+						filePath = match ? "/" + match[2] : path;
+					} else {
+						filePath = path.replace(davUrl, "/");
+					}
+					console.log(filePath);
+					client.putFileContents(filePath, textarea.value);
 				} catch (err) {
 					window.tb.dialog.Alert({
 						title: "Failed to save dav file",
-						message: err,
+						message: err.message,
 					});
 				}
 			} else {

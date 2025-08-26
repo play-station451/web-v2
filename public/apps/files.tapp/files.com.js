@@ -28,7 +28,7 @@ tb_island.addControl({
 										onOk: async fileName => {
 											const path = document.querySelector(".exp").getAttribute("path");
 											const createFile = async (path, fileName) => {
-												await Filer.fs.exists(`${path}/${fileName}`, async exists => {
+												await window.parent.tb.fs.exists(`${path}/${fileName}`, async exists => {
 													if (exists) {
 														const ask = await tb.dialog.Message({
 															title: `This file already exists. Enter a new name for ${fileName}`,
@@ -38,7 +38,7 @@ tb_island.addControl({
 															await createFile(path, ask);
 														}
 													} else {
-														let sh = new Filer.fs.Shell();
+														let sh = tb.sh;
 														await sh.touch(`${path}/${fileName}`, "");
 														openPath(path);
 													}
@@ -65,10 +65,10 @@ tb_island.addControl({
 										const createUniqueFolder = async (path, folderName, number = null) => {
 											const folderPath = `${path}/${folderName}${number !== null ? ` (${number})` : ""}`;
 											try {
-												await Filer.fs.promises.access(folderPath);
+												await window.parent.tb.fs.promises.access(folderPath);
 												return createUniqueFolder(path, folderName, number + 1);
 											} catch (error) {
-												await Filer.fs.promises.mkdir(folderPath);
+												await window.parent.tb.fs.promises.mkdir(folderPath);
 											}
 										};
 										await createUniqueFolder(path, response);
@@ -91,18 +91,18 @@ tb_island.addControl({
 										const path = document.querySelector(".exp").getAttribute("path");
 										const filePath = `${path}/${file.name}`;
 										try {
-											await Filer.fs.promises.access(filePath);
+											await window.parent.tb.fs.promises.access(filePath);
 											await tb.dialog.Message({
 												title: `File "${file.name}" already exists`,
 												defaultValue: file.name,
 												onOk: async newFileName => {
 													if (newFileName !== null && newFileName !== "") {
-														await Filer.fs.promises.writeFile(`${path}/${newFileName}`, Filer.Buffer.from(content));
+														await window.parent.tb.fs.promises.writeFile(`${path}/${newFileName}`, Filer.Buffer.from(content));
 													}
 												},
 											});
 										} catch (error) {
-											await Filer.fs.promises.writeFile(filePath, Filer.Buffer.from(content));
+											await window.parent.tb.fs.promises.writeFile(filePath, Filer.Buffer.from(content));
 										}
 									}
 									openPath(document.querySelector(".nav-input.dir").value);
@@ -139,7 +139,7 @@ tb_island.addControl({
 						title: "Enter a name for the new folder",
 						defaultValue: "",
 						onOk: async response => {
-							await Filer.fs.exists(response, async exists => {
+							await window.parent.tb.fs.exists(response, async exists => {
 								if (exists) openPath(response);
 								else {
 									tb.dialog.Alert({
@@ -181,17 +181,17 @@ tb_island.addControl({
 									await tb.dialog.WebAuth({
 										title: "Enter the credentials for the Dav Drive",
 										onOk: async (username, password) => {
-											const davjson = JSON.parse(await Filer.fs.promises.readFile(`/apps/user/${await tb.user.username()}/files/davs.json`, "utf8"));
+											const davjson = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${await tb.user.username()}/files/davs.json`, "utf8"));
 											davjson.push({
 												name: res1,
 												url: res2,
 												username: username,
 												password: password,
 											});
-											await Filer.fs.promises.writeFile(`/apps/user/${await tb.user.username()}/files/davs.json`, JSON.stringify(davjson, null, 2));
-											const config = JSON.parse(await Filer.fs.promises.readFile(`/apps/user/${await tb.user.username()}/files/config.json`, "utf8"));
+											await window.parent.tb.fs.promises.writeFile(`/apps/user/${await tb.user.username()}/files/davs.json`, JSON.stringify(davjson, null, 2));
+											const config = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${await tb.user.username()}/files/config.json`, "utf8"));
 											config.drives[res1] = `/mnt/${res1}/`;
-											await Filer.fs.promises.writeFile(`/apps/user/${await tb.user.username()}/files/config.json`, JSON.stringify(config, null, 2));
+											await window.parent.tb.fs.promises.writeFile(`/apps/user/${await tb.user.username()}/files/config.json`, JSON.stringify(config, null, 2));
 											await tb.notification.Toast({
 												application: "System",
 												iconSrc: "/fs/apps/system/about.tapp/icon.svg",
@@ -214,14 +214,14 @@ tb_island.addControl({
 						title: "Enter the name of the Dav Drive to remove",
 						defaultValue: "",
 						onOk: async response => {
-							const davjson = JSON.parse(await Filer.fs.promises.readFile(`/apps/user/${await tb.user.username()}/files/davs.json`, "utf8"));
+							const davjson = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${await tb.user.username()}/files/davs.json`, "utf8"));
 							const index = davjson.findIndex(entry => entry.name.toLowerCase() === response.toLowerCase());
 							if (index !== -1) {
 								davjson.splice(index, 1);
-								await Filer.fs.promises.writeFile(`/apps/user/${await tb.user.username()}/files/davs.json`, JSON.stringify(davjson, null, 2));
-								const config = JSON.parse(await Filer.fs.promises.readFile(`/apps/user/${await tb.user.username()}/files/config.json`, "utf8"));
+								await window.parent.tb.fs.promises.writeFile(`/apps/user/${await tb.user.username()}/files/davs.json`, JSON.stringify(davjson, null, 2));
+								const config = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${await tb.user.username()}/files/config.json`, "utf8"));
 								delete config.drives[response.toLowerCase()];
-								await Filer.fs.promises.writeFile(`/apps/user/${await tb.user.username()}/files/config.json`, JSON.stringify(config, null, 2));
+								await window.parent.tb.fs.promises.writeFile(`/apps/user/${await tb.user.username()}/files/config.json`, JSON.stringify(config, null, 2));
 								await tb.notification.Toast({
 									application: "System",
 									iconSrc: "/fs/apps/system/about.tapp/icon.svg",

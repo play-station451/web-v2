@@ -1,11 +1,13 @@
-const Filer = window.parent.tb;
+import * as webdav from "/fs/apps/system/files.tapp/webdav.js";
+
+window.webdav = webdav;
 
 window.addEventListener("load", async () => {
 	parent.postMessage(JSON.stringify({ type: "ready" }), "*");
 });
 
-async function openFile(url, ext) {
-	let exts = JSON.parse(await Filer.fs.promises.readFile("/apps/system/files.tapp/extensions.json", "utf8"));
+async function openFile(url, ext, dav) {
+	let exts = JSON.parse(await window.parent.tb.fs.promises.readFile("/apps/system/files.tapp/extensions.json", "utf8"));
 	if (exts["animated"].includes(ext)) {
 		let imgObj = new Image();
 		imgObj.src = url;
@@ -43,7 +45,36 @@ async function openFile(url, ext) {
 		let offset = { x: 0, y: 0 };
 		let scale = 0.5;
 		let imgObj = new Image();
-		imgObj.src = url;
+		if (dav) {
+			try {
+				const davInstances = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
+				const davUrl = url.split("/dav/")[0] + "/dav/";
+				const dav = davInstances.find(d => d.url.toLowerCase().includes(davUrl));
+				if (!dav) throw new Error("No matching dav instance found");
+				const client = window.webdav.createClient(dav.url, {
+					username: dav.username,
+					password: dav.password,
+					authType: window.webdav.AuthType.Password,
+				});
+				let filePath;
+				if (url.startsWith("http")) {
+					const match = url.match(/^https?:\/\/[^\/]+\/dav\/([^\/]+\/)?(.+)$/);
+					filePath = match ? "/" + match[2] : url;
+				} else {
+					filePath = url.replace(davUrl, "/");
+				}
+				const response = await client.getFileContents(filePath);
+				const blob = new Blob([response], { type: "image/" + ext });
+				imgObj.src = URL.createObjectURL(blob);
+			} catch (err) {
+				window.tb.dialog.Alert({
+					title: "Failed to read dav file",
+					message: err,
+				});
+			}
+		} else {
+			imgObj.src = url;
+		}
 		imgObj.onload = () => {
 			initializeCanvas();
 		};
@@ -171,7 +202,36 @@ async function openFile(url, ext) {
 		});
 	} else if (exts["video"].includes(ext)) {
 		let videoElem = document.createElement("video");
-		videoElem.src = url;
+		if (dav) {
+			try {
+				const davInstances = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
+				const davUrl = url.split("/dav/")[0] + "/dav/";
+				const dav = davInstances.find(d => d.url.toLowerCase().includes(davUrl));
+				if (!dav) throw new Error("No matching dav instance found");
+				const client = window.webdav.createClient(dav.url, {
+					username: dav.username,
+					password: dav.password,
+					authType: window.webdav.AuthType.Password,
+				});
+				let filePath;
+				if (url.startsWith("http")) {
+					const match = url.match(/^https?:\/\/[^\/]+\/dav\/([^\/]+\/)?(.+)$/);
+					filePath = match ? "/" + match[2] : url;
+				} else {
+					filePath = url.replace(davUrl, "/");
+				}
+				const response = await client.getFileContents(filePath);
+				const blob = new Blob([response], { type: "video/" + ext });
+				videoElem.src = URL.createObjectURL(blob);
+			} catch (err) {
+				window.tb.dialog.Alert({
+					title: "Failed to read dav file",
+					message: err,
+				});
+			}
+		} else {
+			videoElem.src = url;
+		}
 		videoElem.controls = true;
 		videoElem.style.width = "75%";
 		videoElem.style.height = "75%";
@@ -200,7 +260,36 @@ async function openFile(url, ext) {
 		});
 	} else if (exts["audio"].includes(ext)) {
 		let audioElem = document.createElement("audio");
-		audioElem.src = url;
+		if (dav) {
+			try {
+				const davInstances = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
+				const davUrl = url.split("/dav/")[0] + "/dav/";
+				const dav = davInstances.find(d => d.url.toLowerCase().includes(davUrl));
+				if (!dav) throw new Error("No matching dav instance found");
+				const client = window.webdav.createClient(dav.url, {
+					username: dav.username,
+					password: dav.password,
+					authType: window.webdav.AuthType.Password,
+				});
+				let filePath;
+				if (url.startsWith("http")) {
+					const match = url.match(/^https?:\/\/[^\/]+\/dav\/([^\/]+\/)?(.+)$/);
+					filePath = match ? "/" + match[2] : url;
+				} else {
+					filePath = url.replace(davUrl, "/");
+				}
+				const response = await client.getFileContents(filePath);
+				const blob = new Blob([response], { type: "audio/" + ext });
+				audioElem.src = URL.createObjectURL(blob);
+			} catch (err) {
+				window.tb.dialog.Alert({
+					title: "Failed to read dav file",
+					message: err,
+				});
+			}
+		} else {
+			audioElem.src = url;
+		}
 		audioElem.controls = true;
 		document.querySelector(".media").innerHTML = "";
 		document.querySelector(".media").appendChild(audioElem);
@@ -285,31 +374,31 @@ window.addEventListener("message", async e => {
 			title: "Open a file",
 			onOk: async file => {
 				const ext = file.split(".").pop();
-				let json = JSON.parse(await Filer.fs.promises.readFile("/apps/system/files.tapp/extensions.json", "utf8"));
+				let json = JSON.parse(await window.parent.tb.fs.promises.readFile("/apps/system/files.tapp/extensions.json", "utf8"));
 				if (file.includes("http")) {
-					openFile(file, ext);
+					openFile(file, ext, true);
 				} else if (json["image"].includes(ext)) {
-					let img = await Filer.fs.promises.readFile(file);
+					let img = await window.parent.tb.fs.promises.readFile(file);
 					let blob = new Blob([img], { type: "image/" + ext });
 					let url = URL.createObjectURL(blob);
 					openFile(url, ext);
 				} else if (json["animated"].includes(ext)) {
-					let img = await Filer.fs.promises.readFile(file);
+					let img = await window.parent.tb.fs.promises.readFile(file);
 					let blob = new Blob([img], { type: "image/" + ext });
 					let url = URL.createObjectURL(blob);
 					openFile(url, ext);
 				} else if (json["pdf"].includes(ext)) {
-					let pdf = await Filer.fs.promises.readFile(file);
+					let pdf = await window.parent.tb.fs.promises.readFile(file);
 					let blob = new Blob([pdf], { type: "application/pdf" });
 					let url = URL.createObjectURL(blob);
 					openFile(url, ext);
 				} else if (json["video"].includes(ext)) {
-					let video = await Filer.fs.promises.readFile(file);
+					let video = await window.parent.tb.fs.promises.readFile(file);
 					let blob = new Blob([video], { type: "video/" + ext });
 					let url = URL.createObjectURL(blob);
 					openFile(url, ext);
 				} else if (json["audio"].includes(ext)) {
-					let audio = await Filer.fs.promises.readFile(file);
+					let audio = await window.parent.tb.fs.promises.readFile(file);
 					let blob = new Blob([audio], { type: "audio/" + ext });
 					let url = URL.createObjectURL(blob);
 					openFile(url, ext);
@@ -321,31 +410,31 @@ window.addEventListener("message", async e => {
 		asked = false;
 		if (data.path) {
 			const ext = data.path.split(".").pop();
-			let json = JSON.parse(await Filer.fs.promises.readFile("/apps/system/files.tapp/extensions.json", "utf8"));
+			let json = JSON.parse(await window.parent.tb.fs.promises.readFile("/apps/system/files.tapp/extensions.json", "utf8"));
 			if (data.path.includes("http")) {
-				openFile(data.path, ext);
+				openFile(data.path, ext, true);
 			} else if (json["image"].includes(ext)) {
-				let img = await Filer.fs.promises.readFile(data.path);
+				let img = await window.parent.tb.fs.promises.readFile(data.path);
 				let blob = new Blob([img], { type: "image/" + ext });
 				let url = URL.createObjectURL(blob);
 				openFile(url, ext);
 			} else if (json["animated"].includes(ext)) {
-				let img = await Filer.fs.promises.readFile(data.path);
+				let img = await window.parent.tb.fs.promises.readFile(data.path);
 				let blob = new Blob([img], { type: "image/" + ext });
 				let url = URL.createObjectURL(blob);
 				openFile(url, ext);
 			} else if (json["pdf"].includes(ext)) {
-				let pdf = await Filer.fs.promises.readFile(data.path);
+				let pdf = await window.parent.tb.fs.promises.readFile(data.path);
 				let blob = new Blob([pdf], { type: "application/pdf" });
 				let url = URL.createObjectURL(blob);
 				openFile(url, ext);
 			} else if (json["video"].includes(ext)) {
-				let video = await Filer.fs.promises.readFile(data.path);
+				let video = await window.parent.tb.fs.promises.readFile(data.path);
 				let blob = new Blob([video], { type: "video/" + ext });
 				let url = URL.createObjectURL(blob);
 				openFile(url, ext);
 			} else if (json["audio"].includes(ext)) {
-				let audio = await Filer.fs.promises.readFile(data.path);
+				let audio = await window.parent.tb.fs.promises.readFile(data.path);
 				let blob = new Blob([audio], { type: "audio/" + ext });
 				let url = URL.createObjectURL(blob);
 				openFile(url, ext);

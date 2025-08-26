@@ -50,6 +50,7 @@ export default function DialogContainer() {
 export function Alert({ title, message, onOk }: dialogProps) {
 	const container = useRef<HTMLDivElement>(null);
 	const dialog = useRef<HTMLDivElement>(null);
+	const [msg, setMsg] = useState<string | null>(null);
 	const OK = () => {
 		if (container.current) {
 			container.current.classList.add("fade-out");
@@ -67,11 +68,26 @@ export function Alert({ title, message, onOk }: dialogProps) {
 			}
 		});
 	});
+	useEffect(() => {
+		// @ts-expect-error
+		if (message instanceof Error) {
+			setMsg(message.message);
+		} else if (typeof message === "object" && message !== null) {
+			try {
+				setMsg(JSON.stringify(message));
+			} catch {
+				setMsg(String(message));
+			}
+		} else {
+			setMsg(String(message));
+		}
+	}, [message]);
+
 	return (
 		<div className="fixed inset-0 z-999999999 flex flex-col items-center justify-center bg-[#00000078] backdrop-blur-xs duration-150" ref={container}>
 			<div ref={dialog} className="flex flex-col p-2.5 gap-2.5 backdrop-blur-md rounded-lg sm:min-w-[340px] md:min-w-[400px] lg:min-w-[600px] bg-[#ffffff18] text-white shadow-tb-border-shadow duration-150">
 				<div className="font-extrabold text-xl leading-none select-none">{title}</div>
-				<div className="dialog-message">{message}</div>
+				<div className="dialog-message">{msg}</div>
 				<div className="flex justify-end">
 					<button className="flex gap-1.5 w-max py-2 px-5 rounded-md cursor-pointer bg-[#86ff9085] shadow-[0px_0px_6px_0px_#00000052,_inset_0_0_0_0.5px_#ffffff38] hover:bg-[#8fff98a2] duration-150" onMouseDown={OK}>
 						OK

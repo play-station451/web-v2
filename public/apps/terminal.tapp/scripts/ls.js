@@ -22,9 +22,9 @@ async function ls(args) {
 			let mounted;
 			try {
 				const client = window.webdav.createClient(dav.url, {
-					username: dav.user,
-					password: dav.pass,
-					authType: window.webdav.AuthType.Digest,
+					username: dav.username,
+					password: dav.password,
+					authType: window.webdav.AuthType.Password,
 				});
 				await client.getDirectoryContents("/");
 				mounted = true;
@@ -44,7 +44,7 @@ async function ls(args) {
 			const client = window.webdav.createClient(dav.url, {
 				username: dav.user,
 				password: dav.pass,
-				authType: window.webdav.AuthType.Digest,
+				authType: window.webdav.AuthType.Password,
 			});
 			const np = args._raw.replace(`/mnt/${davName.toLowerCase()}/`, "") || path.replace(`/mnt/${davName.toLowerCase()}/`, "");
 			const contents = await client.getDirectoryContents(np);
