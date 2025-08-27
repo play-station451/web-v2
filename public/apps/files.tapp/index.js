@@ -462,31 +462,36 @@ const showLS = async () => {
 	});
 };
 
+const useDavClient = async path => {
+	const davInstances = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
+	const davUrl = path.split("/dav/")[0] + "/dav/";
+	const dav = davInstances.find(d => d.url.toLowerCase().includes(davUrl));
+	if (!dav) throw new Error("No matching dav instance found");
+	const client = webdav.createClient(dav.url, {
+		username: dav.username,
+		password: dav.password,
+		authType: webdav.AuthType.Password,
+	});
+	let filePath;
+	if (path.startsWith("http")) {
+		const match = path.match(/^https?:\/\/[^\/]+\/dav\/([^\/]+\/)?(.+)$/);
+		filePath = match ? "/" + match[2] : path;
+	} else {
+		filePath = path.replace(davUrl, "/");
+	}
+	return { client, filePath };
+};
+
 const getItemDetails = async path => {
 	if (path.includes("http")) {
-		const davInstances = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
-		const davUrl = path.split("/dav/")[0] + "/dav/";
-		const dav = davInstances.find(d => d.url.toLowerCase().includes(davUrl));
-		if (!dav) throw new Error("No matching dav instance found");
-		const client = webdav.createClient(dav.url, {
-			username: dav.username,
-			password: dav.password,
-			authType: webdav.AuthType.Password,
-		});
-		let filePath;
-		if (path.startsWith("http")) {
-			const match = path.match(/^https?:\/\/[^\/]+\/dav\/([^\/]+\/)?(.+)$/);
-			filePath = match ? "/" + match[2] : path;
-		} else {
-			filePath = path.replace(davUrl, "/");
-		}
+		const { client, filePath } = await useDavClient(path);
 		const stats = await client.stat(filePath, { depth: 1 });
 		let message = JSON.stringify({
 			type: "item-details",
 			path: path,
 			details: {
 				name: stats.basename,
-				type: `${stats.type} - ${stats.mime}`,
+				type: stats.mime,
 				size: stats.size,
 				created: null,
 				modified: stats.lastmod,
@@ -841,22 +846,7 @@ const cm = async e => {
 									return;
 								}
 								if (path.includes("http")) {
-									const davInstances = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
-									const davUrl = path.split("/dav/")[0] + "/dav/";
-									const dav = davInstances.find(d => d.url.toLowerCase().includes(davUrl));
-									if (!dav) console.error("No matching dav instance found");
-									const client = webdav.createClient(dav.url, {
-										username: dav.username,
-										password: dav.password,
-										authType: webdav.AuthType.Password,
-									});
-									let filePath;
-									if (path.startsWith("http")) {
-										const match = path.match(/^https?:\/\/[^\/]+\/dav\/([^\/]+\/)?(.+)$/);
-										filePath = match ? "/" + match[2] : path;
-									} else {
-										filePath = path.replace(davUrl, "/");
-									}
+									const { client, filePath } = await useDavClient(path);
 									await client.moveFile(filePath, `${path}/${newFileName}`);
 									openPath(document.querySelector(".nav-input.dir").value);
 								} else {
@@ -913,22 +903,7 @@ const cm = async e => {
 				click: async () => {
 					const path = e.target.getAttribute("path");
 					if (path.includes("http")) {
-						const davInstances = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
-						const davUrl = path.split("/dav/")[0] + "/dav/";
-						const dav = davInstances.find(d => d.url.toLowerCase().includes(davUrl));
-						if (!dav) console.error("No matching dav instance found");
-						const client = webdav.createClient(dav.url, {
-							username: dav.username,
-							password: dav.password,
-							authType: webdav.AuthType.Password,
-						});
-						let filePath;
-						if (path.startsWith("http")) {
-							const match = path.match(/^https?:\/\/[^\/]+\/dav\/([^\/]+\/)?(.+)$/);
-							filePath = match ? "/" + match[2] : path;
-						} else {
-							filePath = path.replace(davUrl, "/");
-						}
+						const { client, filePath } = await useDavClient(path);
 						client.deleteFile(filePath);
 						document.querySelector(".exp").removeChild(e.target);
 					} else {
@@ -952,22 +927,7 @@ const cm = async e => {
 					const lk = document.createElement("a");
 					lk.download = name;
 					if (path.includes("http")) {
-						const davInstances = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
-						const davUrl = path.split("/dav/")[0] + "/dav/";
-						const dav = davInstances.find(d => d.url.toLowerCase().includes(davUrl));
-						if (!dav) console.error("No matching dav instance found");
-						const client = webdav.createClient(dav.url, {
-							username: dav.username,
-							password: dav.password,
-							authType: webdav.AuthType.Password,
-						});
-						let filePath;
-						if (path.startsWith("http")) {
-							const match = path.match(/^https?:\/\/[^\/]+\/dav\/([^\/]+\/)?(.+)$/);
-							filePath = match ? "/" + match[2] : path;
-						} else {
-							filePath = path.replace(davUrl, "/");
-						}
+						const { client, filePath } = await useDavClient(path);
 						const blob = await client.getFileContents(filePath);
 						const stats = await client.stat(filePath);
 						const fileBlob = new Blob([blob], { type: stats.mime });
@@ -1277,22 +1237,7 @@ const cm = async e => {
 										const path = document.querySelector(".exp").getAttribute("path");
 										const createFile = async (path, fileName) => {
 											if (e.target.getAttribute("path").includes("http")) {
-												const davInstances = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
-												const davUrl = path.split("/dav/")[0] + "/dav/";
-												const dav = davInstances.find(d => d.url.toLowerCase().includes(davUrl));
-												if (!dav) console.error("No matching dav instance found");
-												const client = webdav.createClient(dav.url, {
-													username: dav.username,
-													password: dav.password,
-													authType: webdav.AuthType.Password,
-												});
-												let filePath;
-												if (path.startsWith("http")) {
-													const match = path.match(/^https?:\/\/[^\/]+\/dav\/([^\/]+\/)?(.+)$/);
-													filePath = match ? "/" + match[2] : path;
-												} else {
-													filePath = path.replace(davUrl, "/");
-												}
+												const { client, filePath } = await useDavClient(path);
 												const exists = await client.exists(`${filePath}/${fileName}`);
 												if (exists) {
 													const ask = await tb.dialog.Message({
@@ -1343,22 +1288,7 @@ const cm = async e => {
 								onOk: async response => {
 									const path = document.querySelector(".exp").getAttribute("path");
 									if (path.includes("http")) {
-										const davInstances = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
-										const davUrl = path.split("/dav/")[0] + "/dav/";
-										const dav = davInstances.find(d => d.url.toLowerCase().includes(davUrl));
-										if (!dav) console.error("No matching dav instance found");
-										const client = webdav.createClient(dav.url, {
-											username: dav.username,
-											password: dav.password,
-											authType: webdav.AuthType.Password,
-										});
-										let filePath;
-										if (path.startsWith("http")) {
-											const match = path.match(/^https?:\/\/[^\/]+\/dav\/([^\/]+\/)?(.+)$/);
-											filePath = match ? "/" + match[2] : path;
-										} else {
-											filePath = path.replace(davUrl, "/");
-										}
+										const { client, filePath } = await useDavClient(path);
 										const exists = await client.exists(`${filePath}/${response}`);
 										if (exists) {
 											const ask = await tb.dialog.Message({
@@ -1401,22 +1331,7 @@ const cm = async e => {
 								if (path.includes("http")) {
 									for (const file of e.target.files) {
 										const content = await file.arrayBuffer();
-										const davInstances = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
-										const davUrl = path.split("/dav/")[0] + "/dav/";
-										const dav = davInstances.find(d => d.url.toLowerCase().includes(davUrl));
-										if (!dav) console.error("No matching dav instance found");
-										const client = webdav.createClient(dav.url, {
-											username: dav.username,
-											password: dav.password,
-											authType: webdav.AuthType.Password,
-										});
-										let filePath;
-										if (path.startsWith("http")) {
-											const match = path.match(/^https?:\/\/[^\/]+\/dav\/([^\/]+\/)?(.+)$/);
-											filePath = match ? "/" + match[2] : path;
-										} else {
-											filePath = path.replace(davUrl, "/");
-										}
+										const { client, filePath } = await useDavClient(path);
 										const exists = await client.exists(`${filePath}/${file.name}`);
 										if (exists) {
 											await tb.dialog.Message({
