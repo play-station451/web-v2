@@ -14,7 +14,8 @@ export class Theme implements ThemeProps {
 	settings: ThemeProps = {};
 
 	constructor() {
-		window.tb.fs.promises.readFile("/system/etc/anura/theme.json", "utf8")
+		window.tb.fs.promises
+			.readFile("/system/etc/anura/theme.json", "utf8")
 			.then((data: string) => {
 				this.settings = JSON.parse(data);
 			})

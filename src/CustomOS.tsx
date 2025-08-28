@@ -47,7 +47,7 @@ export default function CustomOS() {
 					}
 					document.head.appendChild(newScript);
 					script.parentNode?.removeChild(script);
-				};
+				}
 				const styles: any = document.querySelectorAll("link[rel='stylesheet']");
 				for (const style of styles) {
 					const newStyle = document.createElement("link");
