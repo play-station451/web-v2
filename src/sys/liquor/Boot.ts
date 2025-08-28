@@ -29,16 +29,15 @@ let anura: Anura;
 window.addEventListener("load", async () => {
 	await navigator.serviceWorker.register("/anura-sw.js");
 	let conf, milestone, instancemilestone;
-	const Filer = (window as any).Filer;
 	try {
 		conf = await (await fetch("/config.json")).json();
 		milestone = await (await fetch("/MILESTONE")).text();
 		instancemilestone = conf.milestone;
 
 		console.log("writing config??");
-		Filer.fs.writeFile("/config_cached.json", JSON.stringify(conf));
+		window.tb.fs.writeFile("/config_cached.json", JSON.stringify(conf));
 	} catch (e) {
-		conf = JSON.parse(await new Promise(r => Filer.fs.readFile("/config_cached.json", (_: any, b: Uint8Array) => r(new TextDecoder().decode(b)))));
+		conf = JSON.parse(await new Promise(r => window.tb.fs.readFile("/config_cached.json", (_: any, b: Uint8Array) => r(new TextDecoder().decode(b)))));
 	}
 
 	anura = await Anura.new(conf);

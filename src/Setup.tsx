@@ -49,14 +49,14 @@ export default function Setup() {
 				answer: pw.harden(data.securityQuestion.answer),
 			};
 		}
-		await Filer.fs.promises.writeFile(`/home/${usr}/user.json`, JSON.stringify(userInf), "utf8");
-		await Filer.fs.promises.writeFile("/system/etc/terbium/sudousers.json", JSON.stringify([usr]), "utf8");
-		await Filer.fs.promises.mkdir(`/home/${usr}/documents/`);
-		await Filer.fs.promises.mkdir(`/home/${usr}/images/`);
-		await Filer.fs.promises.mkdir(`/home/${usr}/videos/`);
-		await Filer.fs.promises.mkdir(`/home/${usr}/music/`);
-		let settings = JSON.parse(await Filer.fs.promises.readFile(`/home/${usr}/settings.json`, "utf8"));
-		let syssettings = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"));
+		await window.tb.fs.promises.writeFile(`/home/${usr}/user.json`, JSON.stringify(userInf), "utf8");
+		await window.tb.fs.promises.writeFile("/system/etc/terbium/sudousers.json", JSON.stringify([usr]), "utf8");
+		await window.tb.fs.promises.mkdir(`/home/${usr}/documents/`);
+		await window.tb.fs.promises.mkdir(`/home/${usr}/images/`);
+		await window.tb.fs.promises.mkdir(`/home/${usr}/videos/`);
+		await window.tb.fs.promises.mkdir(`/home/${usr}/music/`);
+		let settings = JSON.parse(await window.tb.fs.promises.readFile(`/home/${usr}/settings.json`, "utf8"));
+		let syssettings = JSON.parse(await window.tb.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"));
 		if (!syssettings["setup"] || syssettings["setup"] === false) {
 			syssettings["setup"] = true;
 		}
@@ -71,15 +71,15 @@ export default function Setup() {
 		}
 		const wsrv = sessionStorage.getItem("selectedBare") || `${location.protocol.replace("http", "ws")}//${location.hostname}:${location.port}/wisp/`;
 		settings["wispServer"] = wsrv;
-		await Filer.fs.promises.writeFile(`/home/${usr}/settings.json`, JSON.stringify(settings), "utf8");
-		await Filer.fs.promises.writeFile("/system/etc/terbium/settings.json", JSON.stringify(syssettings), "utf8");
+		await window.tb.fs.promises.writeFile(`/home/${usr}/settings.json`, JSON.stringify(settings), "utf8");
+		await window.tb.fs.promises.writeFile("/system/etc/terbium/settings.json", JSON.stringify(syssettings), "utf8");
 		const wispExist = await fileExists("//apps/system/settings.tapp/wisp-servers.json");
 		if (!wispExist) {
 			const stockDat = [
 				{ id: `${location.protocol.replace("http", "ws")}//${location.hostname}:${location.port}/wisp/`, name: "Backend" },
 				{ id: "wss://wisp.terbiumon.top/wisp/", name: "TB Wisp Instance" },
 			];
-			await Filer.fs.promises.writeFile("//apps/system/settings.tapp/wisp-servers.json", JSON.stringify(stockDat));
+			await window.tb.fs.promises.writeFile("//apps/system/settings.tapp/wisp-servers.json", JSON.stringify(stockDat));
 		}
 		localStorage.setItem("setup", "true");
 		if (sessionStorage!.getItem("logged-in") === null || sessionStorage!.getItem("logged-in") === undefined || sessionStorage!.getItem("logged-in") === "false") {
@@ -442,7 +442,7 @@ export default function Setup() {
 				{ id: "wss://wisp.terbiumon.top/wisp/", name: "TB Wisp Instance" },
 				{ id: value, name: "Custom Wisp" },
 			];
-			await Filer.fs.promises.writeFile("//apps/system/settings.tapp/wisp-servers.json", JSON.stringify(stockDat));
+			await window.tb.fs.promises.writeFile("//apps/system/settings.tapp/wisp-servers.json", JSON.stringify(stockDat));
 		};
 
 		return (

@@ -56,8 +56,8 @@ const useWindowStore = create<WindowState>()(set => ({
 	matchedWindows: [],
 	addWindow: async (config: WindowConfig) => {
 		const recentApps = (await fileExists("/system/var/terbium/recent.json"))
-			? JSON.parse(await Filer.fs.promises.readFile("/system/var/terbium/recent.json", "utf8"))
-			: (await Filer.fs.promises.writeFile("/system/var/terbium/recent.json", JSON.stringify([], null, 2), "utf8").catch((err: any) => console.error(err)), []);
+			? JSON.parse(await window.tb.fs.promises.readFile("/system/var/terbium/recent.json", "utf8"))
+			: (await window.tb.fs.promises.writeFile("/system/var/terbium/recent.json", JSON.stringify([], null, 2), "utf8").catch((err: any) => console.error(err)), []);
 		const updateState = async (state: WindowState) => {
 			const indexes = state.windows.map(w => w.zIndex ?? 0);
 			config.zIndex = Math.max(...indexes) + 1;
@@ -91,7 +91,7 @@ const useWindowStore = create<WindowState>()(set => ({
 			const appName = typeof config.title === "string" ? config.title : config.title?.text;
 			let configData: any = null;
 			try {
-				const data = JSON.parse(await Filer.fs.promises.readFile(`/apps/system/${appName.toLowerCase()}.tapp/index.json`, "utf8")).config;
+				const data = JSON.parse(await window.tb.fs.promises.readFile(`/apps/system/${appName.toLowerCase()}.tapp/index.json`, "utf8")).config;
 				configData = {
 					...data,
 					weight: 1,
@@ -120,7 +120,7 @@ const useWindowStore = create<WindowState>()(set => ({
 			} else {
 				recentApps[recentAppIndex].weight += 1;
 			}
-			await Filer.fs.promises.writeFile("/system/var/terbium/recent.json", JSON.stringify(recentApps, null, 2), "utf8").catch((err: any) => {
+			await window.tb.fs.promises.writeFile("/system/var/terbium/recent.json", JSON.stringify(recentApps, null, 2), "utf8").catch((err: any) => {
 				console.error("Error writing recent apps file:", err);
 			});
 

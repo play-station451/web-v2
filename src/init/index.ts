@@ -1,4 +1,4 @@
-import { Filer, dirExists } from "../sys/types";
+import { dirExists } from "../sys/types";
 import apps from "../apps.json";
 import { copyfs } from "./fs.init";
 import { hash } from "../hash.json";
@@ -9,7 +9,7 @@ export async function init() {
 	 */
 	console.log("Initing File System please wait...");
 	if (!(await dirExists("/home"))) {
-		await Filer.promises.mkdir("/home");
+		await window.tb.fs.promises.mkdir("/home");
 	}
 	const user = JSON.parse(`${sessionStorage.getItem("new-user")}`).username;
 
@@ -17,31 +17,31 @@ export async function init() {
 	 * create apps structure
 	 */
 	if (!(await dirExists("/apps"))) {
-		await Filer.promises.mkdir("/apps");
-		await Filer.promises.mkdir("/apps/system");
-		await Filer.promises.mkdir("/apps/user");
-		await Filer.promises.writeFile("/apps/web_apps.json", JSON.stringify({ apps: [] }));
+		await window.tb.fs.promises.mkdir("/apps");
+		await window.tb.fs.promises.mkdir("/apps/system");
+		await window.tb.fs.promises.mkdir("/apps/user");
+		await window.tb.fs.promises.writeFile("/apps/web_apps.json", JSON.stringify({ apps: [] }));
 	} else {
 		if (!(await dirExists("/apps/user"))) {
-			await Filer.promises.mkdir("/apps/user");
+			await window.tb.fs.promises.mkdir("/apps/user");
 		}
 	}
 
 	if (!(await dirExists(`/apps/user/${user}`))) {
-		await Filer.promises.mkdir(`/apps/user/${user}`);
-		await Filer.promises.mkdir(`/apps/user/${user}/files`);
-		await Filer.promises.mkdir(`/apps/user/${user}/terminal`);
+		await window.tb.fs.promises.mkdir(`/apps/user/${user}`);
+		await window.tb.fs.promises.mkdir(`/apps/user/${user}/files`);
+		await window.tb.fs.promises.mkdir(`/apps/user/${user}/terminal`);
 	}
 
 	/**
 	 * create system structure
 	 */
 	if (!(await dirExists("/system"))) {
-		await Filer.promises.mkdir("/system");
-		await Filer.promises.mkdir("/system/trash");
-		await Filer.promises.mkdir("/system/bin");
-		await Filer.promises.mkdir("/system/etc");
-		await Filer.promises.mkdir("/system/etc/terbium");
+		await window.tb.fs.promises.mkdir("/system");
+		await window.tb.fs.promises.mkdir("/system/trash");
+		await window.tb.fs.promises.mkdir("/system/bin");
+		await window.tb.fs.promises.mkdir("/system/etc");
+		await window.tb.fs.promises.mkdir("/system/etc/terbium");
 		let stockSettings = {
 			theme: "dark",
 			"system-blur": true,
@@ -58,19 +58,19 @@ export async function init() {
 			},
 			"host-name": "terbium",
 		};
-		await Filer.promises.writeFile("/system/etc/terbium/settings.json", JSON.stringify(stockSettings));
-		await Filer.promises.writeFile("/system/etc/terbium/sudousers.json", JSON.stringify([]));
-		await Filer.promises.mkdir("/system/etc/terbium/wallpapers");
-		await Filer.promises.mkdir("/system/var");
-		await Filer.promises.mkdir("/system/var/terbium");
-		await Filer.promises.writeFile("/system/etc/terbium/hash.cache", hash);
+		await window.tb.fs.promises.writeFile("/system/etc/terbium/settings.json", JSON.stringify(stockSettings));
+		await window.tb.fs.promises.writeFile("/system/etc/terbium/sudousers.json", JSON.stringify([]));
+		await window.tb.fs.promises.mkdir("/system/etc/terbium/wallpapers");
+		await window.tb.fs.promises.mkdir("/system/var");
+		await window.tb.fs.promises.mkdir("/system/var/terbium");
+		await window.tb.fs.promises.writeFile("/system/etc/terbium/hash.cache", hash);
 		let startApps = {
 			system_apps: apps.map(app => app.config),
 			pinned_apps: [],
 		};
-		await Filer.promises.writeFile("/system/var/terbium/start.json", JSON.stringify(startApps));
-		await Filer.promises.writeFile(`/apps/installed.json`, JSON.stringify([]));
-		await Filer.promises.mkdir("/apps/anura/");
+		await window.tb.fs.promises.writeFile("/system/var/terbium/start.json", JSON.stringify(startApps));
+		await window.tb.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify([]));
+		await window.tb.fs.promises.mkdir("/apps/anura/");
 		let dockPins = [
 			{
 				title: "Terminal",
@@ -111,18 +111,18 @@ export async function init() {
 				},
 			},
 		];
-		await Filer.promises.writeFile("/system/var/terbium/dock.json", JSON.stringify(dockPins));
-		await Filer.promises.mkdir("/system/lib");
-		await Filer.promises.mkdir("/system/lib/anura");
-		await Filer.promises.mkdir("/system/tmp");
+		await window.tb.fs.promises.writeFile("/system/var/terbium/dock.json", JSON.stringify(dockPins));
+		await window.tb.fs.promises.mkdir("/system/lib");
+		await window.tb.fs.promises.mkdir("/system/lib/anura");
+		await window.tb.fs.promises.mkdir("/system/tmp");
 
 		let recentApps: any[] = [];
-		await Filer.promises.writeFile("/system/var/terbium/recent.json", JSON.stringify(recentApps));
+		await window.tb.fs.promises.writeFile("/system/var/terbium/recent.json", JSON.stringify(recentApps));
 	}
 	var items: any[] = [];
 
 	if (!(await dirExists(`/home/${user}`))) {
-		await Filer.promises.mkdir(`/home/${user}`);
+		await window.tb.fs.promises.mkdir(`/home/${user}`);
 		let userSettings = {
 			wallpaper: "/assets/wallpapers/1.png",
 			wallpaperMode: "cover",
@@ -138,8 +138,8 @@ export async function init() {
 				showSeconds: false,
 			},
 		};
-		await Filer.promises.writeFile(`/home/${user}/settings.json`, JSON.stringify(userSettings));
-		await Filer.promises.mkdir(`/home/${user}/desktop`);
+		await window.tb.fs.promises.writeFile(`/home/${user}/settings.json`, JSON.stringify(userSettings));
+		await window.tb.fs.promises.mkdir(`/home/${user}/desktop`);
 		let r2 = [];
 		let sysapps: { name: string; config: string; user: string }[] = [];
 		for (let i = 0; i < apps.length; i++) {
@@ -178,8 +178,8 @@ export async function init() {
 					left: leftPos,
 				},
 			});
-			await Filer.promises.mkdir(`/apps/system/${name}.tapp`);
-			await Filer.promises.writeFile(
+			await window.tb.fs.promises.mkdir(`/apps/system/${name}.tapp`);
+			await window.tb.fs.promises.writeFile(
 				`/apps/system/${name}.tapp/index.json`,
 				JSON.stringify({
 					name: app.name,
@@ -192,11 +192,11 @@ export async function init() {
 				config: `/apps/system/${name}.tapp/index.json`,
 				user: "System",
 			});
-			await Filer.promises.symlink(`/apps/system/${name}.tapp/index.json`, `/home/${user}/desktop/${name}.lnk`);
+			await window.tb.fs.promises.symlink(`/apps/system/${name}.tapp/index.json`, `/home/${user}/desktop/${name}.lnk`);
 		}
 		await copyfs();
-		await Filer.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(items));
-		await Filer.promises.writeFile(
+		await window.tb.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(items));
+		await window.tb.fs.promises.writeFile(
 			`/apps/user/${user}/files/config.json`,
 			JSON.stringify({
 				"quick-center": true,
@@ -216,31 +216,31 @@ export async function init() {
 			}),
 			"utf8",
 		);
-		await Filer.promises.writeFile(`/apps/user/${user}/files/davs.json`, JSON.stringify([]));
-		await Filer.promises.mkdir(`/apps/user/${user}/browser`);
-		await Filer.promises.writeFile(`/apps/user/${user}/browser/favorites.json`, JSON.stringify([]));
-		await Filer.promises.writeFile(`/apps/user/${user}/browser/userscripts.json`, JSON.stringify([]));
-		await Filer.promises.writeFile(`/apps/installed.json`, JSON.stringify(sysapps));
+		await window.tb.fs.promises.writeFile(`/apps/user/${user}/files/davs.json`, JSON.stringify([]));
+		await window.tb.fs.promises.mkdir(`/apps/user/${user}/browser`);
+		await window.tb.fs.promises.writeFile(`/apps/user/${user}/browser/favorites.json`, JSON.stringify([]));
+		await window.tb.fs.promises.writeFile(`/apps/user/${user}/browser/userscripts.json`, JSON.stringify([]));
+		await window.tb.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(sysapps));
 		const response = await fetch("/apps/files.tapp/icons.json");
 		const dat = await response.json();
 		const iconNames = Object.keys(dat["name-to-path"]);
 		const icons = Object.values(dat["name-to-path"]);
 		var iconArrays: { [key: string]: string } = {};
 
-		await Filer.promises.mkdir(`/system/etc/terbium/file-icons`);
+		await window.tb.fs.promises.mkdir(`/system/etc/terbium/file-icons`);
 		iconNames.forEach(async name => {
 			iconArrays[name] = `/system/etc/terbium/file-icons/${name}.svg`; // name, path
 			const icon = icons[iconNames.indexOf(name)];
-			await Filer.promises.writeFile(`/system/etc/terbium/file-icons/${name}.svg`, icon);
+			await window.tb.fs.promises.writeFile(`/system/etc/terbium/file-icons/${name}.svg`, icon);
 		});
-		await Filer.promises.writeFile(
+		await window.tb.fs.promises.writeFile(
 			`/system/etc/terbium/file-icons.json`,
 			JSON.stringify({
 				"ext-to-name": dat["ext-to-name"],
 				"name-to-path": iconArrays,
 			}),
 		);
-		await Filer.promises.writeFile(
+		await window.tb.fs.promises.writeFile(
 			`/apps/user/${user}/files/quick-center.json`,
 			JSON.stringify({
 				paths: {
@@ -254,9 +254,9 @@ export async function init() {
 			}),
 			"utf8",
 		);
-		await Filer.promises.writeFile(`/apps/user/${user}/terminal/info.json`, JSON.stringify({}));
-		await Filer.promises.mkdir(`/apps/user/${user}/app store/`);
-		await Filer.promises.writeFile(
+		await window.tb.fs.promises.writeFile(`/apps/user/${user}/terminal/info.json`, JSON.stringify({}));
+		await window.tb.fs.promises.mkdir(`/apps/user/${user}/app store/`);
+		await window.tb.fs.promises.writeFile(
 			`/apps/user/${user}/app store/repos.json`,
 			JSON.stringify([
 				{

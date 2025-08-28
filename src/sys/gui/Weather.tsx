@@ -29,7 +29,7 @@ export default function Weather() {
 	useEffect(() => {
 		const getWeather = async () => {
 			try {
-				const settings: SysSettings = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json"));
+				const settings: SysSettings = JSON.parse(await window.tb.fs.promises.readFile("/system/etc/terbium/settings.json"));
 				const defaultLocation = "40.7590322,-74.0516312";
 				const loc = settings.location || defaultLocation;
 				const locationResponse = await fetch(`https://api.weather.gov/points/${loc}`, {

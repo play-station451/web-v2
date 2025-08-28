@@ -24,12 +24,9 @@ declare global {
 
 export const isURL = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/;
 
-const FilerFS: any = window.Filer;
-export const Filer: FilerFS = new FilerFS.FileSystem();
-
 export const dirExists = async (path: string): Promise<boolean> => {
 	return new Promise(resolve => {
-		Filer.stat(path, (err: any, stats: any) => {
+		window.tb.fs.stat(path, (err: any, stats: any) => {
 			if (err) {
 				if (err.code === "ENOENT") {
 					resolve(false);
@@ -47,7 +44,7 @@ export const dirExists = async (path: string): Promise<boolean> => {
 
 export const fileExists = async (path: string): Promise<boolean> => {
 	return new Promise(resolve => {
-		Filer.stat(path, (err: any, stats: any) => {
+		window.tb.fs.stat(path, (err: any, stats: any) => {
 			if (err) {
 				if (err.code === "ENOENT") {
 					resolve(false);

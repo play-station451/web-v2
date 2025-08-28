@@ -128,15 +128,15 @@ export function WispMenu({ isOpen }: WispMenuProps) {
 		const fetchServers = async (): Promise<void> => {
 			const exists = await fileExists("//apps/system/settings.tapp/wisp-servers.json");
 			if (!exists) {
-				await Filer.fs.promises.mkdir("//apps/system/settings.tapp/", { recursive: true } as any);
+				await window.tb.fs.promises.mkdir("//apps/system/settings.tapp/", { recursive: true } as any);
 				const stockDat: Server[] = [
 					{ id: `${location.protocol.replace("http", "ws")}//${location.hostname}:${location.port}/wisp/`, name: "Backend" },
 					{ id: "wss://wisp.terbiumon.top/wisp/", name: "TB Wisp Instance" },
 				];
-				await Filer.fs.promises.writeFile("//apps/system/settings.tapp/wisp-servers.json", JSON.stringify(stockDat));
+				await window.tb.fs.promises.writeFile("//apps/system/settings.tapp/wisp-servers.json", JSON.stringify(stockDat));
 			}
-			const data: Server[] = JSON.parse(await Filer.fs.promises.readFile("//apps/system/settings.tapp/wisp-servers.json"));
-			const settings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`));
+			const data: Server[] = JSON.parse(await window.tb.fs.promises.readFile("//apps/system/settings.tapp/wisp-servers.json"));
+			const settings = JSON.parse(await window.tb.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`));
 			const servers = await Promise.all(
 				data.map(async server => {
 					const res = await ping(server.id);
@@ -207,7 +207,7 @@ export function WispMenu({ isOpen }: WispMenuProps) {
 					className={`
                     flex flex-col gap-1 ${servers.length === 0 ? "justify-center items-center" : ""}
                 `}
-					key={Math.random() + init({ length: 10 })()}
+					key={servers.length.toString()}
 				>
 					{loading ? (
 						<p>Loading...</p>
@@ -227,12 +227,12 @@ export function WispMenu({ isOpen }: WispMenuProps) {
                                                 duration-150
                                             `}
 										onClick={async () => {
-											let settings = await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8");
+											let settings = await window.tb.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8");
 											let settdata = JSON.parse(settings);
 											settdata.wispServer = server.id;
 											window.tb.proxy.updateSWs();
 											const updSet = JSON.stringify(settdata, null, 2);
-											await Filer.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, updSet);
+											await window.tb.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, updSet);
 											setServers(prevServers =>
 												prevServers.map(server => ({
 													...server,
@@ -283,9 +283,9 @@ export function WispMenu({ isOpen }: WispMenuProps) {
 										title: "Enter the socket URL for the Wisp server",
 										onOk: async (url: string) => {
 											const newServer: Server = { id: url, name };
-											let data: Server[] = JSON.parse(await Filer.fs.promises.readFile("//apps/system/settings.tapp/wisp-servers.json"));
+											let data: Server[] = JSON.parse(await window.tb.fs.promises.readFile("//apps/system/settings.tapp/wisp-servers.json"));
 											data.push(newServer);
-											await Filer.fs.promises.writeFile("//apps/system/settings.tapp/wisp-servers.json", JSON.stringify(data));
+											await window.tb.fs.promises.writeFile("//apps/system/settings.tapp/wisp-servers.json", JSON.stringify(data));
 											window.dispatchEvent(new Event("update-wispsrvs"));
 											setisinDiag(false);
 											setLoading(true);

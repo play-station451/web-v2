@@ -615,7 +615,7 @@ async function install(app, type) {
 				return true;
 			} catch (e) {
 				console.error("Error installing the app:", e);
-				await new Filer.fs.Shell().promises.rm(`/apps/system/${app.name}.tapp`, { recursive: true });
+				await window.parent.tb.sh.promises.rm(`/apps/system/${app.name}.tapp`, { recursive: true });
 				window.parent.tb.notification.Toast({
 					message: `Failed to install ${app.name}. Check the console for details.`,
 					application: "App Store",
@@ -737,7 +737,7 @@ async function install(app, type) {
 				return true;
 			} catch (e) {
 				console.error("Error installing the app:", e);
-				await new Filer.fs.Shell().promises.rm(`/apps/anura/${app.name}`, { recursive: true });
+				await window.parent.tb.sh.promises.rm(`/apps/anura/${app.name}`, { recursive: true });
 				window.parent.tb.notification.Toast({
 					message: `Failed to install ${app.name}. Check the console for details.`,
 					application: "App Store",

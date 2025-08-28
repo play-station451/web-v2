@@ -27,13 +27,13 @@ export default function Login() {
 	}, []);
 	useEffect(() => {
 		const FS = async () => {
-			const entries = await Filer.fs.promises.readdir("/home/");
+			const entries = await window.tb.fs.promises.readdir("/home/");
 			const dirEntries = await Promise.all(
 				entries.map(async entry => {
-					const stat = await Filer.fs.promises.stat(`/home/${entry}`);
+					const stat = await window.tb.fs.promises.stat(`/home/${entry}`);
 					if (stat.isDirectory()) {
 						try {
-							await Filer.fs.promises.access(`/home/${entry}/user.json`);
+							await window.tb.fs.promises.access(`/home/${entry}/user.json`);
 							return entry;
 						} catch (error) {
 							return null;
@@ -49,9 +49,9 @@ export default function Login() {
 	}, []);
 	useEffect(() => {
 		const getDefUsr = async () => {
-			const data = await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8");
+			const data = await window.tb.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8");
 			const res = JSON.parse(data);
-			setWallpaper(JSON.parse(await Filer.fs.promises.readFile(`/home/${res.defaultUser}/settings.json`)).wallpaper);
+			setWallpaper(JSON.parse(await window.tb.fs.promises.readFile(`/home/${res.defaultUser}/settings.json`)).wallpaper);
 			setSelectedUser(res.defaultUser);
 		};
 		getDefUsr();
@@ -62,7 +62,7 @@ export default function Login() {
 			const pictures: { [key: string]: string | null } = {};
 			for (const account of accounts) {
 				try {
-					const res = JSON.parse(await Filer.fs.promises.readFile(`/home/${account}/user.json`, "utf8"));
+					const res = JSON.parse(await window.tb.fs.promises.readFile(`/home/${account}/user.json`, "utf8"));
 					pictures[account] = res.pfp || null;
 				} catch (error) {
 					console.error(`Error reading user data for ${account}:`, error);
@@ -71,7 +71,7 @@ export default function Login() {
 			}
 			if (selectedUser && selectedUser !== "/home/user/") {
 				try {
-					const res = JSON.parse(await Filer.fs.promises.readFile(`/home/${selectedUser}/user.json`, "utf8"));
+					const res = JSON.parse(await window.tb.fs.promises.readFile(`/home/${selectedUser}/user.json`, "utf8"));
 					setHasPw(res.password !== false);
 				} catch (error) {
 					console.error("Error reading user data:", error);
@@ -87,7 +87,7 @@ export default function Login() {
 		// @ts-expect-error
 		const passVal = passwordRef.current.value;
 		if (passVal !== "") {
-			const data = await Filer.fs.promises.readFile(`/home/${selectedUser}/user.json`, "utf8");
+			const data = await window.tb.fs.promises.readFile(`/home/${selectedUser}/user.json`, "utf8");
 			const res = JSON.parse(data);
 			const user_pass = res.password.toString();
 			const pass = pw.harden(passVal.toString());
@@ -120,7 +120,7 @@ export default function Login() {
 				setIsLoggingIn(false);
 			}
 			if ((!isLoggingIn && e.key !== "Escape") || e.key.match(/^[a-zA-Z0-9]$/)) {
-				const user = JSON.parse(await Filer.fs.promises.readFile(`/home/${selectedUser}/user.json`, "utf8"));
+				const user = JSON.parse(await window.tb.fs.promises.readFile(`/home/${selectedUser}/user.json`, "utf8"));
 				if (user.password !== false) {
 					setIsLoggingIn(true);
 					setTimeout(() => {
@@ -183,7 +183,7 @@ export default function Login() {
 								style={{ backgroundImage: `url("${profilePictures[account] || ""}")`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}
 								onMouseDown={async () => {
 									setSelectedUser(account);
-									setWallpaper(JSON.parse(await Filer.fs.promises.readFile(`/home/${account}/settings.json`)).wallpaper);
+									setWallpaper(JSON.parse(await window.tb.fs.promises.readFile(`/home/${account}/settings.json`)).wallpaper);
 								}}
 							></div>
 						))}
@@ -292,7 +292,7 @@ export default function Login() {
 													onMouseDown={async () => {
 														const changepw = async () => {
 															setChangepw(true);
-															let settings: User = JSON.parse(await Filer.fs.promises.readFile(`/home/${selectedUser}/user.json`, "utf8"));
+															let settings: User = JSON.parse(await window.tb.fs.promises.readFile(`/home/${selectedUser}/user.json`, "utf8"));
 															if (settings.securityQuestion) {
 																setDialogFn("message", {
 																	title: `${settings.securityQuestion.question}`,
@@ -302,7 +302,7 @@ export default function Login() {
 																				title: `Enter a new Password for the account: ${selectedUser}`,
 																				onOk: (val: string) => {
 																					settings.password = pw.harden(val);
-																					Filer.fs.promises.writeFile(`/home/${selectedUser}/user.json`, JSON.stringify(settings, null, 4));
+																					window.tb.fs.promises.writeFile(`/home/${selectedUser}/user.json`, JSON.stringify(settings, null, 4));
 																					setChangepw(false);
 																					sessionStorage.setItem("logged-in", "true");
 																					sessionStorage.setItem("currAcc", selectedUser);
@@ -324,7 +324,7 @@ export default function Login() {
 																	title: `Enter a new Password for the account: ${selectedUser}`,
 																	onOk: (val: string) => {
 																		settings.password = pw.harden(val);
-																		Filer.fs.promises.writeFile(`/home/${selectedUser}/user.json`, JSON.stringify(settings, null, 4));
+																		window.tb.fs.promises.writeFile(`/home/${selectedUser}/user.json`, JSON.stringify(settings, null, 4));
 																		setChangepw(false);
 																		sessionStorage.setItem("logged-in", "true");
 																		sessionStorage.setItem("currAcc", selectedUser);

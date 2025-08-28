@@ -26,7 +26,7 @@ export class Networking {
 
 			this.Socket = this.libcurl.WispConnection;
 			this.TLSSocket = this.libcurl.TLSSocket;
-			const wisp_server = JSON.parse(await window.Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8")).wispServer;
+			const wisp_server = JSON.parse(await window.tb.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8")).wispServer;
 			this.setWispServer(wisp_server);
 			console.log("libcurl.js ready!");
 		} catch (error) {

@@ -35,7 +35,7 @@ export class BrowserWindow {
 	}
 
 	async loadURL(src: string) {
-		const settings: UserSettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, "utf8"));
+		const settings: UserSettings = JSON.parse(await window.tb.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, "utf8"));
 		window.tb.window.changeSrc(settings.proxy === "Ultraviolet" ? `/uv/service/${await window.tb.proxy.encode(src, "XOR")}` : `/service/${await window.tb.proxy.encode(src, "XOR")}`);
 	}
 

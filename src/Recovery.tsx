@@ -21,18 +21,18 @@ export default function Recovery() {
 	async function copyDir(inp: string, dest: string, rn?: boolean) {
 		if (rn === true) {
 			if (!(await dirExists(dest))) {
-				await Filer.fs.promises.mkdir(dest);
+				await window.tb.fs.promises.mkdir(dest);
 			}
 		}
-		const files = await Filer.fs.promises.readdir(inp);
+		const files = await window.tb.fs.promises.readdir(inp);
 		const totalFiles = files.length;
 		for (const [index, file] of files.entries()) {
-			const stats = await Filer.fs.promises.stat(`${inp}/${file}`);
+			const stats = await window.tb.fs.promises.stat(`${inp}/${file}`);
 			if (stats.isDirectory()) {
-				await Filer.fs.promises.mkdir(`${dest}/${file}`);
+				await window.tb.fs.promises.mkdir(`${dest}/${file}`);
 				await copyDir(`${inp}/${file}`, `${dest}/${file}`, true);
 			} else {
-				await Filer.fs.promises.writeFile(`${dest}/${file}`, await Filer.fs.promises.readFile(`${inp}/${file}`, "utf8"));
+				await window.tb.fs.promises.writeFile(`${dest}/${file}`, await window.tb.fs.promises.readFile(`${inp}/${file}`, "utf8"));
 			}
 			statusref.current!.innerText = `Creating a copy of: ${file}...`;
 			setProgress(Math.floor(((index + 1) / totalFiles) * 100));
@@ -53,24 +53,20 @@ export default function Recovery() {
 		progresscheck.current!.classList.remove("hidden");
 		progresscheck.current!.classList.add("flex");
 		if (await dirExists("/system/")) {
-			// @ts-expect-error types
-			await new Filer.fs.Shell().promises.rm("/system/", { recursive: true });
+			await window.tb.sh.promises.rm("/system/", { recursive: true });
 		}
 		if (await dirExists("/apps/")) {
-			// @ts-expect-error types
-			await new Filer.fs.Shell().promises.rm("/apps/", { recursive: true });
+			await window.tb.sh.promises.rm("/apps/", { recursive: true });
 		}
 		if (await dirExists("/home/")) {
-			// @ts-expect-error types
-			await new Filer.fs.Shell().promises.rm("/home/", { recursive: true });
+			await window.tb.sh.promises.rm("/home/", { recursive: true });
 		}
 		await download("https://cdn.terbiumon.top/recovery/latest.zip", "/uploaded.zip");
 		setShowCursor(false);
 		await unzip("//uploaded.zip", "//");
-		await Filer.fs.promises.mkdir("/system/tmp/");
-		// @ts-expect-error types
-		await new Filer.fs.Shell().promises.rm("/home/Guest/desktop/", { recursive: true });
-		await Filer.fs.promises.mkdir("/home/Guest/desktop/");
+		await window.tb.fs.promises.mkdir("/system/tmp/");
+		await window.tb.sh.promises.rm("/home/Guest/desktop/", { recursive: true });
+		await window.tb.fs.promises.mkdir("/home/Guest/desktop/");
 		let r2 = [];
 		let sysapps: { name: string; config: string; user: string }[] = [];
 		let items: { name: string; item: string; position: { custom: boolean; top: number; left: number } }[] = [];
@@ -114,12 +110,12 @@ export default function Recovery() {
 				config: `/apps/system/${name}.tapp/index.json`,
 				user: "System",
 			});
-			await Filer.fs.promises.writeFile(`/home/Guest/desktop/.desktop.json`, JSON.stringify(items));
-			await Filer.fs.promises.symlink(`/apps/system/${name}.tapp/index.json`, `/home/Guest/desktop/${name}.lnk`);
+			await window.tb.fs.promises.writeFile(`/home/Guest/desktop/.desktop.json`, JSON.stringify(items));
+			await window.tb.fs.promises.symlink(`/apps/system/${name}.tapp/index.json`, `/home/Guest/desktop/${name}.lnk`);
 		}
 		statusref.current!.innerText = "Cleaning up...";
 		setProgress(85);
-		await Filer.fs.promises.unlink("//uploaded.zip");
+		await window.tb.fs.promises.unlink("//uploaded.zip");
 		setProgress(100);
 		statusref.current!.innerText = "Restarting...";
 		sessionStorage.clear();
@@ -142,19 +138,16 @@ export default function Recovery() {
 				const content = await file.arrayBuffer();
 				setProgress(10);
 				if (await dirExists("/system/")) {
-					// @ts-expect-error types
-					await new Filer.fs.Shell().promises.rm("/system/", { recursive: true });
+					await window.tb.sh.promises.rm("/system/", { recursive: true });
 				}
 				if (await dirExists("/apps/")) {
-					// @ts-expect-error types
-					await new Filer.fs.Shell().promises.rm("/apps/", { recursive: true });
+					await window.tb.sh.promises.rm("/apps/", { recursive: true });
 				}
 				if (await dirExists("/home/")) {
-					// @ts-expect-error types
-					await new Filer.fs.Shell().promises.rm("/home/", { recursive: true });
+					await window.tb.sh.promises.rm("/home/", { recursive: true });
 				}
 				setProgress(25);
-				await Filer.fs.promises.writeFile("//uploaded.zip", Filer.Buffer.from(content));
+				await window.tb.fs.promises.writeFile("//uploaded.zip", Filer.Buffer.from(content));
 				setProgress(35);
 				setShowCursor(false);
 				main.current!.classList.remove("flex");
@@ -163,12 +156,11 @@ export default function Recovery() {
 				progresscheck.current!.classList.add("flex");
 				await unzip("//uploaded.zip", "//");
 				setProgress(72);
-				const users = await Filer.fs.promises.readdir("/home/");
+				const users = await window.tb.fs.promises.readdir("/home/");
 				for (const user of users) {
 					// note from XSTARS, this is a workaround that fixes the stupid symlink bug but it fucks over people with custom symlinks so be aware of that
-					// @ts-expect-error types
-					await new Filer.fs.Shell().promises.rm(`/home/${user}/desktop/`, { recursive: true });
-					await Filer.fs.promises.mkdir(`/home/${user}/desktop/`);
+					await window.tb.sh.promises.rm(`/home/${user}/desktop/`, { recursive: true });
+					await window.tb.fs.promises.mkdir(`/home/${user}/desktop/`);
 					let r2 = [];
 					let sysapps: { name: string; config: string; user: string }[] = [];
 					let items: { name: string; item: string; position: { custom: boolean; top: number; left: number } }[] = [];
@@ -212,14 +204,14 @@ export default function Recovery() {
 							config: `/apps/system/${name}.tapp/index.json`,
 							user: "System",
 						});
-						await Filer.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(items));
-						await Filer.fs.promises.symlink(`/apps/system/${name}.tapp/index.json`, `/home/${user}/desktop/${name}.lnk`);
+						await window.tb.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(items));
+						await window.tb.fs.promises.symlink(`/apps/system/${name}.tapp/index.json`, `/home/${user}/desktop/${name}.lnk`);
 					}
 				}
-				await Filer.fs.promises.mkdir("/system/tmp/");
+				await window.tb.fs.promises.mkdir("/system/tmp/");
 				statusref.current!.innerText = "Cleaning up...";
 				setProgress(85);
-				await Filer.fs.promises.unlink("//uploaded.zip");
+				await window.tb.fs.promises.unlink("//uploaded.zip");
 				setProgress(100);
 				statusref.current!.innerText = "Restarting...";
 				sessionStorage.clear();
@@ -236,7 +228,7 @@ export default function Recovery() {
 		const zipFileContent = await response.arrayBuffer();
 		if (!(await dirExists(target))) {
 			// @ts-expect-error types
-			await Filer.fs.promises.mkdir(target, { recursive: true });
+			await window.tb.fs.promises.mkdir(target, { recursive: true });
 		}
 		const compressedFiles = unzipSync(new Uint8Array(zipFileContent));
 		for (const [relativePath, content] of Object.entries(compressedFiles)) {
@@ -246,13 +238,13 @@ export default function Recovery() {
 			for (let i = 0; i < pathParts.length; i++) {
 				currentPath += pathParts[i] + "/";
 				if (i === pathParts.length - 1 && !relativePath.endsWith("/")) {
-					await Filer.fs.promises.writeFile(currentPath.slice(0, -1), Filer.Buffer.from(content));
+					await window.tb.fs.promises.writeFile(currentPath.slice(0, -1), Filer.Buffer.from(content));
 				} else if (!(await dirExists(currentPath))) {
-					await Filer.fs.promises.mkdir(currentPath);
+					await window.tb.fs.promises.mkdir(currentPath);
 				}
 			}
 			if (relativePath.endsWith("/")) {
-				await Filer.fs.promises.mkdir(fullPath);
+				await window.tb.fs.promises.mkdir(fullPath);
 			}
 		}
 		return "Done!";
@@ -266,7 +258,7 @@ export default function Recovery() {
 			throw new Error(`Failed to download the file. Status: ${response.status}`);
 		}
 		const content = await response.arrayBuffer();
-		await Filer.fs.promises.writeFile(location, Filer.Buffer.from(content));
+		await window.tb.fs.promises.writeFile(location, Filer.Buffer.from(content));
 		console.log(`File saved successfully at: ${location}`);
 	}
 
@@ -283,16 +275,13 @@ export default function Recovery() {
 					sessionStorage.setItem("boot", "true");
 					window.location.reload();
 					if (await dirExists("/system/")) {
-						// @ts-expect-error types
-						await new Filer.fs.Shell().promises.rm("/system/", { recursive: true });
+						await window.tb.sh.promises.rm("/system/", { recursive: true });
 					}
 					if (await dirExists("/apps/")) {
-						// @ts-expect-error types
-						await new Filer.fs.Shell().promises.rm("/apps/", { recursive: true });
+						await window.tb.sh.promises.rm("/apps/", { recursive: true });
 					}
 					if (await dirExists("/home/")) {
-						// @ts-expect-error types
-						await new Filer.fs.Shell().promises.rm("/home/", { recursive: true });
+						await window.tb.sh.promises.rm("/home/", { recursive: true });
 					}
 				} else if (selected === 1) {
 					msgbox.current!.classList.remove("hidden");
@@ -311,9 +300,8 @@ export default function Recovery() {
 					progresscheck.current!.classList.remove("hidden");
 					progresscheck.current!.classList.add("flex");
 					await copyDir("/system/tmp/terb-upd/", "/apps/", true);
-					await Filer.fs.promises.writeFile("/system/etc/terbium/hash.cache", hash);
-					// @ts-expect-error
-					await new Filer.fs.Shell().promises.rm("/system/tmp/terb-upd/", { recursive: true });
+					await window.tb.fs.promises.writeFile("/system/etc/terbium/hash.cache", hash);
+					await window.tb.sh.promises.rm("/system/tmp/terb-upd/", { recursive: true });
 					window.location.reload();
 				} else if (selected === (updCache ? 4 : 3)) {
 					sessionStorage.clear();
@@ -415,16 +403,13 @@ export default function Recovery() {
 							sessionStorage.setItem("boot", "true");
 							window.location.reload();
 							if (await dirExists("/system/")) {
-								// @ts-expect-error types
-								await new Filer.fs.Shell().promises.rm("/system/", { recursive: true });
+								await window.tb.sh.promises.rm("/system/", { recursive: true });
 							}
 							if (await dirExists("/apps/")) {
-								// @ts-expect-error types
-								await new Filer.fs.Shell().promises.rm("/apps/", { recursive: true });
+								await window.tb.sh.promises.rm("/apps/", { recursive: true });
 							}
 							if (await dirExists("/home/")) {
-								// @ts-expect-error types
-								await new Filer.fs.Shell().promises.rm("/home/", { recursive: true });
+								await window.tb.sh.promises.rm("/home/", { recursive: true });
 							}
 						}}
 					>
@@ -483,9 +468,8 @@ export default function Recovery() {
 								progresscheck.current!.classList.remove("hidden");
 								progresscheck.current!.classList.add("flex");
 								await copyDir("/system/tmp/terb-upd/", "/apps/", true);
-								await Filer.fs.promises.writeFile("/system/etc/terbium/hash.cache", hash);
-								// @ts-expect-error
-								await new Filer.fs.Shell().promises.rm("/system/tmp/terb-upd/", { recursive: true });
+								await window.tb.fs.promises.writeFile("/system/etc/terbium/hash.cache", hash);
+								await window.tb.sh.promises.rm("/system/tmp/terb-upd/", { recursive: true });
 								window.location.reload();
 							}}
 						>

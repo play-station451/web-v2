@@ -33,9 +33,9 @@ const Desktop: FC<IDesktopProps> = ({ desktop, onContextMenu }) => {
 			setShowNotif(prev => !prev);
 		};
 		const getWallpaper = async () => {
-			const settings: UserSettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`));
+			const settings: UserSettings = JSON.parse(await window.tb.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`));
 			if (settings.wallpaper.startsWith("/system")) {
-				let stream = await Filer.fs.promises.readFile(settings["wallpaper"]);
+				let stream = await window.tb.fs.promises.readFile(settings["wallpaper"]);
 				setWallpaper(`data:image/png;base64,${stream.toString("base64")}`);
 			} else {
 				setWallpaper(settings["wallpaper"]);
@@ -47,7 +47,7 @@ const Desktop: FC<IDesktopProps> = ({ desktop, onContextMenu }) => {
 		};
 		const getPins = async () => {
 			if (await dirExists("/system")) {
-				setPinned(JSON.parse(await Filer.fs.promises.readFile("/system/var/terbium/dock.json", "utf8")));
+				setPinned(JSON.parse(await window.tb.fs.promises.readFile("/system/var/terbium/dock.json", "utf8")));
 			}
 		};
 		getPins();

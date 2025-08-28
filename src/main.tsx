@@ -15,6 +15,13 @@ import { BareMuxConnection } from "@mercuryworkshop/bare-mux";
 
 const Root = () => {
 	const [currPag, setPag] = useState(<Loader />);
+	// @ts-expect-error expected, api is limited to fs untill boot
+	if (typeof window.tb === "undefined") window.tb = {};
+	if (typeof window.tb.fs === "undefined" && typeof Filer !== "undefined" && Filer.fs) {
+		console.log("one more night")
+		window.tb.fs = Filer.fs;
+		window.tb.sh = new Filer.fs.Shell();
+	}
 	const params = new URLSearchParams(window.location.search);
 	useEffect(() => {
 		const tempTransport = async () => {
@@ -65,7 +72,7 @@ const Root = () => {
 			const upd = async () => {
 				let sha;
 				if (await fileExists("/system/etc/terbium/hash.cache")) {
-					sha = await Filer.fs.promises.readFile("/system/etc/terbium/hash.cache", "utf8");
+					sha = await window.tb.fs.promises.readFile("/system/etc/terbium/hash.cache", "utf8");
 				} else {
 					sha = hash;
 				}

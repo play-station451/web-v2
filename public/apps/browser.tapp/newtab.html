@@ -6,7 +6,6 @@
     <title>New Tab</title>
     <link rel="stylesheet" href="./index.css">
     <script src="/assets/libs/tailwind.min.js"></script>
-    <script src="/assets/libs/filer.min.js"></script>
     <script>
         const main = async () => {
             const favs = JSON.parse(await window.parent.parent.tb.fs.promises.readFile(`/apps/user/${await window.parent.tb.user.username()}/browser/favorites.json`, "utf8"))

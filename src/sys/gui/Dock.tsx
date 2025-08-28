@@ -1,7 +1,7 @@
 import { FC, ReactNode, useEffect, useRef, useState } from "react";
 import { MagnifyingGlassIcon, ChevronRightIcon, PuzzlePieceIcon } from "@heroicons/react/24/solid";
 import "./styles/dock.css";
-import { dirExists, Filer, isURL, WindowConfig } from "../types";
+import { dirExists, isURL, WindowConfig } from "../types";
 import { useWindowStore, useSearchMenuStore } from "../Store";
 import SearchMenu from "./Search";
 
@@ -76,8 +76,8 @@ const Dock: FC<IDockProps> = ({ pinned }) => {
 	useEffect(() => {
 		const fetchData = async () => {
 			if (await dirExists("/system")) {
-				setSysApps(JSON.parse(await Filer.promises.readFile("/system/var/terbium/start.json", "utf8")).system_apps);
-				setPins(JSON.parse(await Filer.promises.readFile("/system/var/terbium/start.json", "utf8")).pinned_apps);
+				setSysApps(JSON.parse(await window.tb.fs.promises.readFile("/system/var/terbium/start.json", "utf8")).system_apps);
+				setPins(JSON.parse(await window.tb.fs.promises.readFile("/system/var/terbium/start.json", "utf8")).pinned_apps);
 			}
 		};
 		fetchData();
@@ -826,7 +826,7 @@ export const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, classN
 								let configData: any = null;
 								try {
 									// @ts-expect-error
-									const data = JSON.parse(await Filer.promises.readFile(`/apps/system/${typeof title === "string" ? title : title?.text.toLowerCase()}.tapp/index.json`)).config;
+									const data = JSON.parse(await window.tb.fs.promises.readFile(`/apps/system/${typeof title === "string" ? title : title?.text.toLowerCase()}.tapp/index.json`)).config;
 									configData = {
 										...data,
 									};
@@ -852,9 +852,9 @@ export const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, classN
 						{
 							text: "Unpin from Start",
 							click: async () => {
-								const apps: any = JSON.parse(await Filer.promises.readFile("/system/var/terbium/start.json", "utf8"));
+								const apps: any = JSON.parse(await window.tb.fs.promises.readFile("/system/var/terbium/start.json", "utf8"));
 								apps.pinned_apps = apps.pinned_apps.filter((app: any) => !(app.title === title && app.icon === icon) && !(app.name === title && app.icon === icon));
-								await Filer.promises.writeFile("/system/var/terbium/start.json", JSON.stringify(apps, null, 2));
+								await window.tb.fs.promises.writeFile("/system/var/terbium/start.json", JSON.stringify(apps, null, 2));
 								window.dispatchEvent(new Event("updApps"));
 							},
 						},
@@ -879,11 +879,10 @@ export const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, classN
 											} else {
 												appPath = `/apps/user/${await window.tb.user.username()}/${appName}`;
 											}
-											let installedApps = JSON.parse(await Filer.promises.readFile(`/apps/installed.json`, "utf8"));
+											let installedApps = JSON.parse(await window.tb.fs.promises.readFile(`/apps/installed.json`, "utf8"));
 											installedApps = installedApps.filter((app: any) => app.title === title);
-											await Filer.promises.writeFile(`/apps/installed.json`, JSON.stringify(installedApps));
-											// @ts-expect-error
-											await new Filer.Shell().promises.rm(appPath, { recursive: true });
+											await window.tb.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(installedApps));
+											await window.tb.sh.promises.rm(appPath, { recursive: true });
 											await window.tb.launcher.removeApp(chars);
 											window.dispatchEvent(new Event("updApps"));
 										},
@@ -902,9 +901,9 @@ export const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, classN
 			</div>
 			<ChevronRightIcon
 				onClick={async () => {
-					const apps: any = JSON.parse(await Filer.promises.readFile("/system/var/terbium/start.json", "utf8"));
+					const apps: any = JSON.parse(await window.tb.fs.promises.readFile("/system/var/terbium/start.json", "utf8"));
 					apps.pinned_apps = apps.pinned_apps.filter((app: any) => !(app.title === title && app.icon === icon));
-					await Filer.promises.writeFile("/system/var/terbium/start.json", JSON.stringify(apps, null, 2));
+					await window.tb.fs.promises.writeFile("/system/var/terbium/start.json", JSON.stringify(apps, null, 2));
 					window.dispatchEvent(new Event("updApps"));
 				}}
 				className="size-7 bg-[#ffffff18] backdrop-blur-[20px] shadow-tb-border-shadow p-1.5 rounded-full text-white stroke-current stroke-[3px] opacity-0 group-hover:opacity-100 duration-150 ease-in"
@@ -919,8 +918,8 @@ export const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, classN
 			onContextMenu={async (e: React.MouseEvent) => {
 				e.preventDefault();
 				const { clientX, clientY } = e;
-				const appsStart: any = JSON.parse(await Filer.promises.readFile("/system/var/terbium/start.json", "utf8"));
-				const appsDock: any = JSON.parse(await Filer.promises.readFile("/system/var/terbium/dock.json", "utf8"));
+				const appsStart: any = JSON.parse(await window.tb.fs.promises.readFile("/system/var/terbium/start.json", "utf8"));
+				const appsDock: any = JSON.parse(await window.tb.fs.promises.readFile("/system/var/terbium/dock.json", "utf8"));
 				const isPinnedStart = appsStart.pinned_apps.some((app: any) => app.title === title && app.icon === icon);
 				const isPinnedDock = appsDock.some((app: any) => app.src === src && app.icon === icon);
 				window.tb.contextmenu.create({
@@ -946,7 +945,7 @@ export const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, classN
 										let configData: any = null;
 										try {
 											// @ts-expect-error
-											const data = JSON.parse(await Filer.promises.readFile(`/apps/system/${typeof title === "string" ? title : title?.text.toLowerCase()}.tapp/index.json`)).config;
+											const data = JSON.parse(await window.tb.fs.promises.readFile(`/apps/system/${typeof title === "string" ? title : title?.text.toLowerCase()}.tapp/index.json`)).config;
 											configData = {
 												...data,
 											};
@@ -973,9 +972,9 @@ export const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, classN
 							? {
 									text: "Unpin from Start",
 									click: async () => {
-										const apps: any = JSON.parse(await Filer.promises.readFile("/system/var/terbium/start.json", "utf8"));
+										const apps: any = JSON.parse(await window.tb.fs.promises.readFile("/system/var/terbium/start.json", "utf8"));
 										apps.pinned_apps = apps.pinned_apps.filter((app: any) => !(app.title === title && app.icon === icon));
-										await Filer.promises.writeFile("/system/var/terbium/start.json", JSON.stringify(apps, null, 2));
+										await window.tb.fs.promises.writeFile("/system/var/terbium/start.json", JSON.stringify(apps, null, 2));
 										window.dispatchEvent(new Event("updApps"));
 									},
 								}
@@ -986,7 +985,7 @@ export const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, classN
 											?.replace("/fs", "")
 											.replace(/\/[^/]+\.html$/, "/")
 											.replace(/\/\.\//, "/");
-										const appConfig = JSON.parse(await Filer.promises.readFile(path + "index.json", "utf8"));
+										const appConfig = JSON.parse(await window.tb.fs.promises.readFile(path + "index.json", "utf8"));
 										if (appsStart.pinned_apps.some((app: any) => app.title === appConfig.config.title && app.icon === appConfig.config.icon)) {
 											return;
 										}
@@ -995,7 +994,7 @@ export const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, classN
 											name: typeof appConfig.config.title === "string" ? appConfig.config.title : appConfig.config.title.text,
 											...appConfig.config,
 										});
-										await Filer.promises.writeFile("/system/var/terbium/start.json", JSON.stringify(appsStart, null, 2));
+										await window.tb.fs.promises.writeFile("/system/var/terbium/start.json", JSON.stringify(appsStart, null, 2));
 										window.dispatchEvent(new Event("updApps"));
 									},
 								},
@@ -1020,11 +1019,10 @@ export const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, classN
 											} else {
 												appPath = `/apps/user/${await window.tb.user.username()}/${appName}`;
 											}
-											let installedApps = JSON.parse(await Filer.promises.readFile(`/apps/installed.json`, "utf8"));
+											let installedApps = JSON.parse(await window.tb.fs.promises.readFile(`/apps/installed.json`, "utf8"));
 											installedApps = installedApps.filter((app: any) => app.title === title);
-											await Filer.promises.writeFile(`/apps/installed.json`, JSON.stringify(installedApps));
-											// @ts-expect-error
-											await new Filer.Shell().promises.rm(appPath, { recursive: true });
+											await window.tb.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(installedApps));
+											await window.tb.sh.promises.rm(appPath, { recursive: true });
 											await window.tb.launcher.removeApp(chars);
 											window.dispatchEvent(new Event("updApps"));
 										},
@@ -1043,13 +1041,13 @@ export const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, classN
 			</div>
 			<ChevronRightIcon
 				onClick={async () => {
-					const apps: any = JSON.parse(await Filer.promises.readFile("/system/var/terbium/start.json", "utf8"));
+					const apps: any = JSON.parse(await window.tb.fs.promises.readFile("/system/var/terbium/start.json", "utf8"));
 					apps.pinned_apps.push({
 						title: title,
 						icon: icon,
 						src: src,
 					});
-					await Filer.promises.writeFile("/system/var/terbium/start.json", JSON.stringify(apps, null, 2));
+					await window.tb.fs.promises.writeFile("/system/var/terbium/start.json", JSON.stringify(apps, null, 2));
 					window.dispatchEvent(new Event("updApps"));
 				}}
 				className="size-7 bg-[#ffffff18] backdrop-blur-[20px] shadow-tb-border-shadow p-1.5 rounded-full text-white stroke-current stroke-[3px] opacity-0 group-hover:opacity-100 duration-150 ease-in"

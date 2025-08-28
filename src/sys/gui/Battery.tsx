@@ -67,7 +67,7 @@ export default function Battery() {
 		setInterval(getBattery);
 		getBattery();
 		const getShowPercent = async () => {
-			const settings: UserSettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, "utf8"));
+			const settings: UserSettings = JSON.parse(await window.tb.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, "utf8"));
 			setShowPercent(settings["battery-percent"]);
 		};
 		getShowPercent();
