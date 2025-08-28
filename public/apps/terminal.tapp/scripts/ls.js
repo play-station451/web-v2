@@ -1,7 +1,7 @@
 async function ls(args) {
 	if (args._raw === "/mnt/" || path === "/mnt/") {
 		function centerText(text, width) {
-			const pad = width - text.length;
+			const pad = Math.max(0, width - text.length);
 			const padLeft = Math.floor(pad / 2);
 			const padRight = pad - padLeft;
 			return " ".repeat(padLeft) + text + " ".repeat(padRight);
@@ -42,8 +42,8 @@ async function ls(args) {
 			const davInstances = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
 			const dav = davInstances.find(d => d.name.toLowerCase() === davName);
 			const client = window.webdav.createClient(dav.url, {
-				username: dav.user,
-				password: dav.pass,
+				username: dav.username,
+				password: dav.password,
 				authType: window.webdav.AuthType.Password,
 			});
 			const np = args._raw.replace(`/mnt/${davName.toLowerCase()}/`, "") || path.replace(`/mnt/${davName.toLowerCase()}/`, "");
