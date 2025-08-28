@@ -217,7 +217,7 @@ declare namespace Filer {
          * NOTE: Filer allows for, but ignores the optional `mode` argument used in node.js.
          * @see [fs.mkdir](https://github.com/filerjs/filer?tab=readme-ov-file#mkdir)
          */
-		function mkdir(path: string, mode?: number, callback: (err: Error | null) => void): void;
+		function mkdir(path: string, mode: number, callback: (err: Error | null) => void): void;
 
 		/**
          * Tests a user's permissions for the file or directory supplied in `path` argument.
@@ -254,7 +254,7 @@ declare namespace Filer {
          * The `name` property on the [fs.Dirent](https://nodejs.org/api/fs.html#fs_class_fs_dirent) objects will be encoded using the specified character encoding.
          * @see [fs.readdir](https://github.com/filerjs/filer?tab=readme-ov-file#readdir)
          */
-		function readdir(path: string, options?: { encoding: string; withFileTypes: boolean } | string, callback: (err: Error | null, files: string[]) => void): void;
+		function readdir(path: string, options: { encoding: string; withFileTypes: boolean } | string, callback: (err: Error | null, files: string[]) => void): void;
 
 		/**
          * Closes a file descriptor.
@@ -280,7 +280,7 @@ declare namespace Filer {
          * NOTE: Filer allows for, but ignores the optional `mode` argument used in node.js.
          * @see [fs.open](https://github.com/filerjs/filer?tab=readme-ov-file#open)
          */
-		function open(path: string, flags: "r" | "r+" | "w" | "w+" | "a" | "a+", mode?: number, callback: (err: Error | null, fd: number) => void): void;
+		function open(path: string, flags: "r" | "r+" | "w" | "w+" | "a" | "a+", mode: number, callback: (err: Error | null, fd: number) => void): void;
 
 		/**
          * Changes the file timestamps for the file given at path `path`.
@@ -371,19 +371,19 @@ declare namespace Filer {
 		 * Reads the entire contents of a file. The `options` argument is optional, and can take the form `"utf8"` (i.e., an encoding) or be an object literal: `{ encoding: "utf8", flag: "r" }`. If no encoding is specified, the raw binary buffer is returned via the callback. The callback gets `(error, data)`, where data is the contents of the file.
 		 * @see [fs.readFile](https://github.com/filerjs/filer?tab=readme-ov-file#readfile)
 		 */
-		function readFile(path: string, options?: { encoding: string; flag: "r" | "r+" | "w" | "w+" | "a" | "a+" } | string, callback: (err: Error | null, data: Uint8Array) => void): void;
+		function readFile(path: string, options: { encoding: string; flag: "r" | "r+" | "w" | "w+" | "a" | "a+" } | string, callback: (err: Error | null, data: Uint8Array) => void): void;
 
 		/**
 		 * Writes data to a file. `data` can be a string or `Buffer`, in which case any encoding option is ignored. The `options` argument is optional, and can take the form `"utf8"` (i.e., an encoding) or be an object literal: `{ encoding: "utf8", flag: "w" }`. If no encoding is specified, and `data` is a string, the encoding defaults to `'utf8'`. The callback gets `(error)`.
 		 * @see [fs.writeFile](https://github.com/filerjs/filer?tab=readme-ov-file#writefile)
 		 */
-		function writeFile(path: string, data: Uint8Array | string, options?: { encoding: string; flag: "r" | "r+" | "w" | "w+" | "a" | "a+" } | string, callback: (err: Error | null) => void): void;
+		function writeFile(path: string, data: Uint8Array | string, options: { encoding: string; flag: "r" | "r+" | "w" | "w+" | "a" | "a+" } | string, callback: (err: Error | null) => void): void;
 
 		/**
 		 * Writes data to the end of a file. `data` can be a string or a `Buffer`, in which case any encoding option is ignored. The `options` argument is optional, and can take the form `"utf8"` (i.e., an encoding) or be an object literal: `{ encoding: "utf8", flag: "w" }`. If no encoding is specified, and `data` is a string, the encoding defaults to `'utf8'`. The callback gets `(error)`.
 		 * @see [fs.appendFile](https://github.com/filerjs/filer?tab=readme-ov-file#appendfile)
 		 */
-		function appendFile(filename: string, data: Uint8Array | string, options?: { encoding: string; flag: "r" | "r+" | "w" | "w+" | "a" | "a+" } | string, callback: (err: Error | null) => void): void;
+		function appendFile(filename: string, data: Uint8Array | string, options: { encoding: string; flag: "r" | "r+" | "w" | "w+" | "a" | "a+" } | string, callback: (err: Error | null) => void): void;
 
 		/**
          * Sets an extended attribute of a file or directory named `path`.
@@ -396,7 +396,7 @@ declare namespace Filer {
          * Callback gets no additional arguments.
          * @see [fs.setxattr](https://github.com/filerjs/filer?tab=readme-ov-file#setxattr)
          */
-		function setxattr(path: string, name: string, value: string | object, flag?: "XATTR_CREATE" | "XATTR_REPLACE" | string, callback: (err: Error | null) => void): void;
+		function setxattr(path: string, name: string, value: string | object, flag: "XATTR_CREATE" | "XATTR_REPLACE" | string, callback: (err: Error | null) => void): void;
 
 		/**
          * Sets an extended attribute of the file represented by the open file descriptor `fd`.
@@ -404,7 +404,7 @@ declare namespace Filer {
          * Asynchronous [setxattr(2)](http://man7.org/linux/man-pages/man2/setxattr.2.html). See `fs.setxattr` for more details. Callback gets no additional arguments.
          * @see [fs.fsetxattr](https://github.com/filerjs/filer?tab=readme-ov-file#fsetxattr)
          */
-		function fsetxattr(fd: number, name: string, value: string | object, flag?: "XATTR_CREATE" | "XATTR_REPLACE" | string, callback: (err: Error | null) => void): void;
+		function fsetxattr(fd: number, name: string, value: string | object, flag: "XATTR_CREATE" | "XATTR_REPLACE" | string, callback: (err: Error | null) => void): void;
 
 		/**
          * Gets an extended attribute value for a file or directory.
@@ -450,6 +450,6 @@ declare namespace Filer {
          * Unlike node.js, all watch events return a path. Also, all returned paths are absolute from the root vs. just a relative filename.
          * @see [fs.watch](https://github.com/filerjs/filer?tab=readme-ov-file#watch)
          */
-		function watch(filename: string, options?: { recursive: boolean } | string, listener: (event: string, filename: string) => void): void;
+		function watch(filename: string, options: { recursive: boolean } | string, listener: (event: string, filename: string) => void): void;
 	}
 }

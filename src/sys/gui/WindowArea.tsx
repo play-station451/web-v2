@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect } from "react";
-import { fileExists, UserSettings, WindowConfig } from "../types";
-import { clearInfo, updateInfo } from "./AppIsland";
+import { useEffect, useRef, useState } from "react";
 import { useWindowStore } from "../Store";
+import { fileExists, type UserSettings, type WindowConfig } from "../types";
+import { clearInfo, updateInfo } from "./AppIsland";
 
 interface WindowProps {
 	config: WindowConfig;
@@ -51,8 +51,8 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 	const [minimized, setMinimized] = useState(false);
 	const [title] = useState(typeof config.title === "string" ? config.title : config.title?.text);
 	const [snapRegion, setSnapRegion] = useState<string | null>(null);
-	const [isResizing, setIsResizing] = useState<boolean>(false);
-	const [controls, setControls] = useState(config.controls);
+	const [_isResizing, setIsResizing] = useState<boolean>(false);
+	const [controls, _setControls] = useState(config.controls);
 	const [src, setSrc] = useState(config.src);
 	const originalSize = useRef<{ width: number; height: number } | null>(null);
 	const [isSnapped, setIsSnapped] = useState(false);
@@ -113,7 +113,7 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 			}
 		};
 		prox();
-	}, [srcRef, src]);
+	}, [config.proxy, config.src, titlebarhtml, x, y]);
 	useEffect(() => {
 		const reload = (e: CustomEvent) => {
 			if (e.detail === config.pid) {
@@ -182,7 +182,7 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 		const selWin = (e: CustomEvent) => {
 			if (e.detail === config.wid) {
 				windowStore.arrange(config.wid);
-				// @ts-ignore
+				// @ts-expect-error
 				setZIndex(windowStore.getWindow(config.wid)?.zIndex);
 				setMinimized(false);
 				setTimeout(() => {
@@ -284,7 +284,7 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 			window.removeEventListener("min-wins", minall);
 			if (regionRef.current) regionRef.current.removeEventListener("contextmenu", debugCTX);
 		};
-	}, []);
+	}, [config.pid, config.title, config.wid, minimized, windowStore.arrange, windowStore.getWindow, windowStore.removeWindow]);
 
 	const handleSnap = (newX: number, newY: number) => {
 		if (config.snapable !== false) {
@@ -348,7 +348,7 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 			setSnapRegion(null);
 			onSnapDone?.();
 		}
-	}, [isDragging, isSnapped]);
+	}, [isDragging, isSnapped, onSnapDone]);
 
 	useEffect(() => {
 		const snap = () => {
@@ -404,13 +404,13 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 		};
 		window.addEventListener("mouseup", snap);
 		return () => window.removeEventListener("mouseup", snap);
-	}, [snapRegion, isDragging, maximized, isResizing]);
+	}, [snapRegion, onSnapDone]);
 
 	const handleMouseDown = (direction: "top" | "left" | "right" | "bottom" | "top-left" | "top-right" | "bottom-left" | "bottom-right") => {
 		const onMove = (e: MouseEvent) => {
 			setIsResizing(true);
 			setMaximized(false);
-			windowRef.current!.style.transform = "";
+			windowRef.current?.style.transform = "";
 
 			if (direction.includes("top")) {
 				const offsetY = e.clientY - 65;
@@ -477,7 +477,7 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 		<div
 			ref={windowRef}
 			id={config.wid}
-			// @ts-ignore
+			// @ts-expect-error
 			pid={config.pid}
 			className={`
             ${className ? className : ""}
@@ -503,17 +503,17 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 				style={{
 					backgroundImage: "url(/assets/img/grain.png)",
 				}}
-			></div>
+			/>
 			{isSnapped ? null : (
 				<div
 					ref={focuserRef}
 					className={`absolute rounded-lg ${config.focused ? "inset-x-2 top-[calc(40px+0.5rem)] bottom-2 pointer-events-none opacity-0" : "inset-x-[1px] top-[40px] bottom-[1px] backdrop-blur-[4px] opacity-100"} duration-150`}
 					onMouseDown={() => {
 						windowStore.arrange(config.wid);
-						// @ts-ignore
+						// @ts-expect-error
 						setZIndex(windowStore.getWindow(config.wid)?.zIndex);
 					}}
-				></div>
+				/>
 			)}
 			<div className="absolute left-0 right-0 h-[6px] cursor-n-resize" data-resizer="top" onMouseDown={() => handleMouseDown("top")} />
 			<div className="absolute left-0 top-[6px] bottom-[6px] w-[6px] cursor-w-resize" data-resizer="left" onMouseDown={() => handleMouseDown("left")} />
@@ -528,11 +528,11 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 				className="region flex justify-between items-center bg-[#ffffff10] p-2 min-w-[224px] select-none"
 				onMouseDown={(e: React.MouseEvent) => {
 					windowStore.arrange(config.wid);
-					// @ts-ignore
+					// @ts-expect-error
 					setZIndex(windowStore.getWindow(config.wid)?.zIndex);
 					if ((e.target as HTMLElement).classList.contains("no-drag")) return;
-					const offsetX = e.clientX - windowRef.current!.offsetLeft;
-					const offsetY = e.clientY - windowRef.current!.offsetTop;
+					const offsetX = e.clientX - windowRef.current?.offsetLeft;
+					const offsetY = e.clientY - windowRef.current?.offsetTop;
 
 					const onMove = (e: MouseEvent) => {
 						if (windowRef.current) windowRef.current.style.transform = "";
@@ -541,8 +541,8 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 						const newX = e.clientX - offsetX;
 						const newY = e.clientY - offsetY;
 						handleSnap(newX, newY);
-						if (newY > 0 && newY < window.innerHeight - windowRef.current!.offsetHeight) setY(newY);
-						if (newX > 0 && newX < window.innerWidth - windowRef.current!.offsetWidth) setX(newX);
+						if (newY > 0 && newY < window.innerHeight - windowRef.current?.offsetHeight) setY(newY);
+						if (newX > 0 && newX < window.innerWidth - windowRef.current?.offsetWidth) setX(newX);
 						if (srcRef.current) srcRef.current.style.pointerEvents = "none";
 					};
 
@@ -851,7 +851,7 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 					sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation allow-downloads"
 					onLoad={() => {
 						if (config.message) {
-							srcRef.current?.contentWindow!.postMessage(config.message, "*");
+							srcRef.current?.contentWindow?.postMessage(config.message, "*");
 						}
 						const sr1 = document.createElement("script");
 						const sr2 = document.createElement("script");
@@ -864,7 +864,7 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 					}}
 					referrerPolicy="no-referrer"
 					style={{ border: "none", all: "initial", width: "100%", height: "calc(100% - 40px)", pointerEvents: isMouseDown ? "none" : "auto", userSelect: "none" }}
-				></iframe>
+				/>
 			</div>
 		</div>
 	);
@@ -874,9 +874,9 @@ const DesktopItems = () => {
 	const [items, setItems] = useState<any[]>([]);
 	const [dragging, setDragging] = useState<boolean>(false);
 	const draggedItemIndex = useRef<number | null>(null);
-	const [offset, setOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-	const [dragradius, setDragradius] = useState<boolean>(false);
-	const [selected, setSelected] = useState<any>(null);
+	const [offset, _setOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+	const [_dragradius, setDragradius] = useState<boolean>(false);
+	const [_selected, setSelected] = useState<any>(null);
 	const selectedRef = useRef<HTMLDivElement>(null);
 	const user = sessionStorage.getItem("currAcc");
 
@@ -919,7 +919,7 @@ const DesktopItems = () => {
 								if (type === "symlink") {
 									const isAppJson = (await window.tb.fs.promises.readFile(await window.tb.fs.promises.readlink(`/home/${user}/desktop/${item}`))).includes("config");
 									desktopConfig.push({
-										name: isAppJson ? JSON.parse(await window.tb.fs.promises.readFile(await window.tb.fs.promises.readlink(`/home/${user}/desktop/${item}`)))["config"].title : item,
+										name: isAppJson ? JSON.parse(await window.tb.fs.promises.readFile(await window.tb.fs.promises.readlink(`/home/${user}/desktop/${item}`))).config.title : item,
 										item: `/home/${user}/desktop/${item}`,
 										position: {
 											custom: false,
@@ -968,7 +968,7 @@ const DesktopItems = () => {
 		};
 
 		addDesktopListener();
-	}, []);
+	}, [user]);
 
 	useEffect(() => {
 		const getItems = async () => {
@@ -987,7 +987,7 @@ const DesktopItems = () => {
 							top: position.top,
 							left: position.left,
 						},
-						config: JSON.parse(await window.tb.fs.promises.readFile(await window.tb.fs.promises.readlink(item.item)))["config"],
+						config: JSON.parse(await window.tb.fs.promises.readFile(await window.tb.fs.promises.readlink(item.item))).config,
 					});
 				} else if (type === "file") {
 					const ext = item.name.split(".").pop();
@@ -1026,7 +1026,7 @@ const DesktopItems = () => {
 		getItems();
 		window.addEventListener("upd-desktop", getItems);
 		return () => window.removeEventListener("upd-desktop", getItems);
-	}, []);
+	}, [user]);
 
 	const onMouseDown = (e: React.MouseEvent<HTMLDivElement>, index: number) => {
 		let holdTimeout: NodeJS.Timeout | null = null;
@@ -1156,8 +1156,8 @@ const DesktopItems = () => {
 
 	const onMouseMove = (e: MouseEvent) => {
 		if (dragging && draggedItemIndex !== null) {
-			let newX = e.clientX - offset.x - 44;
-			let newY = e.clientY - offset.y - 80;
+			const newX = e.clientX - offset.x - 44;
+			const newY = e.clientY - offset.y - 80;
 
 			setItems(prevApps => prevApps.map((app, index) => (index === draggedItemIndex.current ? { ...app, position: { ...app.position, left: newX, top: newY, custom: true } } : app)));
 		}
@@ -1188,7 +1188,7 @@ const DesktopItems = () => {
 		return () => {
 			document.removeEventListener("mousemove", onMouseMove);
 		};
-	}, [dragging]);
+	}, [onMouseMove]);
 
 	return (
 		<div className="flex gap-1 flex-wrap h-full">
@@ -1200,11 +1200,11 @@ const DesktopItems = () => {
 						id="desktop-item"
 						className="group relative size-max min-w-16 min-h-16 flex flex-col items-center justify-center p-2 text-sm font-medium text-wrap select-none"
 						onDoubleClick={async () => {
-							let handlers = JSON.parse(await window.tb.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"))["fileAssociatedApps"];
+							let handlers = JSON.parse(await window.tb.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8")).fileAssociatedApps;
 							handlers = Object.entries(handlers).filter(([type, app]) => {
 								return !(type === "text" && app === "text-editor") && !(type === "image" && app === "media-viewer") && !(type === "video" && app === "media-viewer") && !(type === "audio" && app === "media-viewer");
 							});
-							let hands = [];
+							const hands = [];
 							for (const [type, app] of handlers) {
 								hands.push({ text: app, value: type });
 							}
@@ -1230,18 +1230,18 @@ const DesktopItems = () => {
 									},
 								],
 								onOk: async (val: any) => {
-									const data = await fetch(`/fs//system/etc/terbium/file-icons.json`).then(res => res.json());
+									const data = await fetch("/fs//system/etc/terbium/file-icons.json").then(res => res.json());
 									const ext = item.name.split(".").pop();
 									switch (val) {
 										case "text":
 											parent.window.tb.file.handler.openFile(item.item, "text");
 											break;
 										case "media":
-											if (data["image"].includes(ext)) {
+											if (data.image.includes(ext)) {
 												parent.window.tb.file.handler.openFile(item.item, "image");
-											} else if (data["video"].includes(ext)) {
+											} else if (data.video.includes(ext)) {
 												parent.window.tb.file.handler.openFile(item.item, "video");
-											} else if (data["audio"].includes(ext)) {
+											} else if (data.audio.includes(ext)) {
 												parent.window.tb.file.handler.openFile(item.item, "audio");
 											}
 											break;
@@ -1313,7 +1313,7 @@ const DesktopItems = () => {
 							top: item.position.custom === true ? item.position.top : Math.floor(Number(item.position.top) * 66),
 						}}
 					>
-						<div className="absolute z-1 size-full rounded-md bg-[#ffffff10] backdrop-blur-xl opacity-0 shadow-tb-border-shadow group-hover:opacity-100 focus:opacity-100 duration-150 ease-in pointer-events-none select-none"></div>
+						<div className="absolute z-1 size-full rounded-md bg-[#ffffff10] backdrop-blur-xl opacity-0 shadow-tb-border-shadow group-hover:opacity-100 focus:opacity-100 duration-150 ease-in pointer-events-none select-none" />
 						<div className="flex z-2 size-full flex-col items-center justify-center pointer-events-none">
 							{<div className="size-6 pointer-events-none select-none" dangerouslySetInnerHTML={{ __html: item.icon }} />}
 							<span className="leading-none bg-transparent text-white text-center select-none w-16" style={{ textShadow: "0 0 4px #00000052" }}>
@@ -1383,7 +1383,7 @@ const DesktopItems = () => {
 							top: item.position.custom === true ? item.position.top : Math.floor(Number(item.position.top) * 66),
 						}}
 					>
-						<div className="absolute z-[1] size-full rounded-md bg-[#ffffff10] backdrop-blur-xl opacity-0 shadow-tb-border-shadow group-hover:opacity-100 focus:opacity-100 duration-150 ease-in pointer-events-none select-none"></div>
+						<div className="absolute z-[1] size-full rounded-md bg-[#ffffff10] backdrop-blur-xl opacity-0 shadow-tb-border-shadow group-hover:opacity-100 focus:opacity-100 duration-150 ease-in pointer-events-none select-none" />
 						<div className="flex z-[2] size-full flex-col items-center justify-center pointer-events-none">
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-6 pointer-events-none select-none">
 								<path d="M19.5 21a3 3 0 0 0 3-3v-4.5a3 3 0 0 0-3-3h-15a3 3 0 0 0-3 3V18a3 3 0 0 0 3 3h15ZM1.5 10.146V6a3 3 0 0 1 3-3h5.379a2.25 2.25 0 0 1 1.59.659l2.122 2.121c.14.141.331.22.53.22H19.5a3 3 0 0 1 3 3v1.146A4.483 4.483 0 0 0 19.5 9h-15a4.483 4.483 0 0 0-3 1.146Z" />
@@ -1447,7 +1447,7 @@ const DesktopItems = () => {
 							});
 						}}
 					>
-						<div className="absolute z-1 size-full rounded-md bg-[#ffffff10] backdrop-blur-xl opacity-0 shadow-tb-border-shadow group-hover:opacity-100 focus:opacity-100 duration-150 ease-in pointer-events-none select-none"></div>
+						<div className="absolute z-1 size-full rounded-md bg-[#ffffff10] backdrop-blur-xl opacity-0 shadow-tb-border-shadow group-hover:opacity-100 focus:opacity-100 duration-150 ease-in pointer-events-none select-none" />
 						<div className="flex z-2 size-full flex-col items-center justify-center pointer-events-none">
 							<img src={item.config.icon} alt={item.name} className="size-6 pointer-events-none select-none" />
 							<span className="leading-none bg-transparent text-white text-center select-none w-16" style={{ textShadow: "0 0 4px #00000052" }}>
@@ -1517,10 +1517,10 @@ const WindowArea: React.FC<WindowAreaProps> = ({ className }) => {
 	};
 
 	return (
-		// @ts-ignore
+		// @ts-expect-error
 		<window-area
 			class={`${className ?? className} relative`}
-			// @ts-ignore
+			// @ts-expect-error
 			onContextMenuCapture={(e: MouseEvent) => {
 				const pos = { x: e.clientX, y: e.clientY };
 				window.tb.contextmenu.create({

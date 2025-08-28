@@ -29,7 +29,7 @@ function cd(args) {
 		}
 	}
 
-	let finalPath = "/" + resolvedParts.join("/") + "/";
+	let finalPath = `/${resolvedParts.join("/")}/`;
 	if (finalPath === "//") {
 		finalPath = "/";
 	}

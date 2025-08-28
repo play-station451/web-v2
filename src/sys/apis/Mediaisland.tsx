@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import "../gui/styles/mediaisland.css";
-import { MediaProps } from "../types";
+import type { MediaProps } from "../types";
 
 export let setMusicFn: (props: MediaProps) => void;
 export let setVideoFn: (props: MediaProps) => void;
@@ -33,7 +33,7 @@ export default function MediaIsland() {
 		isExistingFn = () => {
 			window.dispatchEvent(new CustomEvent("isExistingMP", { detail: mediaType !== null }));
 		};
-	}, []);
+	}, [mediaType, removeMedia, setMusic, setVideo]);
 	return (
 		<div className={`island media_island w-[250px] h-[50px] rounded-lg ${mediaType ? "opacity-100" : "opacity-0"}`} style={{ backgroundImage: `url(${(mediaProps as MediaProps).background})`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
 			{mediaType === "music" && <Music {...(mediaProps as MediaProps)} onRemove={removeMedia} />}
@@ -69,7 +69,7 @@ function Music({ track_name, artist, endtime, onRemove, onPausePlay, onNext, onB
 		return () => {
 			if (id) clearInterval(id);
 		};
-	}, [isPaused, endtime, onRemove]);
+	}, [isPaused, endtime, onRemove, intervalId]);
 	useEffect(() => {
 		window.addEventListener("tb-pause-isl", () => PausePlay);
 		return () => window.removeEventListener("tb-pause-isl", () => PausePlay);
@@ -84,7 +84,7 @@ function Music({ track_name, artist, endtime, onRemove, onPausePlay, onNext, onB
 	};
 	const next = () => {
 		if (onNext) {
-			// @ts-ignore
+			// @ts-expect-error
 			onNext();
 		} else {
 			onRemove();
@@ -92,7 +92,7 @@ function Music({ track_name, artist, endtime, onRemove, onPausePlay, onNext, onB
 	};
 	const back = () => {
 		if (onBack) {
-			// @ts-ignore
+			// @ts-expect-error
 			onBack();
 		} else {
 			onRemove();
@@ -105,9 +105,9 @@ function Music({ track_name, artist, endtime, onRemove, onPausePlay, onNext, onB
 	};
 	useEffect(() => {
 		if (track.length > 21) {
-			setTrack(track.slice(0, 21) + "...");
+			setTrack(`${track.slice(0, 21)}...`);
 		}
-	}, [track_name]);
+	}, [track.length, track.slice]);
 	return (
 		<div className="music-player w-[250px] h-[50px]">
 			<div className="info">
@@ -160,7 +160,7 @@ function Music({ track_name, artist, endtime, onRemove, onPausePlay, onNext, onB
 			</div>
 			<div className="seekbar">
 				<h4 id="currenttime">{formatTime(elapsedTime)}</h4>
-				<div className="bar"></div>
+				<div className="bar" />
 				<h4 id="endtime">{formatTime(endtime)}</h4>
 			</div>
 		</div>
@@ -194,7 +194,7 @@ function Video({ video_name, creator, endtime, onRemove, onPausePlay, onBack, on
 		return () => {
 			if (id) clearInterval(id);
 		};
-	}, [isPaused, endtime, onRemove]);
+	}, [isPaused, endtime, onRemove, intervalId]);
 	useEffect(() => {
 		window.addEventListener("tb-pause-isl", () => PausePlay);
 		return () => window.removeEventListener("tb-pause-isl", () => PausePlay);
@@ -206,7 +206,7 @@ function Video({ video_name, creator, endtime, onRemove, onPausePlay, onBack, on
 	};
 	const next = () => {
 		if (onNext) {
-			// @ts-ignore
+			// @ts-expect-error
 			onNext();
 		} else {
 			onRemove();
@@ -214,7 +214,7 @@ function Video({ video_name, creator, endtime, onRemove, onPausePlay, onBack, on
 	};
 	const back = () => {
 		if (onBack) {
-			// @ts-ignore
+			// @ts-expect-error
 			onBack();
 		} else {
 			onRemove();
@@ -227,9 +227,9 @@ function Video({ video_name, creator, endtime, onRemove, onPausePlay, onBack, on
 	};
 	useEffect(() => {
 		if (video.length > 21) {
-			setVideo(video.slice(0, 21) + "...");
+			setVideo(`${video.slice(0, 21)}...`);
 		}
-	}, [video_name]);
+	}, [video.length, video.slice]);
 	return (
 		<div className="music-player w-[250px] h-[50px]">
 			<div className="info">
@@ -282,7 +282,7 @@ function Video({ video_name, creator, endtime, onRemove, onPausePlay, onBack, on
 			</div>
 			<div className="seekbar">
 				<h4 id="currenttime">{formatTime(elapsedTime)}</h4>
-				<div className="bar"></div>
+				<div className="bar" />
 				<h4 id="endtime">{formatTime(endtime)}</h4>
 			</div>
 		</div>

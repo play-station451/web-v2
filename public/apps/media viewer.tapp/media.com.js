@@ -1,8 +1,8 @@
 const tb = parent.window.tb;
 const tb_island = tb.window.island;
-const tb_window = tb.window;
-const tb_context_menu = tb.context_menu;
-const tb_dialog = tb.dialog;
+const _tb_window = tb.window;
+const _tb_context_menu = tb.context_menu;
+const _tb_dialog = tb.dialog;
 
 tb_island.addControl({
 	text: "File",
@@ -15,8 +15,8 @@ tb_island.addControl({
 			parent.document.querySelector(".context-menu").remove();
 		}
 		ctx.id = "media-files_ctx";
-		ctx.style.left = `6px`;
-		ctx.style.top = parent.document.querySelector(".app_island").clientHeight + 12 + "px";
+		ctx.style.left = "6px";
+		ctx.style.top = `${parent.document.querySelector(".app_island").clientHeight + 12}px`;
 		const options = [
 			{
 				text: "Open File",
@@ -24,7 +24,7 @@ tb_island.addControl({
 					await tb.dialog.FileBrowser({
 						title: "Select a file to view",
 						onOk: async file => {
-							let url = `${(parent, window.location.origin)}/fs/${file}`;
+							const url = `${(parent, window.location.origin)}/fs/${file}`;
 							const ext = file.split(".").pop();
 							openFile(url, ext);
 						},
@@ -65,8 +65,8 @@ tb_island.addControl({
 			parent.document.querySelector(".context-menu").remove();
 		}
 		ctx.id = "media-computer_ctx";
-		ctx.style.left = `6px`;
-		ctx.style.top = parent.document.querySelector(".app_island").clientHeight + 12 + "px";
+		ctx.style.left = "6px";
+		ctx.style.top = `${parent.document.querySelector(".app_island").clientHeight + 12}px`;
 		const options = [
 			{
 				text: "Open File from PC",

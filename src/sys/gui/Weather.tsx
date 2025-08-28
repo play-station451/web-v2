@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import getTime from "../apis/Time";
-import { SysSettings } from "../types";
+import type { SysSettings } from "../types";
 
 interface LocationData {
 	properties: {

@@ -10,7 +10,7 @@ export default function CustomOS() {
 			console.log(`Terbium Bootloader v2.1.0 is now loading: ${sessionStorage.getItem("bootfile")}`);
 			if (doc.body && doc.head) {
 				const b = document.createElement("base");
-				b.href = `/fs/${sessionStorage.getItem("bootfile")!.replace(/\/?[^\/]+\.html$/, "")}/`;
+				b.href = `/fs/${sessionStorage.getItem("bootfile")?.replace(/\/?[^/]+\.html$/, "")}/`;
 				doc.head.insertBefore(b, doc.head.firstChild);
 				document.body.innerHTML = doc.body.innerHTML;
 				document.head.innerHTML = doc.head.innerHTML;
@@ -21,7 +21,7 @@ export default function CustomOS() {
 						if (script.src.includes("http")) {
 							newScript.src = script.src;
 						} else if (!script.src.includes(`${window.location.origin}/fs/`)) {
-							newScript.src = `/fs/${sessionStorage.getItem("bootfile")!.replace(/\/?[^\/]+\.html$/, "")}${script.src.replace(window.location.origin, "")}`;
+							newScript.src = `/fs/${sessionStorage.getItem("bootfile")?.replace(/\/?[^/]+\.html$/, "")}${script.src.replace(window.location.origin, "")}`;
 						} else {
 							newScript.src = script.src;
 						}

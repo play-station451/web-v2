@@ -1,12 +1,12 @@
-async function sysfetch(args, term) {
+async function sysfetch(args, _term) {
 	if (args._raw.includes("-v")) {
 		displayOutput("Sysfetch v1.0.0");
 		createNewCommandInput();
 	} else {
 		let accent = "#32ae62";
-		let settings = JSON.parse(await window.parent.tb.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, "utf8"));
-		if (settings["accent"]) {
-			accent = settings["accent"];
+		const settings = JSON.parse(await window.parent.tb.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, "utf8"));
+		if (settings.accent) {
+			accent = settings.accent;
 		}
 		displayOutput("                                 %cSystem Information", "color: #3cc3f0; font-weight: bold; text-decoration: underline;");
 		displayOutput(`%c@@@@@@@@@@@@@@~ B@@@@@@@@#G?.     OS%c: TerbiumOS ${tb.system.version()}`, `color: ${accent}`, "color: #b6b6b6");
@@ -23,15 +23,15 @@ async function sysfetch(args, term) {
 }
 
 async function displayCPUInfo(accent) {
-	let cpuCors = navigator.hardwareConcurrency;
-	let cpuInfo = "%c    ^@@@@?     .#@@@P    G@@@@" + "    %cCPU%c: " + cpuCors + " Logical Cores " + `(${Math.floor(cpuCors / 2)} Cores ${cpuCors} threads)`;
+	const cpuCors = navigator.hardwareConcurrency;
+	const cpuInfo = `%c    ^@@@@?     .#@@@P    G@@@@    %cCPU%c: ${cpuCors} Logical Cores (${Math.floor(cpuCors / 2)} Cores ${cpuCors} threads)`;
 	displayOutput(cpuInfo, `color: ${accent}`, `color: ${accent}`, "color: #b6b6b6");
 	return true;
 }
 
 async function displayMemoryInfo(accent) {
-	let mem = navigator.deviceMemory ? navigator.deviceMemory + "GB" : "Unknown";
-	let memoryInfo = "%c    ^@@@@?     .#@@@&GGG#@@@@Y " + "   %cMemory%c: " + mem;
+	const mem = navigator.deviceMemory ? `${navigator.deviceMemory}GB` : "Unknown";
+	const memoryInfo = `%c    ^@@@@?     .#@@@&GGG#@@@@Y    %cMemory%c: ${mem}`;
 	displayOutput(memoryInfo, `color: ${accent}`, `color: ${accent}`, "color: #b6b6b6");
 	return true;
 	// Im confused tho cus I dont think memory is causing it but like idk
@@ -39,18 +39,18 @@ async function displayMemoryInfo(accent) {
 }
 
 async function displayGPUInfo(accent) {
-	let canvas = document.createElement("canvas");
-	let gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+	const canvas = document.createElement("canvas");
+	const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
 	if (!gl) {
 		displayOutput("%cGPU%c: Information not available", `color: ${accent}`, "color: #b6b6b6");
 		return;
 	}
-	let dbgRenderInfo = gl.getExtension("WEBGL_debug_renderer_info");
+	const dbgRenderInfo = gl.getExtension("WEBGL_debug_renderer_info");
 	if (dbgRenderInfo) {
-		let rndr = gl.getParameter(dbgRenderInfo.UNMASKED_RENDERER_WEBGL);
-		let regex = /ANGLE \(.+?,\s*(.+?) \(/;
-		let match = rndr.match(regex);
-		let gpuName = match ? match[1] : "";
+		const rndr = gl.getParameter(dbgRenderInfo.UNMASKED_RENDERER_WEBGL);
+		const regex = /ANGLE \(.+?,\s*(.+?) \(/;
+		const match = rndr.match(regex);
+		const gpuName = match ? match[1] : "";
 		displayOutput(`				  %cGPU%c: ${gpuName}`, `color: ${accent}`, "color: #b6b6b6");
 	} else {
 		displayOutput("				  %cGPU%c: Information not available", `color: ${accent}`, "color: #b6b6b6");
@@ -62,8 +62,9 @@ async function getStorage(accent) {
 	const estimate = await navigator.storage.estimate();
 	const totalSize = estimate.quota;
 	const usedSize = estimate.usage;
-	const usedPercentage = (usedSize / totalSize) * 100;
-	let formattedUsedSize, formattedTotalSize;
+	const _usedPercentage = (usedSize / totalSize) * 100;
+	let formattedUsedSize;
+	let formattedTotalSize;
 	if (usedSize >= 1024 * 1024 * 1024) {
 		formattedUsedSize = `${(usedSize / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 	} else {
@@ -74,7 +75,7 @@ async function getStorage(accent) {
 	} else {
 		formattedTotalSize = `${Math.round((totalSize / (1024 * 1024)).toFixed(2))} MB`;
 	}
-	displayOutput("%c    ^&@@@?      B@@@@@@@@&B5~ " + `    %cStorage%c: ${formattedUsedSize} of ${formattedTotalSize}`, `color: ${accent}`, `color: ${accent}`, "color: #b6b6b6");
+	displayOutput(`%c    ^&@@@?      B@@@@@@@@&B5~     %cStorage%c: ${formattedUsedSize} of ${formattedTotalSize}`, `color: ${accent}`, `color: ${accent}`, "color: #b6b6b6");
 	return true;
 }
 

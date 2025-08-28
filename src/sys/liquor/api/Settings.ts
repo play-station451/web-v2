@@ -6,16 +6,16 @@ export class Settings {
 		this.cache = inital;
 
 		navigator.serviceWorker.ready.then(isReady => {
-			isReady.active!.postMessage({
+			isReady.active?.postMessage({
 				anura_target: "anura.cache",
 				value: this.cache["use-sw-cache"],
 			});
-			isReady.active!.postMessage({
+			isReady.active?.postMessage({
 				anura_target: "anura.bareurl",
 				value: this.cache["bare-url"],
 			});
-			console.debug("ANURA-SW: For this boot, cache will be " + (this.cache["use-sw-cache"] ? "enabled" : "disabled"));
-			this.cache["FileExts"] = {
+			console.debug(`ANURA-SW: For this boot, cache will be ${this.cache["use-sw-cache"] ? "enabled" : "disabled"}`);
+			this.cache.FileExts = {
 				txt: { handler_type: "module", id: "anura.fileviewer" },
 				mp3: { handler_type: "module", id: "anura.fileviewer" },
 				flac: { handler_type: "module", id: "anura.fileviewer" },
@@ -47,7 +47,7 @@ export class Settings {
 
 		if (!initial["wisp-url"]) {
 			let url = "";
-			if (location.protocol == "https:") {
+			if (location.protocol === "https:") {
 				url += "wss://";
 			} else {
 				url += "ws://";
@@ -61,7 +61,7 @@ export class Settings {
 			const raw = await fs.promises.readFile("/system/etc/anura/anura_settings.json");
 			// This Uint8Array is actuallly a buffer, so JSON.parse can handle it
 			Object.assign(initial, JSON.parse(raw as any));
-		} catch (e) {
+		} catch (_e) {
 			fs.mkdir("/system/etc/anura/");
 			fs.mkdir("/system/etc/anura/configs/");
 			fs.mkdir("/system/etc/anura/init/");
@@ -92,7 +92,7 @@ export class Settings {
 		return prop in this.cache;
 	}
 	async set(prop: string, val: any, subprop?: string) {
-		console.debug("Setting " + prop + " to " + val);
+		console.debug(`Setting ${prop} to ${val}`);
 		if (subprop) {
 			this.cache[prop][subprop] = val;
 		} else {

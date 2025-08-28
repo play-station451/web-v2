@@ -12,9 +12,9 @@ async function ls(args) {
 			{ name: "Mounted", width: 10 },
 			{ name: "Mounted Path", width: 20 },
 		];
-		const header = "| " + columns.map(col => centerText(col.name, col.width)).join(" | ") + " |";
-		const separator = "|" + columns.map(col => "-".repeat(col.width + 2)).join("|") + "|";
-		displayOutput(centerText(`TerbiumOS Network Storage Manager v1.0.1`, header.length));
+		const header = `| ${columns.map(col => centerText(col.name, col.width)).join(" | ")} |`;
+		const separator = `|${columns.map(col => "-".repeat(col.width + 2)).join("|")}|`;
+		displayOutput(centerText("TerbiumOS Network Storage Manager v1.0.1", header.length));
 		displayOutput(header);
 		displayOutput(separator);
 		const davInstances = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
@@ -32,12 +32,12 @@ async function ls(args) {
 				mounted = false;
 			}
 			const row = [centerText(dav.name, columns[0].width), centerText(dav.url, columns[1].width), centerText(mounted ? "Yes" : "No", columns[2].width), centerText(`/mnt/${dav.name.toLowerCase()}`, columns[3].width)];
-			displayOutput("| " + row.join(" | ") + " |");
+			displayOutput(`| ${row.join(" | ")} |`);
 		}
 		createNewCommandInput();
 	} else if ((args._raw.includes("/mnt/") && args._raw !== "/mnt/") || (path.includes("/mnt/") && path !== "/mnt/")) {
 		try {
-			const match = args._raw.match(/\/mnt\/([^\/]+)\//) || path.match(/\/mnt\/([^\/]+)\//);
+			const match = args._raw.match(/\/mnt\/([^/]+)\//) || path.match(/\/mnt\/([^/]+)\//);
 			const davName = match ? match[1].toLowerCase() : "";
 			const davInstances = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
 			const dav = davInstances.find(d => d.name.toLowerCase() === davName);

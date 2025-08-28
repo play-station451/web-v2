@@ -1,15 +1,15 @@
-import { FC, createElement, useRef, useState, useEffect } from "react";
-import Dock, { TDockItem } from "./Dock";
-import WindowArea from "./WindowArea";
-import Shell from "./Shell";
-import { WispMenu } from "./Wifi";
+import { createElement, type FC, useEffect, useRef, useState } from "react";
 import DialogContainer from "../apis/Dialogs";
 import NotificationContainer from "../apis/Notifications";
-import { NotificationMenu } from "./NotificationCenter";
-import { dirExists, UserSettings, WindowConfig } from "../types";
-import WinSwitcher from "./WinSwitcher";
-import ContextMenuArea from "./ContextMenu";
+import { dirExists, type UserSettings, type WindowConfig } from "../types";
 import { clearInfo } from "./AppIsland";
+import ContextMenuArea from "./ContextMenu";
+import Dock, { type TDockItem } from "./Dock";
+import { NotificationMenu } from "./NotificationCenter";
+import Shell from "./Shell";
+import { WispMenu } from "./Wifi";
+import WindowArea from "./WindowArea";
+import WinSwitcher from "./WinSwitcher";
 
 interface IDesktopProps {
 	desktop: number;
@@ -35,12 +35,12 @@ const Desktop: FC<IDesktopProps> = ({ desktop, onContextMenu }) => {
 		const getWallpaper = async () => {
 			const settings: UserSettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`));
 			if (settings.wallpaper.startsWith("/system")) {
-				let stream = await Filer.fs.promises.readFile(settings["wallpaper"]);
+				const stream = await Filer.fs.promises.readFile(settings.wallpaper);
 				setWallpaper(`data:image/png;base64,${stream.toString("base64")}`);
 			} else {
-				setWallpaper(settings["wallpaper"]);
+				setWallpaper(settings.wallpaper);
 			}
-			setwallpaperMode(settings["wallpaperMode"]);
+			setwallpaperMode(settings.wallpaperMode);
 		};
 		const showWinPrev = (e: CustomEvent) => {
 			setWinPrev(JSON.parse(e.detail));
@@ -68,11 +68,11 @@ const Desktop: FC<IDesktopProps> = ({ desktop, onContextMenu }) => {
 			// @ts-expect-error
 			window.removeEventListener("windows-prev", showWinPrev);
 		};
-	}, [showNotif, winPrev, pinned]);
+	}, []);
 
 	return (
 		<div
-			className={`desktop flex flex-col h-[inherit] overflow-hidden `}
+			className={"desktop flex flex-col h-[inherit] overflow-hidden "}
 			style={{
 				backgroundImage: `url(${wallpaper})`,
 				backgroundSize: wallpaperMode === "stretch" ? "100% 100%" : wallpaperMode,
@@ -95,7 +95,7 @@ const Desktop: FC<IDesktopProps> = ({ desktop, onContextMenu }) => {
 			<WinSwitcher />
 			<div className={`${winPrev?.open ? "opacity-100" : "opacity-0"} duration-150`}>
 				{winPrev?.windows && winPrev.windows.length > 0 && (
-					<div className={`absolute bottom-16 flex flex-col justify-center items-center rounded-lg bg-[#2020208c] shadow-tb-border-shadow backdrop-blur-[100px] border-none overflow-hidden z-9999999`} style={{ left: `calc(${winPrev?.location}px - ${45 * winPrev?.windows.length}px)` }}>
+					<div className={"absolute bottom-16 flex flex-col justify-center items-center rounded-lg bg-[#2020208c] shadow-tb-border-shadow backdrop-blur-[100px] border-none overflow-hidden z-9999999"} style={{ left: `calc(${winPrev?.location}px - ${45 * winPrev?.windows.length}px)` }}>
 						{winPrev.windows[0].map((win: WindowConfig) => (
 							<div
 								key={win.wid}
@@ -130,7 +130,7 @@ const Desktop: FC<IDesktopProps> = ({ desktop, onContextMenu }) => {
 										clearInfo();
 									}}
 								>
-									<path className="duration-150 pointer-events-none" d="M6 18L18 6M6 6L18 18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"></path>
+									<path className="duration-150 pointer-events-none" d="M6 18L18 6M6 6L18 18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
 								</svg>
 							</div>
 						))}

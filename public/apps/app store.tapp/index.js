@@ -27,7 +27,7 @@ async function loadRepo(url) {
 	document.querySelector(".main").classList.add("flex");
 	const featured = document.querySelector(".featured");
 	switch (type) {
-		case "Terbium":
+		case "Terbium": {
 			const featuredList1 = data.apps;
 			const randomIndex1 = Math.floor(Math.random() * featuredList1.length);
 			data.featured = featuredList1[randomIndex1] || {};
@@ -47,7 +47,7 @@ async function loadRepo(url) {
 			if (data.featured.version) {
 				featured.querySelector("h4:nth-child(2)").textContent = `Version ${data.featured.version}`;
 			} else {
-				featured.querySelector("h4:nth-child(2)").textContent = `Progressive Web App`;
+				featured.querySelector("h4:nth-child(2)").textContent = "Progressive Web App";
 			}
 			featured.querySelector("h4:nth-child(3)").textContent = `By ${data.featured.developer || "Unknown"}`;
 			const appCards1 = await Promise.all(
@@ -55,7 +55,7 @@ async function loadRepo(url) {
 					const icn1 = await window.parent.tb.libcurl.fetch(app.icon);
 					const blob1 = await icn1.blob();
 					const icnurl1 = URL.createObjectURL(blob1);
-					const displayName = app.name && app.name.length > 10 ? app.name.slice(0, 10) + "..." : app.name || "Unknown";
+					const displayName = app.name && app.name.length > 10 ? `${app.name.slice(0, 10)}...` : app.name || "Unknown";
 					const cardHtml = `
 						<div class="app-card w-[100%] h-[105px] bg-[#00000032] rounded-[12px] flex flex-col items-center justify-center" data-app-index="${data.apps.indexOf(app)}">
 							<img src="${icnurl1 || "/tb.svg"}" alt="App Icon" class="w-[50px] h-[50px] rounded-[12px] mb-4 object-cover" />
@@ -77,12 +77,13 @@ async function loadRepo(url) {
 			document.querySelector(".apps-list").innerHTML = appCards.join("");
 			document.querySelectorAll(".app-card").forEach(card => {
 				card.addEventListener("click", function () {
-					const idx = parseInt(this.getAttribute("data-app-index"), 10);
+					const idx = Number.parseInt(this.getAttribute("data-app-index"), 10);
 					loadApp(data.apps[idx], type);
 				});
 			});
 			break;
-		case "Anura":
+		}
+		case "Anura": {
 			const featuredList2 = data.apps;
 			const randomIndex2 = Math.floor(Math.random() * featuredList2.length);
 			data.featured = featuredList2[randomIndex2] || {};
@@ -102,15 +103,15 @@ async function loadRepo(url) {
 			if (data.featured.version) {
 				featured.querySelector("h4:nth-child(2)").textContent = `Version ${data.featured.version}`;
 			} else {
-				featured.querySelector("h4:nth-child(2)").textContent = `Progressive Web App`;
+				featured.querySelector("h4:nth-child(2)").textContent = "Progressive Web App";
 			}
-			featured.querySelector("h4:nth-child(3)").textContent = `Anura Application`;
+			featured.querySelector("h4:nth-child(3)").textContent = "Anura Application";
 			const appCards2 = await Promise.all(
 				data.apps.map(async app => {
 					const icn1 = await window.parent.tb.libcurl.fetch(`${url.replace("manifest.json", "")}/apps/${app.package}/${app.icon}`);
 					const blob1 = await icn1.blob();
 					const icnurl1 = URL.createObjectURL(blob1);
-					const displayName = app.name && app.name.length > 10 ? app.name.slice(0, 10) + "..." : app.name || "Unknown";
+					const displayName = app.name && app.name.length > 10 ? `${app.name.slice(0, 10)}...` : app.name || "Unknown";
 					const cardHtml = `
 						<div class="app-card w-[100%] h-[105px] bg-[#00000032] rounded-[12px] flex flex-col items-center justify-center" data-app-index="${data.apps.indexOf(app)}">
 							<img src="${icnurl1 || "/tb.svg"}" alt="App Icon" class="w-[50px] h-[50px] rounded-[12px] mb-4 object-cover" />
@@ -132,11 +133,12 @@ async function loadRepo(url) {
 			document.querySelector(".apps-list").innerHTML = appCards_2.join("");
 			document.querySelectorAll(".app-card").forEach(card => {
 				card.addEventListener("click", function () {
-					const idx = parseInt(this.getAttribute("data-app-index"), 10);
+					const idx = Number.parseInt(this.getAttribute("data-app-index"), 10);
 					loadApp(data.apps[idx], type);
 				});
 			});
 			break;
+		}
 		case "Xen":
 			console.log("Xen repo not implemented yet.");
 			document.querySelector(".featured h3").textContent = "Xen App Store";
@@ -157,7 +159,7 @@ async function loadApp(app, type) {
 	let icnUrl;
 	let isInstalled = false;
 	let uptodate = true;
-	const installedApps = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/installed.json`, "utf8"));
+	const installedApps = JSON.parse(await window.parent.tb.fs.promises.readFile("/apps/installed.json", "utf8"));
 	if (installedApps.some(a => a.name === app.name)) {
 		isInstalled = true;
 		const config = JSON.parse(await window.parent.tb.fs.promises.readFile(`${installedApps.find(a => a.name === app.name).config}`, "utf8"));
@@ -172,13 +174,14 @@ async function loadApp(app, type) {
 	}
 	switch (type) {
 		case "Terbium":
-		case "tb-PWA":
+		case "tb-PWA": {
 			const icn1 = await window.parent.tb.libcurl.fetch(app.icon);
 			const blob1 = await icn1.blob();
 			icnUrl = URL.createObjectURL(blob1);
 			break;
+		}
 		case "Anura":
-		case "tb-liq":
+		case "tb-liq": {
 			let icn2;
 			if (currRepo.url) {
 				icn2 = await window.parent.tb.libcurl.fetch(`${currRepo.url.replace("manifest.json", "")}/apps/${app.package}/${app.icon}`);
@@ -191,6 +194,7 @@ async function loadApp(app, type) {
 			const blob2 = await icn2.blob();
 			icnUrl = URL.createObjectURL(blob2);
 			break;
+		}
 		case "Xen":
 			break;
 	}
@@ -217,8 +221,8 @@ async function loadApp(app, type) {
 					<li><strong>Size:</strong> ${app.size || "N/A"}</li>
 					<ul>
 						<h2 class="font-black text-3xl mb-2">Requirements:</h2>
-						<li><strong>OS: ${(app.requirements && app.requirements.os) || "Any"}</strong></li>
-						<li><strong>Proxy: ${(app.requirements && app.requirements.proxy) || "Any"}</strong></li>
+						<li><strong>OS: ${app.requirements?.os || "Any"}</strong></li>
+						<li><strong>Proxy: ${app.requirements?.proxy || "Any"}</strong></li>
 					</ul>
 				</ul>
 				</div>
@@ -307,7 +311,7 @@ async function loadRepos() {
 	for (const repo of repos) {
 		const repoinfo = await window.parent.tb.libcurl.fetch(repo.url);
 		if (!repoinfo.ok) {
-			const displayName = repo.name && repo.name.length > 8 ? repo.name.slice(0, 8) + "..." : repo.name || "Unknown";
+			const displayName = repo.name && repo.name.length > 8 ? `${repo.name.slice(0, 8)}...` : repo.name || "Unknown";
 			const repoCard = document.createElement("div");
 			repoCard.className = "repo-card flex flex-row items-center bg-[#00000032] rounded-lg h-[50px] p-1 gap-1";
 			repoCard.onclick = () => loadRepo(repo.url);
@@ -318,7 +322,7 @@ async function loadRepos() {
 					<circle cx="16" cy="16" r="16" fill="#D8645D"/>
 				</svg>
 			`;
-			repoCard.addEventListener("contextmenu", function (e) {
+			repoCard.addEventListener("contextmenu", e => {
 				e.preventDefault();
 				window.parent.tb.contextmenu.create({
 					x: e.clientX + 100,
@@ -347,7 +351,7 @@ async function loadRepos() {
 			const icn = await window.parent.tb.libcurl.fetch(repo.icon);
 			const blob = await icn.blob();
 			const icnurl = URL.createObjectURL(blob);
-			const displayName = data.name && data.name.length > 8 ? data.name.slice(0, 8) + "..." : data.name || "Unknown";
+			const displayName = data.name && data.name.length > 8 ? `${data.name.slice(0, 8)}...` : data.name || "Unknown";
 			const repoCard = document.createElement("div");
 			repoCard.className = "repo-card flex flex-row items-center bg-[#00000032] rounded-lg h-[50px] p-1 gap-1";
 			repoCard.onclick = () => loadRepo(repo.url);
@@ -358,7 +362,7 @@ async function loadRepos() {
 					<circle cx="16" cy="16" r="16" fill="#5DD881"/>
 				</svg>
 			`;
-			repoCard.addEventListener("contextmenu", function (e) {
+			repoCard.addEventListener("contextmenu", e => {
 				e.preventDefault();
 				window.parent.tb.contextmenu.create({
 					x: e.clientX + 100,
@@ -386,7 +390,7 @@ async function loadRepos() {
 			const icn = await window.parent.tb.libcurl.fetch(data.repo.icon);
 			const blob = await icn.blob();
 			const icnurl = URL.createObjectURL(blob);
-			const displayName = data.repo.name && data.repo.name.length > 8 ? data.repo.name.slice(0, 8) + "..." : data.repo.name || "Unknown";
+			const displayName = data.repo.name && data.repo.name.length > 8 ? `${data.repo.name.slice(0, 8)}...` : data.repo.name || "Unknown";
 			const repoCard = document.createElement("div");
 			repoCard.className = "repo-card flex flex-row items-center bg-[#00000032] rounded-lg h-[50px] p-1 gap-1";
 			repoCard.onclick = () => loadRepo(repo.url);
@@ -397,7 +401,7 @@ async function loadRepos() {
 					<circle cx="16" cy="16" r="16" fill="#5DD881"/>
 				</svg>
 			`;
-			repoCard.addEventListener("contextmenu", function (e) {
+			repoCard.addEventListener("contextmenu", e => {
 				e.preventDefault();
 				window.parent.tb.contextmenu.create({
 					x: e.clientX + 100,
@@ -427,7 +431,7 @@ async function loadRepos() {
  * Changes the view between apps and PWAs
  * @param {string} type - The type of view ("apps" or "pwa")
  */
-function view(type) {
+function _view(type) {
 	if (type === "apps") {
 		viewType = "apps";
 		document.querySelector(".apps-list").classList.remove("hidden");
@@ -458,7 +462,7 @@ function view(type) {
 /**
  * Adds a new repo to the repo list
  */
-async function addRepo() {
+async function _addRepo() {
 	window.parent.tb.dialog.Message({
 		title: "Enter a Repo URL",
 		onOk: async value => {
@@ -543,7 +547,8 @@ async function install(app, type) {
 				time: 5000,
 			});
 			return false;
-		} else if (app.requirements.proxy && app.requirements.proxy !== window.parent.tb.proxy.get()) {
+		}
+		if (app.requirements.proxy && app.requirements.proxy !== window.parent.tb.proxy.get()) {
 			window.parent.tb.notification.Toast({
 				message: `Failed to install ${app.name}. The current selected proxy does not meet the minimum requirements.`,
 				application: "App Store",
@@ -584,16 +589,16 @@ async function install(app, type) {
 					snapable: appData.wmArgs.snapable,
 				});
 				try {
-					let apps = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/installed.json`, "utf8"));
+					const apps = JSON.parse(await window.parent.tb.fs.promises.readFile("/apps/installed.json", "utf8"));
 					apps.push({
 						name: app.name,
 						user: await window.parent.tb.user.username(),
 						config: `/apps/system/${app.name}.tapp/.tbconfig`,
 					});
-					await window.parent.tb.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(apps));
+					await window.parent.tb.fs.promises.writeFile("/apps/installed.json", JSON.stringify(apps));
 				} catch {
 					await window.parent.tb.fs.promises.writeFile(
-						`/apps/installed.json`,
+						"/apps/installed.json",
 						JSON.stringify([
 							{
 								name: app.name,
@@ -624,39 +629,39 @@ async function install(app, type) {
 				});
 				return false;
 			}
-		case "tb-PWA":
+		case "tb-PWA": {
 			const web_apps = JSON.parse(await window.parent.tb.fs.promises.readFile("/apps/web_apps.json", "utf8"));
 			web_apps.apps.push(app.name.toLowerCase());
 			await window.parent.tb.fs.promises.writeFile("/apps/web_apps.json", JSON.stringify(web_apps));
 			await window.parent.tb.launcher.addApp({
-				title: app["wmArgs"]["title"],
+				title: app.wmArgs.title,
 				name: app.name,
 				icon: app.icon,
-				src: app["wmArgs"]["src"],
+				src: app.wmArgs.src,
 				size: {
-					width: app["wmArgs"]["size"]["width"],
-					height: app["wmArgs"]["size"]["height"],
+					width: app.wmArgs.size.width,
+					height: app.wmArgs.size.height,
 				},
-				single: app["wmArgs"]["single"],
-				resizable: app["wmArgs"]["resizable"],
-				controls: app["wmArgs"]["controls"],
-				message: app["wmArgs"]["message"],
-				proxy: app["wmArgs"]["proxy"],
-				snapable: app["wmArgs"]["snapable"],
+				single: app.wmArgs.single,
+				resizable: app.wmArgs.resizable,
+				controls: app.wmArgs.controls,
+				message: app.wmArgs.message,
+				proxy: app.wmArgs.proxy,
+				snapable: app.wmArgs.snapable,
 			});
 			await window.parent.tb.fs.promises.mkdir(`/apps/user/${await window.parent.tb.user.username()}/${app.name}`);
 			await window.parent.tb.fs.promises.writeFile(`/apps/user/${await window.parent.tb.user.username()}/${app.name}/index.json`, JSON.stringify(app));
 			try {
-				let apps = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/installed.json`, "utf8"));
+				const apps = JSON.parse(await window.parent.tb.fs.promises.readFile("/apps/installed.json", "utf8"));
 				apps.push({
 					name: app.name,
 					user: await window.parent.tb.user.username(),
 					config: `/apps/user/${await window.parent.tb.user.username()}/${app.name}/index.json`,
 				});
-				await window.parent.tb.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(apps));
+				await window.parent.tb.fs.promises.writeFile("/apps/installed.json", JSON.stringify(apps));
 			} catch {
 				await window.parent.tb.fs.promises.writeFile(
-					`/apps/installed.json`,
+					"/apps/installed.json",
 					JSON.stringify([
 						{
 							name: app.name,
@@ -676,6 +681,7 @@ async function install(app, type) {
 				},
 			});
 			return true;
+		}
 		case "tb-liq":
 		case "Anura":
 			try {
@@ -706,16 +712,16 @@ async function install(app, type) {
 					id: appData.package,
 				};
 				try {
-					let apps = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/installed.json`, "utf8"));
+					const apps = JSON.parse(await window.parent.tb.fs.promises.readFile("/apps/installed.json", "utf8"));
 					apps.push({
 						name: appData.name,
 						user: await window.parent.tb.user.username(),
 						config: `/apps/anura/${app.name}/manifest.json`,
 					});
-					await window.parent.tb.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(apps));
+					await window.parent.tb.fs.promises.writeFile("/apps/installed.json", JSON.stringify(apps));
 				} catch {
 					await window.parent.tb.fs.promises.writeFile(
-						`/apps/installed.json`,
+						"/apps/installed.json",
 						JSON.stringify([
 							{
 								name: appData.name,
@@ -765,9 +771,9 @@ async function uninstall(app, type) {
 				await new window.parent.tb.fs.Shell().promises.rm(`/apps/user/${sessionStorage.getItem("currAcc")}/${app.name}.tapp`, { recursive: true });
 			}
 			try {
-				let installedApps = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/installed.json`, "utf8"));
+				let installedApps = JSON.parse(await window.parent.tb.fs.promises.readFile("/apps/installed.json", "utf8"));
 				installedApps = installedApps.filter(a => a.name !== app.name);
-				await window.parent.tb.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(installedApps));
+				await window.parent.tb.fs.promises.writeFile("/apps/installed.json", JSON.stringify(installedApps));
 			} catch {
 				throw new Error("Failed to update the installed app list");
 			}
@@ -779,7 +785,7 @@ async function uninstall(app, type) {
 				time: 5000,
 			});
 			break;
-		case "tb-PWA":
+		case "tb-PWA": {
 			const web_apps = JSON.parse(await window.parent.tb.fs.promises.readFile("/apps/web_apps.json", "utf8"));
 			const index = web_apps.apps.indexOf(app.name.toLowerCase());
 			if (index > -1) {
@@ -790,9 +796,9 @@ async function uninstall(app, type) {
 			await window.parent.tb.fs.promises.unlink(`/apps/user/${await window.parent.tb.user.username()}/${app.name}/index.json`);
 			await window.parent.tb.sh.promises.rm(`/apps/user/${await window.parent.tb.user.username()}/${app.name}`, { recursive: true });
 			try {
-				let installedApps = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/installed.json`, "utf8"));
+				let installedApps = JSON.parse(await window.parent.tb.fs.promises.readFile("/apps/installed.json", "utf8"));
 				installedApps = installedApps.filter(a => a.name !== app.name);
-				await window.parent.tb.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(installedApps));
+				await window.parent.tb.fs.promises.writeFile("/apps/installed.json", JSON.stringify(installedApps));
 			} catch {
 				throw new Error("Failed to update the installed app list");
 			}
@@ -803,13 +809,14 @@ async function uninstall(app, type) {
 				time: 5000,
 			});
 			break;
+		}
 		case "Anura":
 		case "tb-liq":
 			await new window.parent.tb.fs.Shell().promises.rm(`/apps/anura/${app.name}`, { recursive: true });
 			try {
-				let installedApps = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/installed.json`, "utf8"));
+				let installedApps = JSON.parse(await window.parent.tb.fs.promises.readFile("/apps/installed.json", "utf8"));
 				installedApps = installedApps.filter(a => a.name !== app.name);
-				await window.parent.tb.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(installedApps));
+				await window.parent.tb.fs.promises.writeFile("/apps/installed.json", JSON.stringify(installedApps));
 			} catch {
 				throw new Error("Failed to update the installed app list");
 			}
@@ -831,7 +838,7 @@ async function uninstall(app, type) {
  * @param {string} target
  */
 async function unzip(path, target) {
-	const response = await fetch("/fs/" + path);
+	const response = await fetch(`/fs/${path}`);
 	const zipFileContent = await response.arrayBuffer();
 	if (!(await dirExists(target))) {
 		await window.parent.tb.fs.promises.mkdir(target, { recursive: true });
@@ -842,7 +849,7 @@ async function unzip(path, target) {
 		const pathParts = fullPath.split("/");
 		let currentPath = "";
 		for (let i = 0; i < pathParts.length; i++) {
-			currentPath += pathParts[i] + "/";
+			currentPath += `${pathParts[i]}/`;
 			if (i === pathParts.length - 1 && !relativePath.endsWith("/")) {
 				try {
 					console.log(`touch ${currentPath.slice(0, -1)}`);

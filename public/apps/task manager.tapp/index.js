@@ -2,7 +2,7 @@ const navbuttons = document.querySelectorAll(".navbtn");
 
 navbuttons.forEach(btn => {
 	const tooltip = btn.querySelector("span");
-	let btnWidth = btn.getBoundingClientRect().width;
+	const btnWidth = btn.getBoundingClientRect().width;
 	tooltip.classList.add(`top-[${btnWidth + 4}px]`);
 
 	btn.addEventListener(
@@ -30,7 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	setInterval(getTasks, 2500);
 });
 
-function loadPane(val) {
+function _loadPane(val) {
 	const sys = document.getElementById("sysinf");
 	const main = document.getElementById("appl");
 	if (val === "sys") {
@@ -48,26 +48,27 @@ function getSpecs() {
 	const memtxt = document.getElementById("ram");
 	const ssdtxt = document.getElementById("ssd");
 	const gputxt = document.getElementById("gpu");
-	let mem = navigator.deviceMemory ? navigator.deviceMemory + "GB" + " of ram" : "Not Available";
-	let canvas = document.createElement("canvas");
-	let gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+	const mem = navigator.deviceMemory ? `${navigator.deviceMemory}GB of ram` : "Not Available";
+	const canvas = document.createElement("canvas");
+	const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
 	if (!gl) {
 		console.error("%cGPU%c: Information not available", `color: ${accent}`, "color: #b6b6b6");
 		return;
 	}
 	let gpuName;
-	let dbgRenderInfo = gl.getExtension("WEBGL_debug_renderer_info");
+	const dbgRenderInfo = gl.getExtension("WEBGL_debug_renderer_info");
 	if (dbgRenderInfo) {
-		let rndr = gl.getParameter(dbgRenderInfo.UNMASKED_RENDERER_WEBGL);
-		let regex = /ANGLE \(.+?,\s*(.+?) \(/;
-		let match = rndr.match(regex);
+		const rndr = gl.getParameter(dbgRenderInfo.UNMASKED_RENDERER_WEBGL);
+		const regex = /ANGLE \(.+?,\s*(.+?) \(/;
+		const match = rndr.match(regex);
 		gpuName = match ? match[1] : "Not Available";
 	}
 	navigator.storage.estimate().then(estimate => {
 		const totalSize = estimate.quota;
 		const usedSize = estimate.usage;
-		const usedPercentage = (usedSize / totalSize) * 100;
-		let formattedUsedSize, formattedTotalSize;
+		const _usedPercentage = (usedSize / totalSize) * 100;
+		let formattedUsedSize;
+		let formattedTotalSize;
 		if (usedSize >= 1024 * 1024 * 1024) {
 			formattedUsedSize = `${(usedSize / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 		} else {
@@ -80,9 +81,9 @@ function getSpecs() {
 		}
 		ssdtxt.textContent = `${formattedUsedSize} of ${formattedTotalSize}`;
 	});
-	let cpuCors = navigator.hardwareConcurrency;
+	const cpuCors = navigator.hardwareConcurrency;
 	cputxt.textContent = `${cpuCors} Logical Cores (${Math.floor(cpuCors / 2)} Cores ${cpuCors} threads)`;
-	let memoryUsed = window.tman_info && window.tman_info.bytes ? window.tman_info.bytes : 0;
+	const memoryUsed = window.tman_info?.bytes ? window.tman_info.bytes : 0;
 	let formattedMemoryUsed;
 	if (memoryUsed >= 1024 * 1024 * 1024) {
 		formattedMemoryUsed = `${(memoryUsed / (1024 * 1024 * 1024)).toFixed(2)} GB`;
@@ -102,9 +103,9 @@ async function getTasks() {
 	}
 	window.tman_info = mem;
 	const windows = window.parent.tb.process.list();
-	let main = document.querySelector("tbody");
-	let existingEntries = main.querySelectorAll("tr");
-	let currentWinIds = Array.from(existingEntries).map(entry => entry.getAttribute("win-id"));
+	const main = document.querySelector("tbody");
+	const existingEntries = main.querySelectorAll("tr");
+	const currentWinIds = Array.from(existingEntries).map(entry => entry.getAttribute("win-id"));
 	const currentIdsSet = new Set(currentWinIds);
 	Object.values(windows).forEach(win => {
 		const winID = win.id;

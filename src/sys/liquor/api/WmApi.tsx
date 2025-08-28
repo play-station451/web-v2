@@ -1,16 +1,16 @@
-import { AliceWM, WindowInformation } from "../AliceWM";
-import { App } from "../coreapps/App";
+import { AliceWM, type WindowInformation } from "../AliceWM";
+import type { App } from "../coreapps/App";
 
 export class WMAPI {
 	// @ts-expect-error
 	windows: WeakRef<any>[] = [];
-	async create(ctx: App | any, info: WindowInformation, onfocus: (() => void) | null = null, onresize: ((w: number, h: number) => void) | null = null) {
+	async create(ctx: App | any, _info: WindowInformation, _onfocus: (() => void) | null = null, _onresize: ((w: number, h: number) => void) | null = null) {
 		const win = await AliceWM.create(ctx);
 		// @ts-expect-error stfu
 		this.windows.push(new WeakRef(win));
 		return win;
 	}
-	async createGeneric(ctx: App, info: object) {
+	async createGeneric(_ctx: App, info: object) {
 		if (!info) {
 			info = {
 				title: "Generic Window",

@@ -6,7 +6,7 @@ function useSec(timeStr) {
 }
 
 function getBg(style) {
-	const match = /url\(['"]?([^'"\)]+)['"]?\)/.exec(style);
+	const match = /url\(['"]?([^'")]+)['"]?\)/.exec(style);
 	return match ? match[1] : null;
 }
 
@@ -91,7 +91,7 @@ setInterval(() => {
 			const bk = document.querySelector(".playControls__prev");
 
 			return {
-				track_name: sname.length > 18 ? sname.slice(0, 18) + "..." : sname,
+				track_name: sname.length > 18 ? `${sname.slice(0, 18)}...` : sname,
 				artist: aname,
 				background: img,
 				time: useSec(curr),

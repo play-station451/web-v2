@@ -1,5 +1,5 @@
 const Filer = window.parent.tb.fs;
-const IS_URL = /^(https?:\/\/)?(www\.)?([-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}|localhost)\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/;
+const _IS_URL = /^(https?:\/\/)?(www\.)?([-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}|localhost)\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/;
 const create_new_id = () => {
 	const id = Math.random().toString(36).substr(2, 9);
 	if (document.getElementById(id)) {
@@ -10,36 +10,34 @@ const create_new_id = () => {
 
 function customEncode(input) {
 	if (input) {
-		let str = input.toString();
-		let charArray = str.split("");
-		let encodedArray = charArray.map((char, index) => {
+		const str = input.toString();
+		const charArray = str.split("");
+		const encodedArray = charArray.map((char, index) => {
 			if (index % 2) {
 				return String.fromCharCode(2 ^ char.charCodeAt());
-			} else {
-				return char;
 			}
+			return char;
 		});
-		let encodedString = encodedArray.join("");
-		let finalResult = encodeURIComponent(encodedString);
+		const encodedString = encodedArray.join("");
+		const finalResult = encodeURIComponent(encodedString);
 		return finalResult;
-	} else {
-		return input;
 	}
+	return input;
 }
 
 function customDecode(encodedString) {
 	if (!encodedString) return encodedString;
-	let [firstPart, ...restParts] = encodedString.split("?");
-	let decodedString = decodeURIComponent(firstPart)
+	const [firstPart, ...restParts] = encodedString.split("?");
+	const decodedString = decodeURIComponent(firstPart)
 		.split("")
 		.map((char, index) => (index % 2 ? String.fromCharCode(2 ^ char.charCodeAt(0)) : char))
 		.join("");
-	let finalResult = decodedString + (restParts.length ? "?" + restParts.join("?") : "");
+	const finalResult = decodedString + (restParts.length ? `?${restParts.join("?")}` : "");
 	return finalResult;
 }
 
-const topbar_height = document.querySelector(".topbar").getBoundingClientRect().height;
-document.body.style.setProperty(`--topbar-height`, `${document.querySelector(".topbar").getBoundingClientRect().height}px`);
+const _topbar_height = document.querySelector(".topbar").getBoundingClientRect().height;
+document.body.style.setProperty("--topbar-height", `${document.querySelector(".topbar").getBoundingClientRect().height}px`);
 
 const new_tab = document.querySelector(".new-tab");
 new_tab.addEventListener("click", () => {
@@ -48,7 +46,7 @@ new_tab.addEventListener("click", () => {
 
 function closeTab(id) {
 	const tab = document.getElementById(id);
-	const tab_content = document.getElementById(id + "-content");
+	const tab_content = document.getElementById(`${id}-content`);
 	tab.remove();
 	window.parent.tb.mediaplayer.hide();
 	tab_content.remove();
@@ -79,7 +77,7 @@ function newTab() {
 	tab_close.src = "/apps/browser.tapp/close.svg";
 	tab.appendChild(tab_close);
 	document.querySelectorAll(".tab").forEach(otab => {
-		if (otab.id != tab.id) {
+		if (otab.id !== tab.id) {
 			otab.classList.remove("active");
 		}
 	});
@@ -91,13 +89,13 @@ function newTab() {
 	const urlbar = document.createElement("input");
 	const user = window.parent.sessionStorage.getItem("currAcc");
 	urlbar.classList.add("urlbar");
-	urlbar.addEventListener("focus", e => {
+	urlbar.addEventListener("focus", _e => {
 		document.querySelector(".searchbars").classList.add("focus");
 	});
-	urlbar.addEventListener("blur", e => {
+	urlbar.addEventListener("blur", _e => {
 		document.querySelector(".searchbars").classList.remove("focus");
 	});
-	urlbar.id = id + "-urlbar";
+	urlbar.id = `${id}-urlbar`;
 	urlbar.type = "text";
 	urlbar.placeholder = "Search or enter a URL";
 	urlbar.autocomplete = "off";
@@ -107,7 +105,7 @@ function newTab() {
 	});
 	document.querySelector(".searchbars").appendChild(urlbar);
 	document.querySelectorAll(".urlbar").forEach(ourlbar => {
-		if (ourlbar.id != urlbar.id) {
+		if (ourlbar.id !== urlbar.id) {
 			ourlbar.classList.remove("active");
 		}
 	});
@@ -126,7 +124,7 @@ function newTab() {
 			const localhostMatch = url.match(localhostRegex);
 
 			if (localhostMatch) {
-				const port = localhostMatch[2] ? parseInt(localhostMatch[2].substring(1)) : 80;
+				const port = localhostMatch[2] ? Number.parseInt(localhostMatch[2].substring(1), 10) : 80;
 				const serverUrl = window.parent.tb.node.servers.get(port);
 				if (serverUrl) {
 					activeTabContent.src = serverUrl;
@@ -144,12 +142,12 @@ function newTab() {
 				case "about:userscripts":
 					activeTabContent.src = "/apps/browser.tapp/userscripts.html";
 					break;
-				default:
+				default: {
 					const input = url;
 					Filer.promises.readFile(`/home/${user}/settings.json`, "utf8").then(async data => {
-						let settings = JSON.parse(data);
+						const settings = JSON.parse(data);
 						const searchEngine = localStorage.getItem("sEngine") || "https://google.com/search?q=";
-						const isUrl = /^(https?:\/\/)|(localhost(:\d+)?([\/?]|$))|([a-z0-9\-]+\.[a-z]{2,})/i.test(input) && !/\s/.test(input);
+						const isUrl = /^(https?:\/\/)|(localhost(:\d+)?([/?]|$))|([a-z0-9-]+\.[a-z]{2,})/i.test(input) && !/\s/.test(input);
 						let targetUrl;
 						if (isUrl) {
 							targetUrl = input.startsWith("http") ? input : `https://${input}`;
@@ -163,20 +161,21 @@ function newTab() {
 						}
 					});
 					break;
+				}
 			}
 
 			activeTabContent.onload = () => {
 				const pageTitle = activeTabContent.contentDocument.title || "Untitled";
 				const maxTitleLength = 8;
-				const tabTitle = pageTitle.length > maxTitleLength ? pageTitle.substring(0, maxTitleLength) + "..." : pageTitle;
+				const tabTitle = pageTitle.length > maxTitleLength ? `${pageTitle.substring(0, maxTitleLength)}...` : pageTitle;
 				activeTab.querySelector(".tab-title").innerHTML = tabTitle;
 			};
 		}
 	});
 	const tab_content = document.createElement("iframe");
 	Filer.promises.readFile(`/home/${user}/settings.json`, "utf8").then(data => {
-		let settings = JSON.parse(data);
-		let proxy = settings["proxy"];
+		const settings = JSON.parse(data);
+		const proxy = settings.proxy;
 		console.log(proxy);
 		console.log(localStorage.getItem("defUrl"));
 		if (localStorage.getItem("defUrl") === "about:newtab") {
@@ -191,22 +190,22 @@ function newTab() {
 			});
 		} else {
 			if (proxy === "Ultraviolet") {
-				tab_content.src = parent.window.location.origin + "/uv/service/" + customEncode(localStorage.getItem("defUrl") || "about:newtab");
+				tab_content.src = `${parent.window.location.origin}/uv/service/${customEncode(localStorage.getItem("defUrl") || "about:newtab")}`;
 			} else if (proxy === "Scramjet") {
-				tab_content.src = parent.window.location.origin + "/service/" + customEncode(localStorage.getItem("defUrl") || "about:newtab");
+				tab_content.src = `${parent.window.location.origin}/service/${customEncode(localStorage.getItem("defUrl") || "about:newtab")}`;
 			}
 		}
 	});
-	const unloadHandler = function () {
-		setTimeout(function () {
+	const unloadHandler = () => {
+		setTimeout(() => {
 			const pageTitle = tab_content.contentDocument.title || "Untitled";
 			const maxTitleLength = 8;
-			const tabTitle = pageTitle.length > maxTitleLength ? pageTitle.substring(0, maxTitleLength) + "..." : pageTitle;
+			const tabTitle = pageTitle.length > maxTitleLength ? `${pageTitle.substring(0, maxTitleLength)}...` : pageTitle;
 			tab_title.innerHTML = tabTitle;
 		}, 0);
 	};
 	tab_content.classList.add("tab-content");
-	tab_content.id = id + "-content";
+	tab_content.id = `${id}-content`;
 	const inject_engines = () => {
 		if (document.querySelector(".left-arrow").classList.contains("disabled")) {
 			document.querySelector(".left-arrow").classList.remove("disabled");
@@ -302,7 +301,7 @@ function newTab() {
 		}
 		const pageTitle = tab_content.contentDocument.title || "Untitled";
 		const maxTitleLength = 8;
-		const tabTitle = pageTitle.length > maxTitleLength ? pageTitle.substring(0, maxTitleLength) + "..." : pageTitle;
+		const tabTitle = pageTitle.length > maxTitleLength ? `${pageTitle.substring(0, maxTitleLength)}...` : pageTitle;
 		tab_title.innerHTML = tabTitle;
 		let url = tab_content.src;
 		url = url.replace(parent.window.location.origin, "");
@@ -315,7 +314,7 @@ function newTab() {
 	};
 	document.querySelector("main").appendChild(tab_content);
 	document.querySelectorAll(".tab-content").forEach(otab => {
-		if (otab.id != tab_content.id) {
+		if (otab.id !== tab_content.id) {
 			otab.classList.remove("active");
 		}
 	});
@@ -330,19 +329,19 @@ function newTab() {
 			clearInterval(interval);
 		}
 		document.querySelectorAll(".tab").forEach(otab => {
-			if (otab.id != tab.id) {
+			if (otab.id !== tab.id) {
 				otab.classList.remove("active");
 			}
 		});
 		document.querySelectorAll(".tab-content").forEach(otab => {
-			if (otab.id != tab_content.id) {
+			if (otab.id !== tab_content.id) {
 				otab.classList.remove("active");
 			}
 		});
 		tab.classList.add("active");
 		tab_content.classList.add("active");
 		document.querySelectorAll(".urlbar").forEach(ourlbar => {
-			if (ourlbar.id != urlbar.id) {
+			if (ourlbar.id !== urlbar.id) {
 				ourlbar.classList.remove("active");
 			}
 		});
@@ -374,7 +373,7 @@ window.addEventListener("keypress", e => {
 
 window.onload = () => {
 	newTab();
-	let tabs = document.querySelector(".tabs");
+	const tabs = document.querySelector(".tabs");
 	tabs.addEventListener("wheel", e => {
 		if (e.deltaY > 0) {
 			tabs.scrollLeft += 100;
@@ -440,11 +439,11 @@ const pwaIns = async () => {
 		tabTitle = pageTitle.length > maxTitleLength ? pageTitle.substring(0, maxTitleLength) : pageTitle;
 	}
 	const favicon = activeTabContent.contentDocument.querySelector("link[rel~='icon']")?.href || activeTabContent.contentDocument.querySelector("link[rel='shortcut icon']")?.href || "/apps/browser.tapp/icon.svg";
-	let data = JSON.parse(await Filer.promises.readFile("/apps/web_apps.json", "utf8"));
+	const data = JSON.parse(await Filer.promises.readFile("/apps/web_apps.json", "utf8"));
 	await Filer.exists(`/apps/user/${await window.parent.tb.user.username()}/${tabTitle}/index.json`, async exists => {
-		let apps = data.apps;
+		const apps = data.apps;
 		if (apps.includes(tabTitle.toLowerCase()) || exists) {
-			let index = apps.indexOf(tabTitle.toLowerCase());
+			const index = apps.indexOf(tabTitle.toLowerCase());
 			apps.splice(index, 1);
 			data.apps = apps;
 			await Filer.promises.writeFile("/apps/web_apps.json", JSON.stringify(data));
@@ -484,11 +483,11 @@ const pwaIns = async () => {
 const showTabs = () => {
 	if (document.querySelector(".tab-container").style.display === "none") {
 		document.querySelector(".tab-container").style.display = "flex";
-		document.querySelector("main").style.height = `calc(100% - calc(var(--topbar-height) + 10px))`;
+		document.querySelector("main").style.height = "calc(100% - calc(var(--topbar-height) + 10px))";
 		document.querySelector(".controls").style.marginTop = "0px";
 	} else {
 		document.querySelector(".controls").style.marginTop = "5px";
-		document.querySelector("main").style.height = `100%`;
+		document.querySelector("main").style.height = "100%";
 		document.querySelector(".tab-container").style.display = "none";
 	}
 };

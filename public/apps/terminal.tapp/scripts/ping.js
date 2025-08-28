@@ -6,7 +6,7 @@ async function ping(args) {
 
 	if (!url) displayError("No Url was Provided");
 	if (!url.includes("http://") && !url.includes("https://")) {
-		url = "http://" + url;
+		url = `http://${url}`;
 	}
 
 	for (let i = 0; i < numPings; i++) {

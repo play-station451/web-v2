@@ -39,8 +39,8 @@ export class ContextMenuAPI {
 		);
 	}
 	show(x: number, y: number) {
-		this.element.style.top = y.toString() + "px";
-		this.element.style.left = x.toString() + "px";
+		this.element.style.top = `${y.toString()}px`;
+		this.element.style.left = `${x.toString()}px`;
 		document.body.appendChild(this.element);
 		this.isShown = true;
 		this.element.focus();

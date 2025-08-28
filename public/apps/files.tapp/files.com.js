@@ -1,8 +1,8 @@
 const tb = parent.window.tb;
 const tb_island = tb.window.island;
-const tb_window = tb.window;
-const tb_context_menu = tb.context_menu;
-const tb_dialog = tb.dialog;
+const _tb_window = tb.window;
+const _tb_context_menu = tb.context_menu;
+const _tb_dialog = tb.dialog;
 
 const appIsland = window.parent.document.querySelector(".app_island");
 
@@ -11,7 +11,7 @@ tb_island.addControl({
 	appname: "Files",
 	id: "files_file",
 	click: () => {
-		let isTrash = document.querySelector(".exp").getAttribute("path") === "/home/trash" ? true : false;
+		const isTrash = document.querySelector(".exp").getAttribute("path") === "/home/trash";
 		tb.contextmenu.create({
 			x: 6,
 			y: appIsland.clientHeight + 12,
@@ -22,7 +22,7 @@ tb_island.addControl({
 							text: "New File",
 							click: async () => {
 								try {
-									const response = await tb.dialog.Message({
+									const _response = await tb.dialog.Message({
 										title: "Enter a name for the new file",
 										defaultValue: "",
 										onOk: async fileName => {
@@ -38,7 +38,7 @@ tb_island.addControl({
 															await createFile(path, ask);
 														}
 													} else {
-														let sh = tb.sh;
+														const sh = tb.sh;
 														await sh.touch(`${path}/${fileName}`, "");
 														openPath(path);
 													}
@@ -57,7 +57,7 @@ tb_island.addControl({
 					: {
 							text: "New Folder",
 							click: async () => {
-								const response = await tb.dialog.Message({
+								const _response = await tb.dialog.Message({
 									title: "Enter a name for the new folder",
 									defaultValue: "",
 									onOk: async response => {
@@ -67,7 +67,7 @@ tb_island.addControl({
 											try {
 												await window.parent.tb.fs.promises.access(folderPath);
 												return createUniqueFolder(path, folderName, number + 1);
-											} catch (error) {
+											} catch (_error) {
 												await window.parent.tb.fs.promises.mkdir(folderPath);
 											}
 										};
@@ -101,7 +101,7 @@ tb_island.addControl({
 													}
 												},
 											});
-										} catch (error) {
+										} catch (_error) {
 											await window.parent.tb.fs.promises.writeFile(filePath, Filer.Buffer.from(content));
 										}
 									}
@@ -135,7 +135,7 @@ tb_island.addControl({
 			{
 				text: "Go To",
 				click: async () => {
-					const response = await tb.dialog.Message({
+					const _response = await tb.dialog.Message({
 						title: "Enter a name for the new folder",
 						defaultValue: "",
 						onOk: async response => {

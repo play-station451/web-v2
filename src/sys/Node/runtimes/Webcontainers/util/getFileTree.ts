@@ -4,8 +4,8 @@
  * @see https://webcontainers.io/guides/working-with-the-file-system
  */
 
+import type { DirectoryNode, FileNode, FileSystemTree } from "@webcontainer/api";
 import getFileTreeGeneric from "../../util/getFileTree";
-import type { FileSystemTree, DirectoryNode, FileNode } from "@webcontainer/api";
 
 /**
  * Converts a flat file tree (path -> contents) to WebContainer's FileSystemTree format

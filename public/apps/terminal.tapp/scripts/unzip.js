@@ -1,5 +1,5 @@
 async function uzip(path, target) {
-	const response = await fetch("/fs/" + path);
+	const response = await fetch(`/fs/${path}`);
 	const zipFileContent = await response.arrayBuffer();
 	if (!(await dirExists(target))) {
 		await window.parent.tb.fs.promises.mkdir(target, { recursive: true });
@@ -10,7 +10,7 @@ async function uzip(path, target) {
 		const pathParts = fullPath.split("/");
 		let currentPath = "";
 		for (let i = 0; i < pathParts.length; i++) {
-			currentPath += pathParts[i] + "/";
+			currentPath += `${pathParts[i]}/`;
 			if (i === pathParts.length - 1 && !relativePath.endsWith("/")) {
 				try {
 					console.log(`touch ${currentPath.slice(0, -1)}`);
@@ -66,7 +66,8 @@ async function unzip(args) {
 		displayOutput("Usage: unzip <zipfile> <target>");
 		createNewCommandInput();
 		return;
-	} else if (path.includes("/mnt/")) {
+	}
+	if (path.includes("/mnt/")) {
 		displayError("TNSM unzip: Unzipping files from mounted drives is not supported yet.");
 		createNewCommandInput();
 		return;

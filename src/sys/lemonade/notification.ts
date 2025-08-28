@@ -30,7 +30,7 @@ export class Notification {
 		if (!this.eventHandlers[event]) {
 			this.eventHandlers[event] = [];
 		}
-		this.eventHandlers[event]!.push(handler);
+		this.eventHandlers[event]?.push(handler);
 	}
 
 	off(event: NotificationEvent, handler: (...args: any[]) => void): void {

@@ -157,7 +157,7 @@ type FilerFS = {
 		rename(oldPath: string, newPath: string): Promise<void>;
 		rmdir(path: string): Promise<void>;
 		setxattr(path: string, name: string, value: string | object, flag?: "CREATE" | "REPLACE"): Promise<void>;
-		stat(path: string, callback?: void | any): Promise<TStats>;
+		stat(path: string, callback?: undefined | any): Promise<TStats>;
 		symlink(srcPath: string, dstPath: string, type?: string): Promise<void>;
 		truncate(path: string, len: number): Promise<void>;
 		unlink(path: string): Promise<void>;

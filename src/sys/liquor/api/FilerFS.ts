@@ -1,15 +1,17 @@
 // @ts-nocheck
-import { FilerFS } from "../types/Filer";
-import { Anura } from "../Anura";
+
+import type { Anura } from "../Anura";
+import type { FilerFS } from "../types/Filer";
 import { AFSProvider } from "./Filesystem";
+
 const AnuraFDSymbol = Symbol.for("AnuraFD");
 type AnuraFD = {
 	fd: number;
 	[AnuraFDSymbol]: string;
 };
 // @ts-expect-error
-const Filer = window.Filer;
-let anura: Anura;
+const _Filer = window.Filer;
+let _anura: Anura;
 
 export class FilerAFSProvider extends AFSProvider<any> {
 	domain = "/";
@@ -28,7 +30,7 @@ export class FilerAFSProvider extends AFSProvider<any> {
 	}
 
 	ftruncate(fd: AnuraFD, len: number, callback?: (err: Error | null, fd: AnuraFD) => void) {
-		this.fs.ftruncate(fd.fd, len, (err, fd) => callback!(err, { fd, [AnuraFDSymbol]: this.domain }));
+		this.fs.ftruncate(fd.fd, len, (err, fd) => callback?.(err, { fd, [AnuraFDSymbol]: this.domain }));
 	}
 
 	truncate(path: string, len: number, callback?: (err: Error | null) => void) {
@@ -105,14 +107,14 @@ export class FilerAFSProvider extends AFSProvider<any> {
 	open(path: string, flags: "r" | "r+" | "w" | "w+" | "a" | "a+", mode?: unknown, callback?: unknown): void {
 		if (typeof mode === "number") {
 			this.fs.open(path, flags, mode, (err, fd) =>
-				(callback as (err: Error | null, fd: AnuraFD) => void)!(err, {
+				(callback as (err: Error | null, fd: AnuraFD) => void)?.(err, {
 					fd,
 					[AnuraFDSymbol]: this.domain,
 				}),
 			);
 		} else {
 			this.fs.open(path, flags, (err, fd) =>
-				(mode as (err: Error | null, fd: AnuraFD) => void)!(err, {
+				(mode as (err: Error | null, fd: AnuraFD) => void)?.(err, {
 					fd,
 					[AnuraFDSymbol]: this.domain,
 				}),

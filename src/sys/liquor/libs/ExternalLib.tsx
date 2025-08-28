@@ -1,5 +1,6 @@
-import { Anura } from "../Anura";
+import type { Anura } from "../Anura";
 import { Lib } from "./lib";
+
 // API Stub: TODO Later
 interface LibManifest {
 	name: string;
@@ -32,16 +33,16 @@ export class ExternalLib extends Lib {
 		super();
 		this.manifest = manifest;
 		this.name = manifest.name;
-		this.icon = source + "/" + manifest.icon;
+		this.icon = `${source}/${manifest.icon}`;
 		this.source = source;
 		this.package = manifest.package;
 		this.latestVersion = manifest.currentVersion;
 		Object.keys(manifest.versions).forEach(version => {
-			this.versions[version] = source + "/" + manifest.versions[version];
+			this.versions[version] = `${source}/${manifest.versions[version]}`;
 			console.log(this.versions[version]);
 		});
 		if (manifest.installHook) {
-			import(/* @vite-ignore */ source + "/" + manifest.installHook).then(module => {
+			import(/* @vite-ignore */ `${source}/${manifest.installHook}`).then(module => {
 				try {
 					// @ts-expect-error
 					module.default(anura, this);
@@ -55,7 +56,7 @@ export class ExternalLib extends Lib {
 		if (!version) {
 			version = this.latestVersion;
 		}
-		if (this.manifest.cache && this.cache[version] && this.installedLibs == Object.keys(window.anura.libs)) {
+		if (this.manifest.cache && this.cache[version] && this.installedLibs === Object.keys(window.anura.libs)) {
 			return this.cache[version];
 		}
 		if (this.versions[version]) {
@@ -66,8 +67,7 @@ export class ExternalLib extends Lib {
 				this.installedLibs = Object.keys(window.anura.libs);
 			}
 			return mod;
-		} else {
-			throw new Error(`Library ${this.name} does not supply version ${version}`);
 		}
+		throw new Error(`Library ${this.name} does not supply version ${version}`);
 	}
 }

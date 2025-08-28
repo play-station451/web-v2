@@ -1,9 +1,9 @@
-import { dialogProps } from "../types";
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { dialogProps } from "../types";
 import "../gui/styles/dialog.css";
 import "../gui/styles/cropper.css";
-import Cropper from "cropperjs";
 import Compressor from "compressorjs";
+import Cropper from "cropperjs";
 
 export type dialogType = "alert" | "message" | "select" | "auth" | "permissions" | "filebrowser" | "directorybrowser" | "savefile" | "cropper" | "webauth";
 
@@ -13,7 +13,7 @@ export let removeFn: () => void;
 export default function DialogContainer() {
 	const [dialogType, setdialogType] = useState<dialogType | null>(null);
 	const [dialogProps, setdialogProps] = useState<dialogProps | {}>({});
-	const [sudo, setSudo] = useState<boolean | null>(null);
+	const [_sudo, setSudo] = useState<boolean | null>(null);
 	const remove = () => {
 		setdialogType(null);
 		setdialogProps({});
@@ -30,7 +30,7 @@ export default function DialogContainer() {
 	useEffect(() => {
 		setDialogFn = setDialog;
 		removeFn = remove;
-	}, []);
+	}, [remove, setDialog]);
 	return (
 		<>
 			{dialogType === "alert" && <Alert {...(dialogProps as dialogProps)} />}
@@ -198,12 +198,11 @@ export function Select({ title, options, onOk, onCancel }: dialogProps) {
 			<div ref={dialog} className="flex flex-col p-2.5 gap-2.5 backdrop-blur-md rounded-lg sm:min-w-[340px] md:min-w-[400px] lg:min-w-[600px] bg-[#ffffff18] text-white shadow-tb-border-shadow duration-150">
 				<div className="font-extrabold text-xl leading-none select-none">{title}</div>
 				<div className="grid grid-cols-4 gap-2">
-					{options &&
-						options.map((option: { text: string; value: string }) => (
-							<button key={option.value} className="py-1.5 px-2.5 rounded-md bg-[#ffffff10] hover:bg-[#ffffff28] shadow-tb-border-shadow duration-150 cursor-pointer" onMouseDown={() => OK(option.value)}>
-								{option.text}
-							</button>
-						))}
+					{options?.map((option: { text: string; value: string }) => (
+						<button key={option.value} className="py-1.5 px-2.5 rounded-md bg-[#ffffff10] hover:bg-[#ffffff28] shadow-tb-border-shadow duration-150 cursor-pointer" onMouseDown={() => OK(option.value)}>
+							{option.text}
+						</button>
+					))}
 				</div>
 			</div>
 		</div>
@@ -216,7 +215,7 @@ export function Auth({ title, defaultUsername, onOk, onCancel, sudo }: dialogPro
 	const dialog = useRef<HTMLDivElement | null>(null);
 	const usernameRef = useRef<HTMLInputElement | null>(null);
 	const passwordRef = useRef<HTMLInputElement | null>(null);
-	const [sudoList, setSudoList] = useState<string[]>([]);
+	const [_sudoList, _setSudoList] = useState<string[]>([]);
 	const OK = () => {
 		const username = usernameRef.current?.value;
 		const password = passwordRef.current?.value;
@@ -267,7 +266,7 @@ export function Auth({ title, defaultUsername, onOk, onCancel, sudo }: dialogPro
 					defaultValue={sudo ? "sudo" : defaultUsername}
 					placeholder="Username"
 					className={`
-                        ${sudo ? `p-2 pl-4 rounded-lg bg-[#ffffff08] outline-hidden shadow-tb-border-shadow` : `p-2 pl-4 rounded-lg bg-[#ffffff16] cursor-text outline-hidden shadow-tb-border-shadow`}
+                        ${sudo ? "p-2 pl-4 rounded-lg bg-[#ffffff08] outline-hidden shadow-tb-border-shadow" : "p-2 pl-4 rounded-lg bg-[#ffffff16] cursor-text outline-hidden shadow-tb-border-shadow"}
                     `}
 					style={{ width: "100%" }}
 					ref={usernameRef}
@@ -373,7 +372,7 @@ export function FileBrowser({ title, filter, onOk, onCancel }: dialogProps) {
 	};
 	useEffect(() => {
 		openDirectory(currentDirectory);
-	}, [currentDirectory]);
+	}, [currentDirectory, openDirectory]);
 	const entClick = (entry: string, isDirectory: boolean) => {
 		if (isDirectory) {
 			setCurrentDirectory(`${currentDirectory}/${entry}`);
@@ -467,7 +466,7 @@ export function FileBrowser({ title, filter, onOk, onCancel }: dialogProps) {
 							onMouseDown={() => {
 								const parts = currentDirectory.split("/");
 								parts.pop();
-								const inp = parts.join("/") + "/";
+								const inp = `${parts.join("/")}/`;
 								setCurrentDirectory(inp);
 							}}
 						>
@@ -517,7 +516,7 @@ export function DirectoryBrowser({ title, defualtDir, onOk, onCancel }: dialogPr
 	};
 	useEffect(() => {
 		openDirectory(currentDirectory);
-	}, [currentDirectory]);
+	}, [currentDirectory, openDirectory]);
 	const Select = () => {
 		if (selectedEntry) {
 			setTimeout(() => {
@@ -660,7 +659,7 @@ export function SaveFile({ title, defualtDir, filename, onOk, onCancel }: dialog
 	};
 	useEffect(() => {
 		openDirectory(currentDirectory);
-	}, [currentDirectory]);
+	}, [currentDirectory, openDirectory]);
 	const Select = (entry: string, isDirectory: boolean) => {
 		if (isDirectory) {
 			if (fileInp.current) {
@@ -744,7 +743,7 @@ export function SaveFile({ title, defualtDir, filename, onOk, onCancel }: dialog
 						className="p-2 pl-4 rounded-lg bg-[#ffffff16] cursor-text outline-hidden shadow-tb-border-shadow duration-150"
 						onKeyDown={e => {
 							if (e.key === "Enter") {
-								const inputPath = fileInp.current!.value;
+								const inputPath = fileInp.current?.value;
 								if (inputPath.endsWith("/")) {
 									setCurrentDirectory(inputPath);
 								} else {
@@ -816,7 +815,7 @@ export function Crop({ title, img, onOk, onCancel }: dialogProps) {
 		<div className="fixed inset-0 z-999999999 flex flex-col items-center justify-center bg-[#00000078] backdrop-blur-xs duration-150">
 			<div className="flex flex-col p-2.5 gap-2.5 backdrop-blur-md rounded-lg sm:min-w-[340px] md:min-w-[400px] lg:min-w-[600px] bg-[#ffffff18] text-white shadow-tb-border-shadow duration-150">
 				<div className="font-extrabold text-xl leading-none select-none">{title}</div>
-				<img ref={imgRef} className="w-full h-24"></img>
+				<img ref={imgRef} className="w-full h-24" />
 				<div className="flex justify-between">
 					<button className="p-2 text-[#ffffff78] cursor-pointer hover:text-white duration-150" onMouseDown={Cancel}>
 						Cancel

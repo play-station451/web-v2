@@ -88,10 +88,10 @@ html {
 }
 
 .topbar .controls .navigation-button {
-	width: 16px !important;
-	height: 16px !important;
-	min-height: 16px !important;
-	min-width: 16px !important;
+	width: 16px;
+	height: 16px;
+	min-height: 16px;
+	min-width: 16px;
 	stroke: #ffffff;
 	stroke-width: 1.5px;
 	padding: 6px;

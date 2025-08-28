@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { UserSettings } from "../types";
+import type { UserSettings } from "../types";
 
 declare global {
 	interface Navigator {
@@ -143,7 +143,7 @@ export default function Battery() {
               duration-150
             `}
 					>
-						{batteryStatus != "none" ? batteryStatus : "N/A"}
+						{batteryStatus !== "none" ? batteryStatus : "N/A"}
 					</div>
 				</div>
 			)

@@ -1,8 +1,8 @@
-import { FC, ReactNode, useEffect, useRef, useState } from "react";
-import { MagnifyingGlassIcon, ChevronRightIcon, PuzzlePieceIcon } from "@heroicons/react/24/solid";
+import { ChevronRightIcon, MagnifyingGlassIcon, PuzzlePieceIcon } from "@heroicons/react/24/solid";
+import { type FC, type ReactNode, useEffect, useRef, useState } from "react";
 import "./styles/dock.css";
-import { dirExists, Filer, isURL, WindowConfig } from "../types";
-import { useWindowStore, useSearchMenuStore } from "../Store";
+import { useSearchMenuStore, useWindowStore } from "../Store";
+import { dirExists, Filer, isURL, type WindowConfig } from "../types";
 import SearchMenu from "./Search";
 
 export type TDockItem = {
@@ -86,7 +86,7 @@ const Dock: FC<IDockProps> = ({ pinned }) => {
 		}
 		window.addEventListener("updApps", fetchData);
 		return () => window.removeEventListener("updApps", fetchData);
-	}, []);
+	}, [isStartOpen]);
 
 	useEffect(() => {
 		const fetchUser = async () => {
@@ -246,7 +246,7 @@ const Dock: FC<IDockProps> = ({ pinned }) => {
 						</span>
 						<input
 							ref={searchRef}
-							className={`bg-transparent focus-within:outline-hidden text-lg font-[680] cursor-[var(--cursor-text)] w-full`}
+							className={"bg-transparent focus-within:outline-hidden text-lg font-[680] cursor-[var(--cursor-text)] w-full"}
 							type="text"
 							onFocus={() => {
 								setSearchActive(true);
@@ -269,7 +269,7 @@ const Dock: FC<IDockProps> = ({ pinned }) => {
 									let systemAppsMatch = 0;
 									for (let i = 0; i < systemAppsChildren.length; i++) {
 										const child: Element = systemAppsChildren[i];
-										if (child.textContent && child.textContent.toLowerCase().includes(query)) {
+										if (child.textContent?.toLowerCase().includes(query)) {
 											child.classList.remove("hidden");
 											setTimeout(() => {
 												child.classList.remove("opacity-0");
@@ -289,7 +289,7 @@ const Dock: FC<IDockProps> = ({ pinned }) => {
 										let pinnedAppsMatch = 0;
 										for (let i = 0; i < pinnedAppsChildren.length; i++) {
 											const child: Element = pinnedAppsChildren[i];
-											if (child.textContent && child.textContent.toLowerCase().includes(query)) {
+											if (child.textContent?.toLowerCase().includes(query)) {
 												child.classList.remove("hidden");
 												setTimeout(() => {
 													child.classList.remove("opacity-0");
@@ -398,7 +398,7 @@ const Dock: FC<IDockProps> = ({ pinned }) => {
 							</div>
 						</div>
 					) : null}
-					<div ref={searchMatchRef} className={"absolute top-1/2 left-1/2 -translate-1/2 flex gap-1.5 duration-150" + " " + `${searchMatch ? "" : "opacity-0 pointer-events-none -translate-x-3"}`}>
+					<div ref={searchMatchRef} className={`absolute top-1/2 left-1/2 -translate-1/2 flex gap-1.5 duration-150 ${searchMatch ? "" : "opacity-0 pointer-events-none -translate-x-3"}`}>
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-6">
 							<path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2Zm1.5 14.25h-3v-1.5h3v1.5Zm0-3h-3V7.5h3v5.75Z" />
 						</svg>
@@ -533,7 +533,7 @@ const Dock: FC<IDockProps> = ({ pinned }) => {
 							))}
 						</div>
 					) : null}
-					{(pinned?.length ?? 0) > 0 && windowStore.windows.length > 0 ? <span className="flex bg-[#ffffff38] backdrop-blur-[20px] h-[20px] w-1 rounded-full"></span> : null}
+					{(pinned?.length ?? 0) > 0 && windowStore.windows.length > 0 ? <span className="flex bg-[#ffffff38] backdrop-blur-[20px] h-[20px] w-1 rounded-full" /> : null}
 					<div
 						ref={openedAppsDockRef}
 						className={`
@@ -590,7 +590,7 @@ const DockItem: FC<TDockItem> = ({ className, icon, title, src, onClick, onConte
 			window.removeEventListener("currWID", setWID as EventListener);
 			window.removeEventListener("mousemove", mm);
 		};
-	}, [currWID, winfocused]);
+	}, [mm, title, windowStore.windows.find]);
 	return (
 		<dock-item
 			ref={dockItemRef}
@@ -598,7 +598,7 @@ const DockItem: FC<TDockItem> = ({ className, icon, title, src, onClick, onConte
 			wid={wid}
 			class={
 				className
-					? className + " cursor-pointer p-1 hover:bg-[#ffffff28] rounded-md duration-100 ease-in select-none"
+					? `${className} cursor-pointer p-1 hover:bg-[#ffffff28] rounded-md duration-100 ease-in select-none`
 					: "cursor-pointer p-1 hover:bg-[#ffffff28] rounded-md duration-100 ease-in select-none" +
 						`
             ${winfocused ? "bg-[#ffffff28] shadow-tb-border-shadow" : ""}
@@ -618,7 +618,8 @@ const DockItem: FC<TDockItem> = ({ className, icon, title, src, onClick, onConte
 										group.some((w: WindowConfig) => {
 											if (typeof w.title === "string") {
 												return w.title === title;
-											} else if (w.title && w.title.text) {
+											}
+											if (w.title?.text) {
 												return w.title.text === title;
 											}
 											return false;
@@ -694,7 +695,7 @@ const PinnedDockItem: FC<TDockItem> = ({ className, icon, title, src, onClick, o
 	return (
 		<dock-item
 			// @ts-expect-error
-			class={className ? className + " cursor-pointer p-1 hover:bg-[#ffffff28] rounded-md duration-100 ease-in select-none" : "cursor-pointer p-1 hover:bg-[#ffffff28] rounded-md duration-100 ease-in select-none"}
+			class={className ? `${className} cursor-pointer p-1 hover:bg-[#ffffff28] rounded-md duration-100 ease-in select-none` : "cursor-pointer p-1 hover:bg-[#ffffff28] rounded-md duration-100 ease-in select-none"}
 			onContextMenu={() => {
 				return;
 			}}
@@ -756,7 +757,7 @@ export const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, classN
 	// @ts-expect-error
 	const chars = typeof title === "string" ? title.split("") : title?.text.split("");
 	const [resolvedIcon, setResolvedIcon] = useState<string | boolean | undefined>(false);
-	let sysapps = [{ title: "Terminal" }, { title: "Files" }, { title: "Settings" }, { title: { text: "App Store" } }, { title: "Browser" }, { title: "Calculator" }, { title: "Feedback" }, { title: "About" }, { title: "Text Editor" }, { title: "Task Manager" }, { title: "Anura File Manager" }];
+	const sysapps = [{ title: "Terminal" }, { title: "Files" }, { title: "Settings" }, { title: { text: "App Store" } }, { title: "Browser" }, { title: "Calculator" }, { title: "Feedback" }, { title: "About" }, { title: "Text Editor" }, { title: "Task Manager" }, { title: "Anura File Manager" }];
 	// @ts-expect-error
 	const isSystemApp = sysapps.map(app => (typeof app.title === "string" ? app.title : app.title.text)).includes(typeof title === "string" ? title : title?.text);
 
@@ -879,9 +880,9 @@ export const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, classN
 											} else {
 												appPath = `/apps/user/${await window.tb.user.username()}/${appName}`;
 											}
-											let installedApps = JSON.parse(await Filer.promises.readFile(`/apps/installed.json`, "utf8"));
+											let installedApps = JSON.parse(await Filer.promises.readFile("/apps/installed.json", "utf8"));
 											installedApps = installedApps.filter((app: any) => app.title === title);
-											await Filer.promises.writeFile(`/apps/installed.json`, JSON.stringify(installedApps));
+											await Filer.promises.writeFile("/apps/installed.json", JSON.stringify(installedApps));
 											// @ts-expect-error
 											await new Filer.Shell().promises.rm(appPath, { recursive: true });
 											await window.tb.launcher.removeApp(chars);
@@ -898,7 +899,7 @@ export const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, classN
 					// @ts-expect-error
 					resolvedIcon === true ? <img src={icon} className="w-7 h-7 flex items-center justify-center" /> : <div className="w-7 h-7 flex items-center justify-center">{<PuzzlePieceIcon className="size-7" />}</div>
 				}
-				<span className="text-white font-[680]">{chars.length > 10 ? chars.slice(0, 10).join("") + "..." : chars.join("")}</span>
+				<span className="text-white font-[680]">{chars.length > 10 ? `${chars.slice(0, 10).join("")}...` : chars.join("")}</span>
 			</div>
 			<ChevronRightIcon
 				onClick={async () => {
@@ -986,7 +987,7 @@ export const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, classN
 											?.replace("/fs", "")
 											.replace(/\/[^/]+\.html$/, "/")
 											.replace(/\/\.\//, "/");
-										const appConfig = JSON.parse(await Filer.promises.readFile(path + "index.json", "utf8"));
+										const appConfig = JSON.parse(await Filer.promises.readFile(`${path}index.json`, "utf8"));
 										if (appsStart.pinned_apps.some((app: any) => app.title === appConfig.config.title && app.icon === appConfig.config.icon)) {
 											return;
 										}
@@ -1020,9 +1021,9 @@ export const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, classN
 											} else {
 												appPath = `/apps/user/${await window.tb.user.username()}/${appName}`;
 											}
-											let installedApps = JSON.parse(await Filer.promises.readFile(`/apps/installed.json`, "utf8"));
+											let installedApps = JSON.parse(await Filer.promises.readFile("/apps/installed.json", "utf8"));
 											installedApps = installedApps.filter((app: any) => app.title === title);
-											await Filer.promises.writeFile(`/apps/installed.json`, JSON.stringify(installedApps));
+											await Filer.promises.writeFile("/apps/installed.json", JSON.stringify(installedApps));
 											// @ts-expect-error
 											await new Filer.Shell().promises.rm(appPath, { recursive: true });
 											await window.tb.launcher.removeApp(chars);
@@ -1039,7 +1040,7 @@ export const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, classN
 					// @ts-expect-error
 					resolvedIcon === true ? <img src={icon} className="w-7 h-7 flex items-center justify-center" /> : <div className="w-7 h-7 flex items-center justify-center">{<PuzzlePieceIcon className="size-7" />}</div>
 				}
-				<span className="text-white font-[680]">{chars.length > 10 ? chars.slice(0, 10).join("") + "..." : chars.join("")}</span>
+				<span className="text-white font-[680]">{chars.length > 10 ? `${chars.slice(0, 10).join("")}...` : chars.join("")}</span>
 			</div>
 			<ChevronRightIcon
 				onClick={async () => {

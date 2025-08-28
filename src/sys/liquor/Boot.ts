@@ -13,7 +13,7 @@ channel.addEventListener("message", msg => {
 
 	if (msg.data === "blackmanthunderstorm") {
 		activetab = false;
-		//@ts-ignore
+		//@ts-expect-error
 		for (const elm of [...document.children]) {
 			elm.remove();
 		}
@@ -28,7 +28,9 @@ let anura: Anura;
 
 window.addEventListener("load", async () => {
 	await navigator.serviceWorker.register("/anura-sw.js");
-	let conf, milestone, instancemilestone;
+	let conf;
+	let milestone;
+	let instancemilestone;
 	const Filer = (window as any).Filer;
 	try {
 		conf = await (await fetch("/config.json")).json();
@@ -37,7 +39,7 @@ window.addEventListener("load", async () => {
 
 		console.log("writing config??");
 		Filer.fs.writeFile("/config_cached.json", JSON.stringify(conf));
-	} catch (e) {
+	} catch (_e) {
 		conf = JSON.parse(await new Promise(r => Filer.fs.readFile("/config_cached.json", (_: any, b: Uint8Array) => r(new TextDecoder().decode(b)))));
 	}
 
@@ -45,10 +47,10 @@ window.addEventListener("load", async () => {
 	if (milestone) {
 		const stored = anura.settings.get("milestone");
 		if (!stored) await anura.settings.set("milestone", milestone);
-		else if (stored != milestone || anura.settings.get("instancemilestone") != instancemilestone) {
+		else if (stored !== milestone || anura.settings.get("instancemilestone") !== instancemilestone) {
 			await anura.settings.set("milestone", milestone);
 			await anura.settings.set("instancemilestone", instancemilestone);
-			navigator.serviceWorker.controller!.postMessage({
+			navigator.serviceWorker.controller?.postMessage({
 				anura_target: "anura.cache.invalidate",
 			});
 			console.log("invalidated cache");
@@ -124,14 +126,14 @@ document.addEventListener("anura-login-completed", async () => {
 	// Load all persistent sideloaded apps
 	try {
 		// @ts-expect-error
-		anura.fs.readdir("/apps/anura", (err: Error, files: string[]) => {
+		anura.fs.readdir("/apps/anura", (_err: Error, files: string[]) => {
 			// Fixes a weird edgecase that I was facing where no user apps are installed, nothing breaks it just throws an error which I would like to mitigate.
-			if (files == undefined) return;
+			if (files === undefined) return;
 			files.forEach(file => {
 				try {
-					anura.registerExternalApp("/fs/apps/anura/" + file);
+					anura.registerExternalApp(`/fs/apps/anura/${file}`);
 				} catch (e) {
-					anura.logger.error("Anura failed to load an app " + e);
+					anura.logger.error(`Anura failed to load an app ${e}`);
 				}
 			});
 		});
@@ -141,15 +143,15 @@ document.addEventListener("anura-login-completed", async () => {
 	// Load all user provided init scripts
 	try {
 		// @ts-expect-error
-		anura.fs.readdir("/userInit", (err: Error, files: string[]) => {
+		anura.fs.readdir("/userInit", (_err: Error, files: string[]) => {
 			// Fixes a weird edgecase that I was facing where no user apps are installed, nothing breaks it just throws an error which I would like to mitigate.
-			if (files == undefined) return;
+			if (files === undefined) return;
 			files.forEach(file => {
 				try {
 					anura.fs.readFile(
-						"/userInit/" + file,
+						`/userInit/${file}`,
 						// @ts-expect-error
-						function (err: Error, data: Uint8Array) {
+						(err: Error, data: Uint8Array) => {
 							if (err) throw "Failed to read file";
 							try {
 								eval(new TextDecoder("utf-8").decode(data));
@@ -159,7 +161,7 @@ document.addEventListener("anura-login-completed", async () => {
 						},
 					);
 				} catch (e) {
-					anura.logger.error("Anura failed to load an app " + e);
+					anura.logger.error(`Anura failed to load an app ${e}`);
 				}
 			});
 		});
@@ -175,7 +177,7 @@ document.addEventListener("anura-login-completed", async () => {
 		});
 	}
 
-	document.addEventListener("contextmenu", function (e) {
+	document.addEventListener("contextmenu", e => {
 		if (e.shiftKey) return;
 		e.preventDefault();
 		//     const menu: any = document.querySelector(".custom-menu");

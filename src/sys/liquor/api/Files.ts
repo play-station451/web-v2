@@ -1,4 +1,4 @@
-import { Anura } from "../Anura";
+import type { Anura } from "../Anura";
 
 // Depends on Settings.ts, must be loaded AFTER
 let anura: Anura;
@@ -11,7 +11,7 @@ export class FilesAPI {
 	folderIcon = "/assets/img/folder.svg";
 	open = async function (path: string): Promise<void> {
 		anura = window.anura;
-		const ext = path.split("/").pop()!.split(".").pop();
+		const ext = path.split("/").pop()?.split(".").pop();
 		const extHandlers = anura.settings.get("FileExts") || {};
 		if (extHandlers[ext!]) {
 			const handler = extHandlers[ext!];
@@ -34,7 +34,7 @@ export class FilesAPI {
 			}
 			if (handler.handler_type === "cjs") {
 				// Legacy handler, eval it
-				eval((await (await fetch(handler.path)).text()) + `openFile(${JSON.stringify(path)})`); // here, JSON.stringify is used to properly escape the string
+				eval(`${await (await fetch(handler.path)).text()}openFile(${JSON.stringify(path)})`); // here, JSON.stringify is used to properly escape the string
 				return;
 			}
 		}
@@ -47,8 +47,8 @@ export class FilesAPI {
 	async defaultOpen(path: string): Promise<void> {
 		anura = window.anura;
 		const extHandlers = anura.settings.get("FileExts") || {};
-		if (extHandlers["default"]) {
-			const handler = extHandlers["default"];
+		if (extHandlers.default) {
+			const handler = extHandlers.default;
 			console.log(`Opening ${path} with ${handler}`);
 			if (handler.handler_type === "module") {
 				const handlerModule = await anura.import(handler.id);
@@ -64,14 +64,14 @@ export class FilesAPI {
 				return;
 			}
 			if (handler.handler_type === "cjs") {
-				eval((await (await fetch(handler.path)).text()) + `openFile(${JSON.stringify(path)})`);
+				eval(`${await (await fetch(handler.path)).text()}openFile(${JSON.stringify(path)})`);
 				return;
 			}
 		}
 	}
 
 	getIcon = async (path: string) => {
-		const ext = path.split("/").pop()!.split(".").pop();
+		const ext = path.split("/").pop()?.split(".").pop();
 		const extHandlers = anura.settings.get("FileExts") || {};
 		if (extHandlers[ext!]) {
 			const handler = extHandlers[ext!];
@@ -104,8 +104,8 @@ export class FilesAPI {
 	async defaultIcon(path: string) {
 		anura = window.anura;
 		const extHandlers = anura.settings.get("FileExts") || {};
-		if (extHandlers["default"]) {
-			const handler = extHandlers["default"];
+		if (extHandlers.default) {
+			const handler = extHandlers.default;
 			if (handler.handler_type === "module") {
 				const handlerModule = await anura.import(handler.id);
 				if (!handlerModule) {
@@ -135,7 +135,7 @@ export class FilesAPI {
 
 	async getFileType(path: string) {
 		anura = window.anura;
-		const ext = path.split("/").pop()!.split(".").pop();
+		const ext = path.split("/").pop()?.split(".").pop();
 		const extHandlers = anura.settings.get("FileExts") || {};
 		if (extHandlers[ext!]) {
 			const handler = extHandlers[ext!];

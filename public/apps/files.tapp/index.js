@@ -1,8 +1,9 @@
 import * as webdav from "./webdav.js";
+
 const Filer = window.Filer;
 
 const user = sessionStorage.getItem("currAcc");
-window.addEventListener("load", event => {
+window.addEventListener("load", _event => {
 	const dirInput = document.querySelector(".nav-input.dir");
 	if (sessionStorage.getItem("ldir")) {
 		dirInput.value = sessionStorage.getItem("ldir");
@@ -36,7 +37,7 @@ const back = async () => {
 		const input = dirInput.value.trim();
 		const parts = input.split("/");
 		parts.pop();
-		const inp = parts.join("/") + "/";
+		const inp = `${parts.join("/")}/`;
 		openPath(inp);
 	}
 };
@@ -55,7 +56,7 @@ document.getElementById("reload").addEventListener("click", () => {
 const emptyTrash = async () => {
 	await window.parent.tb.fs.promises.readdir("/system/trash").then(async files => {
 		if (files.length > 0) {
-			for (let file of files) {
+			for (const file of files) {
 				const filePath = `/system/trash/${file}`;
 				window.parent.tb.fs.promises.stat(filePath, async (err, stats) => {
 					if (err) {
@@ -106,7 +107,7 @@ const createCollapsible = async (title, id, opened, children) => {
 		paths.classList.add("collapsed");
 		collaspeIcon.querySelector("svg").classList.add("collapsed");
 	}
-	for (let title in children) {
+	for (const title in children) {
 		const path = document.createElement("div");
 		path.classList.add("path-item");
 		if (title.toLocaleLowerCase().endsWith(".tapp")) {
@@ -207,13 +208,13 @@ const createCollapsible = async (title, id, opened, children) => {
 		function click() {
 			openPath(children[title]);
 		}
-		path.getAttribute("oneclick") === "true" ? path.addEventListener("click", e => click()) : path.addEventListener("dblclick", e => click());
+		path.getAttribute("oneclick") === "true" ? path.addEventListener("click", _e => click()) : path.addEventListener("dblclick", _e => click());
 	}
 	collapsible.appendChild(paths);
-	collapsibleTitleContainer.addEventListener("click", async e => {
+	collapsibleTitleContainer.addEventListener("click", async _e => {
 		const icon = collapsible.querySelector(".collapsible-icon svg");
 		const paths = collapsible.querySelector(".paths");
-		let qcdata = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/config.json`, "utf8"));
+		const qcdata = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/config.json`, "utf8"));
 		if (qcdata["open-collapsibles"]) {
 			if (qcdata["open-collapsibles"][id]) {
 				if (qcdata["open-collapsibles"][id] === true) {
@@ -286,7 +287,7 @@ const createStorageDeviceCard = (type, davInfo) => {
 	});
 
 	switch (type) {
-		case "local":
+		case "local": {
 			title.textContent = "Local Storage";
 			const maxStorage = 10 * 1024 * 1024;
 			const warningThreshold = 90;
@@ -318,6 +319,7 @@ const createStorageDeviceCard = (type, davInfo) => {
 				percent.style.backgroundColor = "#5D78D8";
 			}
 			break;
+		}
 		case "fs":
 			title.textContent = "File System";
 			if ("navigator" in window && "storage" in navigator) {
@@ -325,7 +327,8 @@ const createStorageDeviceCard = (type, davInfo) => {
 					const totalSize = estimate.quota;
 					const usedSize = estimate.usage;
 					const usedPercentage = (usedSize / totalSize) * 100;
-					let formattedUsedSize, formattedTotalSize;
+					let formattedUsedSize;
+					let formattedTotalSize;
 					if (usedSize >= 1024 * 1024 * 1024) {
 						formattedUsedSize = `${(usedSize / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 					} else {
@@ -349,10 +352,10 @@ const createStorageDeviceCard = (type, davInfo) => {
 				});
 			}
 			break;
-		case "dav":
+		case "dav": {
 			title.textContent = davInfo.name || "Dav Drive";
 			const displayText = davInfo.url || "http://localhost:3001/dav/";
-			size.textContent = displayText.length > 18 ? displayText.slice(0, 18) + "..." : displayText;
+			size.textContent = displayText.length > 18 ? `${displayText.slice(0, 18)}...` : displayText;
 			percent.style.width = "100%";
 			const test = async () => {
 				try {
@@ -394,6 +397,7 @@ const createStorageDeviceCard = (type, davInfo) => {
 			};
 			test();
 			break;
+		}
 	}
 
 	item.appendChild(info);
@@ -403,8 +407,8 @@ const createStorageDeviceCard = (type, davInfo) => {
 const showStorageDevices = () => {
 	const exp = document.querySelector(".exp");
 	exp.innerHTML = "";
-	let fscard = createStorageDeviceCard("fs");
-	let lscard = createStorageDeviceCard("local");
+	const fscard = createStorageDeviceCard("fs");
+	const lscard = createStorageDeviceCard("local");
 	const sd_items = document.createElement("div");
 	sd_items.classList.add("sd-items");
 	sd_items.appendChild(fscard);
@@ -412,7 +416,7 @@ const showStorageDevices = () => {
 	const getdav = async () => {
 		const davInstances = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
 		for (const dav of davInstances) {
-			let si = createStorageDeviceCard("dav", { name: dav.name, url: dav.url, user: dav.username, pass: dav.password });
+			const si = createStorageDeviceCard("dav", { name: dav.name, url: dav.url, user: dav.username, pass: dav.password });
 			sd_items.appendChild(si);
 		}
 	};
@@ -447,8 +451,8 @@ const showLS = async () => {
 		pathItem.appendChild(title);
 		pathItem.setAttribute("path", `local storage/${key}`);
 		exp.appendChild(pathItem);
-		pathItem.addEventListener("dblclick", e => {
-			let lsitem = localStorage.getItem(key);
+		pathItem.addEventListener("dblclick", _e => {
+			const lsitem = localStorage.getItem(key);
 			tb.dialog.Message({
 				title: `Change the key for ${key}`,
 				defaultValue: lsitem,
@@ -464,7 +468,7 @@ const showLS = async () => {
 
 const useDavClient = async path => {
 	const davInstances = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
-	const davUrl = path.split("/dav/")[0] + "/dav/";
+	const davUrl = `${path.split("/dav/")[0]}/dav/`;
 	const dav = davInstances.find(d => d.url.toLowerCase().includes(davUrl));
 	if (!dav) throw new Error("No matching dav instance found");
 	const client = webdav.createClient(dav.url, {
@@ -474,8 +478,8 @@ const useDavClient = async path => {
 	});
 	let filePath;
 	if (path.startsWith("http")) {
-		const match = path.match(/^https?:\/\/[^\/]+\/dav\/([^\/]+\/)?(.+)$/);
-		filePath = match ? "/" + match[2] : path;
+		const match = path.match(/^https?:\/\/[^/]+\/dav\/([^/]+\/)?(.+)$/);
+		filePath = match ? `/${match[2]}` : path;
 	} else {
 		filePath = path.replace(davUrl, "/");
 	}
@@ -486,7 +490,7 @@ const getItemDetails = async path => {
 	if (path.includes("http")) {
 		const { client, filePath } = await useDavClient(path);
 		const stats = await client.stat(filePath, { depth: 1 });
-		let message = JSON.stringify({
+		const message = JSON.stringify({
 			type: "item-details",
 			path: path,
 			details: {
@@ -503,7 +507,7 @@ const getItemDetails = async path => {
 		});
 
 		parent.window.tb.window.create({
-			title: `Properties`,
+			title: "Properties",
 			icon: "/fs/apps/system/files.tapp/icon.svg",
 			src: "/fs/apps/system/files.tapp/properties/index.html",
 			size: {
@@ -516,17 +520,17 @@ const getItemDetails = async path => {
 	} else {
 		window.parent.tb.fs.stat(path, (err, stats) => {
 			if (err) return console.error(err);
-			let name = stats.name;
-			let type = stats.isFile() ? "File" : stats.isDirectory() ? "Folder" : "Symbolic Link";
-			let size = stats.size;
-			let created = stats.ctime;
-			let modified = stats.mtime;
-			let accessed = stats.atime;
-			let owner = stats.uid;
-			let mode = stats.mode;
-			let version = stats.version;
+			const name = stats.name;
+			const type = stats.isFile() ? "File" : stats.isDirectory() ? "Folder" : "Symbolic Link";
+			const size = stats.size;
+			const created = stats.ctime;
+			const modified = stats.mtime;
+			const accessed = stats.atime;
+			const owner = stats.uid;
+			const mode = stats.mode;
+			const version = stats.version;
 
-			let message = JSON.stringify({
+			const message = JSON.stringify({
 				type: "item-details",
 				path: path,
 				details: {
@@ -543,7 +547,7 @@ const getItemDetails = async path => {
 			});
 
 			parent.window.tb.window.create({
-				title: `Properties`,
+				title: "Properties",
 				icon: "/fs/apps/system/files.tapp/icon.svg",
 				src: "/fs/apps/system/files.tapp/properties/index.html",
 				size: {
@@ -568,7 +572,7 @@ const cm = async e => {
 		context.classList.remove("fade-in");
 	}, 200);
 	let options = [];
-	let isTrash = document.querySelector(".exp").getAttribute("path") === "/system/trash" ? true : false;
+	const isTrash = document.querySelector(".exp").getAttribute("path") === "/system/trash";
 	if (e.target.getAttribute("type") === "file") {
 		options = [
 			{
@@ -581,11 +585,11 @@ const cm = async e => {
 						ext = ext.slice(-1).join(".");
 					}
 					const data = JSON.parse(await window.parent.tb.fs.promises.readFile("/apps/system/files.tapp/extensions.json", "utf8"));
-					if (data["image"].includes(ext)) {
+					if (data.image.includes(ext)) {
 						parent.window.tb.file.handler.openFile(e.target.getAttribute("path"), "image");
-					} else if (data["video"].includes(ext)) {
+					} else if (data.video.includes(ext)) {
 						parent.window.tb.file.handler.openFile(e.target.getAttribute("path"), "video");
-					} else if (data["audio"].includes(ext)) {
+					} else if (data.audio.includes(ext)) {
 						parent.window.tb.file.handler.openFile(e.target.getAttribute("path"), "audio");
 					} else if (ext.toLowerCase() === "tapp.zip") {
 						try {
@@ -594,12 +598,11 @@ const cm = async e => {
 								title: "Install application",
 								message: `Would you like to install the application: ${path}?`,
 								onOk: async () => {
-									const appPath = `/fs/${path}`.replace("//", "/");
-									const appName =
-										path
-											.replace(`/home/${window.parent.sessionStorage.getItem("currAcc")}/`, "")
-											.replace(/\//g, ".")
-											.replace(/\.zip$/, "") + "";
+									const _appPath = `/fs/${path}`.replace("//", "/");
+									const appName = `${path
+										.replace(`/home/${window.parent.sessionStorage.getItem("currAcc")}/`, "")
+										.replace(/\//g, ".")
+										.replace(/\.zip$/, "")}`;
 									window.parent.tb.notification.Installing({
 										message: `Installing ${appName}...`,
 										application: "Files",
@@ -638,16 +641,16 @@ const cm = async e => {
 											user: window.parent.sessionStorage.getItem("currAcc"),
 										});
 										try {
-											let apps = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/installed.json`, "utf8"));
+											const apps = JSON.parse(await window.parent.tb.fs.promises.readFile("/apps/installed.json", "utf8"));
 											apps.push({
 												name: appName,
 												user: await window.parent.tb.user.username(),
 												config: `/apps/system/${appName}.tapp/.tbconfig`,
 											});
-											await window.parent.tb.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(apps));
+											await window.parent.tb.fs.promises.writeFile("/apps/installed.json", JSON.stringify(apps));
 										} catch {
 											await window.parent.tb.fs.promises.writeFile(
-												`/apps/installed.json`,
+												"/apps/installed.json",
 												JSON.stringify([
 													{
 														name: appName,
@@ -680,20 +683,20 @@ const cm = async e => {
 								message: `❌ An Unexpected error occurred when trying to install the app: ${path} Error: ${e}`,
 							});
 						}
-					} else if (data["extractables"].includes(ext) || ext.toLowerCase() === "app.zip" || ext.toLowerCase() === "lib.zip") {
+					} else if (data.extractables.includes(ext) || ext.toLowerCase() === "app.zip" || ext.toLowerCase() === "lib.zip") {
 						const zipFilePath = e.target.getAttribute("path");
 						const path = item.getAttribute("path").replace(".zip", "");
 						const targetDirectory = `${path}`;
 						await unzip(zipFilePath, targetDirectory);
 						openPath(document.querySelector(".nav-input.dir").value);
-					} else if (data["text"].includes(ext)) {
+					} else if (data.text.includes(ext)) {
 						parent.window.tb.file.handler.openFile(e.target.getAttribute("path"), "text");
 					} else {
-						let handlers = JSON.parse(await window.parent.tb.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"))["fileAssociatedApps"];
+						let handlers = JSON.parse(await window.parent.tb.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8")).fileAssociatedApps;
 						handlers = Object.entries(handlers).filter(([type, app]) => {
 							return !(type === "text" && app === "text-editor") && !(type === "image" && app === "media-viewer") && !(type === "video" && app === "media-viewer") && !(type === "audio" && app === "media-viewer");
 						});
-						let hands = [];
+						const hands = [];
 						for (const [type, app] of handlers) {
 							hands.push({ text: app, value: type });
 						}
@@ -723,16 +726,17 @@ const cm = async e => {
 									case "text":
 										parent.window.tb.file.handler.openFile(e.target.getAttribute("path"), "text");
 										break;
-									case "media":
+									case "media": {
 										const ext = e.target.getAttribute("name").split(".").pop();
-										if (data["image"].includes(ext)) {
+										if (data.image.includes(ext)) {
 											parent.window.tb.file.handler.openFile(e.target.getAttribute("path"), "image");
-										} else if (data["video"].includes(ext)) {
+										} else if (data.video.includes(ext)) {
 											parent.window.tb.file.handler.openFile(e.target.getAttribute("path"), "video");
-										} else if (data["audio"].includes(ext)) {
+										} else if (data.audio.includes(ext)) {
 											parent.window.tb.file.handler.openFile(e.target.getAttribute("path"), "audio");
 										}
 										break;
+									}
 									case "webview":
 										parent.window.tb.file.handler.openFile(e.target.getAttribute("path"), "webpage");
 										break;
@@ -762,11 +766,11 @@ const cm = async e => {
 			{
 				text: "Open With",
 				click: async () => {
-					let handlers = JSON.parse(await window.parent.tb.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"))["fileAssociatedApps"];
+					let handlers = JSON.parse(await window.parent.tb.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8")).fileAssociatedApps;
 					handlers = Object.entries(handlers).filter(([type, app]) => {
 						return !(type === "text" && app === "text-editor") && !(type === "image" && app === "media-viewer") && !(type === "video" && app === "media-viewer") && !(type === "audio" && app === "media-viewer");
 					});
-					let hands = [];
+					const hands = [];
 					for (const [type, app] of handlers) {
 						hands.push({ text: app, value: type });
 					}
@@ -797,16 +801,17 @@ const cm = async e => {
 								case "text":
 									parent.window.tb.file.handler.openFile(e.target.getAttribute("path"), "text");
 									break;
-								case "media":
+								case "media": {
 									const ext = e.target.getAttribute("name").split(".").pop();
-									if (data["image"].includes(ext)) {
+									if (data.image.includes(ext)) {
 										parent.window.tb.file.handler.openFile(e.target.getAttribute("path"), "image");
-									} else if (data["video"].includes(ext)) {
+									} else if (data.video.includes(ext)) {
 										parent.window.tb.file.handler.openFile(e.target.getAttribute("path"), "video");
-									} else if (data["audio"].includes(ext)) {
+									} else if (data.audio.includes(ext)) {
 										parent.window.tb.file.handler.openFile(e.target.getAttribute("path"), "audio");
 									}
 									break;
+								}
 								case "webview":
 									parent.window.tb.file.handler.openFile(e.target.getAttribute("path"), "webpage");
 									break;
@@ -858,11 +863,11 @@ const cm = async e => {
 										item.classList.add(`${type}-item`, "path-item");
 										const icon = document.createElement("div");
 										icon.classList.add("icon");
-										let ext = newFileName.split(".").pop();
-										const data = await fetch(`/fs//system/etc/terbium/file-icons.json`).then(res => res.json());
-										let iconName = data["ext-to-name"][ext];
-										let iconPath = data["name-to-path"][iconName];
-										let unknown = data["name-to-path"]["Unknown"];
+										const ext = newFileName.split(".").pop();
+										const data = await fetch("/fs//system/etc/terbium/file-icons.json").then(res => res.json());
+										const iconName = data["ext-to-name"][ext];
+										const iconPath = data["name-to-path"][iconName];
+										const unknown = data["name-to-path"].Unknown;
 										if (iconPath) {
 											icon.innerHTML = iconPath;
 										} else {
@@ -911,7 +916,7 @@ const cm = async e => {
 							await window.parent.tb.fs.promises.unlink(path);
 							document.querySelector(".exp").removeChild(e.target);
 						} else {
-							let data = await window.parent.tb.fs.promises.readFile(path, "utf8");
+							const data = await window.parent.tb.fs.promises.readFile(path, "utf8");
 							await window.parent.tb.fs.promises.writeFile(`/system/trash/${e.target.getAttribute("name")}`, data);
 							await window.parent.tb.fs.promises.unlink(path);
 							document.querySelector(".exp").removeChild(e.target);
@@ -1012,7 +1017,7 @@ const cm = async e => {
 										try {
 											await window.parent.tb.fs.promises.access(folderPath);
 											return createUniqueFolder(path, folderName, number + 1);
-										} catch (error) {
+										} catch (_error) {
 											await window.parent.tb.fs.promises.mkdir(folderPath);
 										}
 									};
@@ -1089,7 +1094,7 @@ const cm = async e => {
 				: {
 						text: "Rename",
 						click: async () => {
-							let path = e.target.getAttribute("path");
+							const path = e.target.getAttribute("path");
 							tb.dialog.Message({
 								title: `Enter a new name for folder ${e.target.querySelector(".title").textContent}`,
 								defaultValue: e.target.getAttribute("name"),
@@ -1189,10 +1194,10 @@ const cm = async e => {
 										return;
 									}
 									if (files.length > 0) {
-										await window.parent.tb.fs.promises.mkdir("/system/trash/" + path.split("/").pop());
+										await window.parent.tb.fs.promises.mkdir(`/system/trash/${path.split("/").pop()}`);
 										for (const file of files) {
 											const filePath = `${path}/${file}`;
-											let data = await window.parent.tb.fs.readFile(filePath, "utf8");
+											const data = await window.parent.tb.fs.readFile(filePath, "utf8");
 											await window.parent.tb.fs.promises.writeFile(`/system/trash/${path.split("/").pop()}/${file}`, data);
 											await window.parent.tb.fs.promises.unlink(filePath);
 										}
@@ -1200,7 +1205,7 @@ const cm = async e => {
 										document.querySelector(".exp").removeChild(e.target);
 									} else {
 										await window.parent.tb.fs.promises.rmdir(path);
-										await window.parent.tb.fs.promises.mkdir("/system/trash/" + path.split("/").pop());
+										await window.parent.tb.fs.promises.mkdir(`/system/trash/${path.split("/").pop()}`);
 										document.querySelector(".exp").removeChild(e.target);
 									}
 								});
@@ -1262,7 +1267,7 @@ const cm = async e => {
 															await createFile(path, ask);
 														}
 													} else {
-														let sh = window.parent.tb.sh;
+														const sh = window.parent.tb.sh;
 														await sh.touch(`${path}/${fileName}`, "");
 														createPath(fileName, `${path}/${fileName}`, "file");
 													}
@@ -1307,7 +1312,7 @@ const cm = async e => {
 											try {
 												await window.parent.tb.fs.promises.access(folderPath);
 												return createUniqueFolder(path, folderName, number + 1);
-											} catch (error) {
+											} catch (_error) {
 												await window.parent.tb.fs.promises.mkdir(folderPath);
 											}
 										};
@@ -1362,7 +1367,7 @@ const cm = async e => {
 													}
 												},
 											});
-										} catch (error) {
+										} catch (_error) {
 											await window.parent.tb.fs.promises.writeFile(filePath, Filer.Buffer.from(content));
 										}
 									}
@@ -1394,7 +1399,7 @@ const cm = async e => {
 			// },
 		];
 	}
-	for (let option of options) {
+	for (const option of options) {
 		if (option === null) continue;
 		const optionEl = document.createElement("div");
 		optionEl.classList.add("context-menu-button");
@@ -1424,13 +1429,13 @@ const cm = async e => {
 window.addEventListener("contextmenu", cm);
 window.addEventListener("touchhold", cm);
 
-const navigate = path => {};
+const _navigate = _path => {};
 
 const createPath = async (title, path, type) => {
 	const config = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${user}/files/config.json`, "utf8"));
 	if (config["show-hidden-files"] === false && title.startsWith(".")) return;
 
-	let item = document.createElement("div");
+	const item = document.createElement("div");
 	item.classList.add("path-item");
 	item.setAttribute("path", path);
 	item.setAttribute("name", title);
@@ -1441,16 +1446,16 @@ const createPath = async (title, path, type) => {
 	item.setAttribute("parent-path", pbs);
 	const icon = document.createElement("div");
 	icon.classList.add("icon");
-	let itemTitle = document.createElement("span");
+	const itemTitle = document.createElement("span");
 	itemTitle.classList.add("title");
 	itemTitle.textContent = title;
 	if (type === "file") {
 		item.classList.add("file-item");
-		let ext = path.split(".").pop();
+		const ext = path.split(".").pop();
 		const data = JSON.parse(await window.parent.window.parent.tb.fs.promises.readFile("/system/etc/terbium/file-icons.json"));
-		let iconName = data["ext-to-name"][ext];
-		let iconPath = data["name-to-path"][iconName];
-		let unknown = data["name-to-path"]["Unknown"];
+		const iconName = data["ext-to-name"][ext];
+		const iconPath = data["name-to-path"][iconName];
+		const unknown = data["name-to-path"].Unknown;
 		if (iconPath) {
 			const imgData = await window.parent.tb.fs.promises.readFile(iconPath, "utf8");
 			icon.innerHTML = imgData;
@@ -1466,11 +1471,11 @@ const createPath = async (title, path, type) => {
 				ext = ext.slice(-1).join(".");
 			}
 			const data = JSON.parse(await window.parent.window.parent.tb.fs.promises.readFile("/apps/system/files.tapp/extensions.json", "utf8"));
-			if (data["image"].includes(ext)) {
+			if (data.image.includes(ext)) {
 				parent.window.tb.file.handler.openFile(item.getAttribute("path"), "image");
-			} else if (data["video"].includes(ext)) {
+			} else if (data.video.includes(ext)) {
 				parent.window.tb.file.handler.openFile(item.getAttribute("path"), "video");
-			} else if (data["audio"].includes(ext)) {
+			} else if (data.audio.includes(ext)) {
 				parent.window.tb.file.handler.openFile(item.getAttribute("path"), "audio");
 			} else if (ext.toLowerCase() === "tapp.zip") {
 				try {
@@ -1479,12 +1484,11 @@ const createPath = async (title, path, type) => {
 						title: "Install application",
 						message: `Would you like to install the application: ${path}?`,
 						onOk: async () => {
-							const appPath = `/fs/${path}`.replace("//", "/");
-							const appName =
-								path
-									.replace(`/home/${window.parent.sessionStorage.getItem("currAcc")}/`, "")
-									.replace(/\//g, ".")
-									.replace(/\.zip$/, "") + "";
+							const _appPath = `/fs/${path}`.replace("//", "/");
+							const appName = `${path
+								.replace(`/home/${window.parent.sessionStorage.getItem("currAcc")}/`, "")
+								.replace(/\//g, ".")
+								.replace(/\.zip$/, "")}`;
 							window.parent.tb.notification.Installing({
 								message: `Installing ${appName}...`,
 								application: "Files",
@@ -1523,16 +1527,16 @@ const createPath = async (title, path, type) => {
 									user: window.parent.sessionStorage.getItem("currAcc"),
 								});
 								try {
-									let apps = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/installed.json`, "utf8"));
+									const apps = JSON.parse(await window.parent.tb.fs.promises.readFile("/apps/installed.json", "utf8"));
 									apps.push({
 										name: appName,
 										user: await window.parent.tb.user.username(),
 										config: `/apps/user/${await window.parent.tb.user.username()}/${appName}/.tbconfig`,
 									});
-									await window.parent.tb.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(apps));
+									await window.parent.tb.fs.promises.writeFile("/apps/installed.json", JSON.stringify(apps));
 								} catch {
 									await window.parent.tb.fs.promises.writeFile(
-										`/apps/installed.json`,
+										"/apps/installed.json",
 										JSON.stringify([
 											{
 												name: appName,
@@ -1565,20 +1569,20 @@ const createPath = async (title, path, type) => {
 						message: `❌ An Unexpected error occurred when trying to install the app: ${path} Error: ${e}`,
 					});
 				}
-			} else if (data["extractables"].includes(ext) || ext.toLowerCase() === "app.zip" || ext.toLowerCase() === "lib.zip") {
+			} else if (data.extractables.includes(ext) || ext.toLowerCase() === "app.zip" || ext.toLowerCase() === "lib.zip") {
 				const zipFilePath = e.target.getAttribute("path");
 				const path = item.getAttribute("path").replace(".zip", "");
 				const targetDirectory = `${path}`;
 				await unzip(zipFilePath, targetDirectory);
 				openPath(document.querySelector(".nav-input.dir").value);
-			} else if (data["text"].includes(ext)) {
+			} else if (data.text.includes(ext)) {
 				parent.window.tb.file.handler.openFile(item.getAttribute("path"), "text");
 			} else {
-				let handlers = JSON.parse(await window.parent.tb.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"))["fileAssociatedApps"];
+				let handlers = JSON.parse(await window.parent.tb.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8")).fileAssociatedApps;
 				handlers = Object.entries(handlers).filter(([type, app]) => {
 					return !(type === "text" && app === "text-editor") && !(type === "image" && app === "media-viewer") && !(type === "video" && app === "media-viewer") && !(type === "audio" && app === "media-viewer");
 				});
-				let hands = [];
+				const hands = [];
 				for (const [type, app] of handlers) {
 					hands.push({ text: app, value: type });
 				}
@@ -1608,16 +1612,17 @@ const createPath = async (title, path, type) => {
 							case "text":
 								parent.window.tb.file.handler.openFile(item.getAttribute("path"), "text");
 								break;
-							case "media":
+							case "media": {
 								const ext = e.target.getAttribute("name").split(".").pop();
-								if (data["image"].includes(ext)) {
+								if (data.image.includes(ext)) {
 									parent.window.tb.file.handler.openFile(item.getAttribute("path"), "image");
-								} else if (data["video"].includes(ext)) {
+								} else if (data.video.includes(ext)) {
 									parent.window.tb.file.handler.openFile(item.getAttribute("path"), "video");
-								} else if (data["audio"].includes(ext)) {
+								} else if (data.audio.includes(ext)) {
 									parent.window.tb.file.handler.openFile(item.getAttribute("path"), "audio");
 								}
 								break;
+							}
 							case "webview":
 								parent.window.tb.file.handler.openFile(item.getAttribute("path"), "webpage");
 								break;
@@ -1735,7 +1740,7 @@ const createPath = async (title, path, type) => {
 						break;
 				}
 		}
-		item.addEventListener("dblclick", e => {
+		item.addEventListener("dblclick", _e => {
 			openPath(path);
 			const dirInput = document.querySelector(".nav-input.dir");
 			dirInput.value = path;
@@ -1753,7 +1758,7 @@ const openPath = async path => {
 		}
 	} else if (path === "cmd") {
 		const path = document.querySelector(".exp").getAttribute("path");
-		let message = JSON.stringify({
+		const message = JSON.stringify({
 			type: "open-path",
 			path: path,
 		});
@@ -1793,10 +1798,10 @@ const openPath = async path => {
 		return;
 	}
 	if (path.includes("mnt")) {
-		let davInstances = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
+		const davInstances = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
 		const toFind = path.split("/")[2] || "";
-		let davConfig = davInstances.find(dav => dav.name === toFind);
-		console.log("Loading webdav: " + davConfig.url + path.split("/")[2]);
+		const davConfig = davInstances.find(dav => dav.name === toFind);
+		console.log(`Loading webdav: ${davConfig.url}${path.split("/")[2]}`);
 		if (!davConfig) {
 			window.parent.tb.dialog.Alert({
 				title: "WebDAV Error",
@@ -1804,7 +1809,7 @@ const openPath = async path => {
 			});
 			return;
 		}
-		let relPath = path.replace(`/mnt/${davConfig.name}/`, "/");
+		const relPath = path.replace(`/mnt/${davConfig.name}/`, "/");
 		console.log(relPath);
 		const exp = document.querySelector(".exp");
 		exp.innerHTML = "";
@@ -1860,8 +1865,8 @@ const openPath = async path => {
 					const data = JSON.parse(await window.parent.window.parent.tb.fs.promises.readFile("/system/etc/terbium/file-icons.json"));
 					const ext = itemPath.split(".").pop();
 					const iconName = data["ext-to-name"][ext];
-					let iconPath = data["name-to-path"][iconName];
-					let unknown = data["name-to-path"]["Unknown"];
+					const iconPath = data["name-to-path"][iconName];
+					const unknown = data["name-to-path"].Unknown;
 					if (iconPath) {
 						icon.innerHTML = await window.parent.window.parent.tb.fs.promises.readFile(iconPath, "utf8");
 					} else {
@@ -1877,11 +1882,11 @@ const openPath = async path => {
 					el.addEventListener("dblclick", () => openPath(itemPath.replace(davConfig.url, `/mnt/${davConfig.name}`)));
 				} else {
 					el.addEventListener("dblclick", async () => {
-						let handlers = JSON.parse(await window.parent.tb.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"))["fileAssociatedApps"];
+						let handlers = JSON.parse(await window.parent.tb.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8")).fileAssociatedApps;
 						handlers = Object.entries(handlers).filter(([type, app]) => {
 							return !(type === "text" && app === "text-editor") && !(type === "image" && app === "media-viewer") && !(type === "video" && app === "media-viewer") && !(type === "audio" && app === "media-viewer");
 						});
-						let hands = [];
+						const hands = [];
 						for (const [type, app] of handlers) {
 							hands.push({ text: app, value: type });
 						}
@@ -1908,16 +1913,17 @@ const openPath = async path => {
 									case "text":
 										parent.window.tb.file.handler.openFile(itemPath, "text");
 										break;
-									case "media":
+									case "media": {
 										const ext = itemPath.split(".").pop();
-										if (data["image"].includes(ext)) {
+										if (data.image.includes(ext)) {
 											parent.window.tb.file.handler.openFile(itemPath, "image");
-										} else if (data["video"].includes(ext)) {
+										} else if (data.video.includes(ext)) {
 											parent.window.tb.file.handler.openFile(itemPath, "video");
-										} else if (data["audio"].includes(ext)) {
+										} else if (data.audio.includes(ext)) {
 											parent.window.tb.file.handler.openFile(itemPath, "audio");
 										}
 										break;
+									}
 									case "webview":
 										parent.window.tb.file.handler.openFile(itemPath, "webpage");
 										break;
@@ -1969,9 +1975,8 @@ const openPath = async path => {
 		const search = document.querySelector(".nav-input.search");
 		search.setAttribute("placeholder", `Search ${path.split("/").pop()}`);
 		return;
-	} else {
-		document.querySelector(".drive-modal").style.display = "none";
 	}
+	document.querySelector(".drive-modal").style.display = "none";
 	if (path.split("/").pop() === "") {
 		path = path.substring(0, path.length - 1);
 	}
@@ -2001,13 +2006,13 @@ const openPath = async path => {
 	} else {
 		window.parent.tb.fs.readdir(path, async (err, files) => {
 			if (err) return console.error(err);
-			for (let file of files) {
-				await window.parent.tb.fs.stat(path + "/" + file, (err, stats) => {
+			for (const file of files) {
+				await window.parent.tb.fs.stat(`${path}/${file}`, (err, stats) => {
 					if (err) return console.error(err);
 					if (stats.isDirectory()) {
-						createPath(file, path + "/" + file, "folder");
+						createPath(file, `${path}/${file}`, "folder");
 					} else if (stats.isFile()) {
-						createPath(file, path + "/" + file, "file");
+						createPath(file, `${path}/${file}`, "file");
 					}
 				});
 			}
@@ -2021,10 +2026,10 @@ self.openPath = openPath;
 self.emptyTrash = emptyTrash;
 
 async function unzip(path, target, app) {
-	const response = await fetch("/fs/" + path);
+	const response = await fetch(`/fs/${path}`);
 	if (!app) {
 		window.parent.tb.notification.Installing({
-			message: `Unzipping...`,
+			message: "Unzipping...",
 			application: "Files",
 			iconSrc: "/fs/apps/system/files.tapp/icon.svg",
 			time: 500,
@@ -2040,7 +2045,7 @@ async function unzip(path, target, app) {
 		const pathParts = fullPath.split("/");
 		let currentPath = "";
 		for (let i = 0; i < pathParts.length; i++) {
-			currentPath += pathParts[i] + "/";
+			currentPath += `${pathParts[i]}/`;
 			if (i === pathParts.length - 1 && !relativePath.endsWith("/")) {
 				try {
 					console.log(`touch ${currentPath.slice(0, -1)}`);
@@ -2097,9 +2102,9 @@ const dirExists = async path => {
 
 const clearSearchButton = document.querySelector(".clear-search");
 const search = document.querySelector(".nav-input.search");
-search.addEventListener("input", e => {
+search.addEventListener("input", _e => {
 	const exp = document.querySelector(".exp");
-	let path = exp.getAttribute("path");
+	const path = exp.getAttribute("path");
 	if (search.value === "") {
 		openPath(path);
 		clearSearchButton.classList.add("opacity-0", "pointer-events-none");
@@ -2112,8 +2117,8 @@ search.addEventListener("input", e => {
 			console.error(err);
 			return;
 		}
-		for (let file of files) {
-			await window.parent.tb.fs.stat(path + "/" + file, (err, stats) => {
+		for (const file of files) {
+			await window.parent.tb.fs.stat(`${path}/${file}`, (err, stats) => {
 				if (err) {
 					console.error(err);
 					return;
@@ -2123,11 +2128,11 @@ search.addEventListener("input", e => {
 				}
 				if (stats.isDirectory()) {
 					if (file.toLowerCase().includes(search.value.toLowerCase())) {
-						createPath(file, path + "/" + file, "folder");
+						createPath(file, `${path}/${file}`, "folder");
 					}
 				} else if (stats.isFile()) {
 					if (file.toLowerCase().includes(search.value.toLowerCase())) {
-						createPath(file, path + "/" + file, "file");
+						createPath(file, `${path}/${file}`, "file");
 					}
 				}
 			});
@@ -2143,14 +2148,14 @@ const cfgload = async () => {
 	}
 	const topbarheight = document.querySelector(".topbar").offsetHeight;
 	document.querySelector("main").style.setProperty("--topbar-height", `${topbarheight}px`);
-	let config = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/config.json`, "utf8"));
+	const config = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/config.json`, "utf8"));
 	if (config["quick-center"] === true) {
-		await createCollapsible("Quick Center", "quick-center", config["open-collapsibles"]["quick-center"], JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/quick-center.json`, "utf8"))["paths"]);
+		await createCollapsible("Quick Center", "quick-center", config["open-collapsibles"]["quick-center"], JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/quick-center.json`, "utf8")).paths);
 	}
-	if (config["drives"]) {
-		await createCollapsible("Drives", "drives", config["open-collapsibles"]["drives"], config["drives"]);
+	if (config.drives) {
+		await createCollapsible("Drives", "drives", config["open-collapsibles"].drives, config.drives);
 	}
-	if (config["storage"]) {
+	if (config.storage) {
 		const storageDevices = document.createElement("div");
 		storageDevices.classList.add("absolute-path-item");
 		const icon = document.createElement("div");
@@ -2167,7 +2172,7 @@ const cfgload = async () => {
 		itemTitle.textContent = "Storage Devices";
 		storageDevices.appendChild(itemTitle);
 		document.querySelector(".sidebar").appendChild(storageDevices);
-		storageDevices.addEventListener("click", e => showStorageDevices());
+		storageDevices.addEventListener("click", _e => showStorageDevices());
 	}
 	const sidebarwidth = document.querySelector(".sidebar").offsetWidth;
 	document.querySelector("main").style.setProperty("--sidebar-width", `${sidebarwidth}px`);

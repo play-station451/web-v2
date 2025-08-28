@@ -22,7 +22,7 @@ declare global {
 	}
 }
 
-export const isURL = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/;
+export const isURL = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/;
 
 const FilerFS: any = window.Filer;
 export const Filer: FilerFS = new FilerFS.FileSystem();
@@ -108,10 +108,10 @@ export interface Group {
  * @constant `pub` The public permission. This is the lowest level of permission and is assigned to all users by default.
  */
 export enum Perm {
-	sys,
-	usr,
-	grp,
-	pub,
+	sys = 0,
+	usr = 1,
+	grp = 2,
+	pub = 3,
 }
 
 export enum Errors {
@@ -241,8 +241,8 @@ export interface NotificationProps {
 	application: string;
 	iconSrc: string;
 	time?: number;
-	onOk?: void | any;
-	onCancel?: void | any;
+	onOk?: undefined | any;
+	onCancel?: undefined | any;
 	txt?: string;
 }
 
@@ -266,8 +266,8 @@ export interface dialogProps {
 	defualtDir?: string;
 	filename?: string;
 	img?: string;
-	onOk: void | any;
-	onCancel?: void | any;
+	onOk: undefined | any;
+	onCancel?: undefined | any;
 	sudo?: boolean;
 }
 
@@ -316,9 +316,9 @@ export interface MediaProps {
 	time?: number;
 	background?: string;
 	endtime: number;
-	onPausePlay: void;
-	onNext?: void;
-	onBack?: void;
+	onPausePlay: undefined;
+	onNext?: undefined;
+	onBack?: undefined;
 }
 
 export type websocketUrl = `wss://${string}` | `ws://${string}`;
@@ -509,7 +509,7 @@ export interface COM {
 		video(props: MediaProps): void;
 		hide(): void;
 		pauseplay(): void;
-		isExisting(): void | boolean | Promise<boolean>;
+		isExisting(): undefined | boolean | Promise<boolean>;
 	};
 	file: {
 		handler: {

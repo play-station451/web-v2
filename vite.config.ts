@@ -1,13 +1,14 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react-swc";
-import { viteStaticCopy } from "vite-plugin-static-copy";
-import { libcurlPath } from "@mercuryworkshop/libcurl-transport";
-// @ts-expect-error no types
-import { epoxyPath } from "@mercuryworkshop/epoxy-transport";
 import { baremuxPath } from "@mercuryworkshop/bare-mux/node";
 // @ts-expect-error no types
+import { epoxyPath } from "@mercuryworkshop/epoxy-transport";
+import { libcurlPath } from "@mercuryworkshop/libcurl-transport";
+// @ts-expect-error no types
 import { server as wisp } from "@mercuryworkshop/wisp-js/server";
+import react from "@vitejs/plugin-react-swc";
 import config from "dotenv";
+import { defineConfig } from "vite";
+import { viteStaticCopy } from "vite-plugin-static-copy";
+
 config.config();
 
 // https://vitejs.dev/config/

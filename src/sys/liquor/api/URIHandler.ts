@@ -1,5 +1,6 @@
-import { Anura } from "../Anura";
-let anura: Anura;
+import type { Anura } from "../Anura";
+
+let _anura: Anura;
 
 interface LibURIHandler {
 	tag: "lib";
@@ -43,7 +44,7 @@ export class URIHandlerAPI {
 		if (handler.handler.tag === "lib") {
 			let lib;
 			if (handler.handler.version) {
-				lib = await window.anura.import(handler.handler.pkg + "@" + handler.handler.version);
+				lib = await window.anura.import(`${handler.handler.pkg}@${handler.handler.version}`);
 			} else {
 				lib = await window.anura.import(handler.handler.pkg);
 			}

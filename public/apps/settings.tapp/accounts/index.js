@@ -9,12 +9,12 @@ const getAccounts = async () => {
 				const account = JSON.parse(await tb.fs.promises.readFile(`/home/${entry}/user.json`, "utf8"));
 				return {
 					name: entry,
-					id: account["id"],
-					username: account["username"],
-					perm: account["perm"],
-					pfp: account["pfp"],
+					id: account.id,
+					username: account.username,
+					perm: account.perm,
+					pfp: account.pfp,
 				};
-			} catch (e) {
+			} catch (_e) {
 				return null;
 			}
 		}),
@@ -23,7 +23,7 @@ const getAccounts = async () => {
 	return accounts.filter(account => account !== null);
 };
 
-const deleteAccount = async id => {
+const _deleteAccount = async id => {
 	const sudoUsers = JSON.parse(await tb.fs.promises.readFile("/system/etc/terbium/sudousers.json", "utf8"));
 	let sudoWithPassword = null;
 	for (const sudoUser of sudoUsers) {
@@ -46,7 +46,7 @@ const deleteAccount = async id => {
 				tb.dialog.Auth({
 					title: "Request Permission",
 					defaultUsername: sudoUsers[0],
-					onOk: async (username, password) => {
+					onOk: async (_username, password) => {
 						const pass = await tb.crypto(password);
 						if (pass === JSON.parse(await tb.fs.promises.readFile(`/home/${sudoUsers[0]}/user.json`, "utf8")).password) {
 							tb.system.users.remove(id);
@@ -70,7 +70,7 @@ const deleteAccount = async id => {
 			await tb.dialog.Auth({
 				title: "Authenticate to Delete Account",
 				defaultUsername: sessionStorage.getItem("currAcc"),
-				onOk: async (username, password) => {
+				onOk: async (_username, password) => {
 					const pass = await tb.crypto(password);
 					if (pass === pw) {
 						await tb.system.users.remove(id);
@@ -87,9 +87,9 @@ const deleteAccount = async id => {
 	}
 };
 
-const changePerm = async () => {
+const _changePerm = async () => {
 	const data = JSON.parse(await tb.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, "utf8"));
-	if (data["password"] === false) {
+	if (data.password === false) {
 		await tb.dialog.Select({
 			title: "Enter the permission level you wish to set (Ex: Admin, User, Group, Public)",
 			options: [
@@ -111,8 +111,8 @@ const changePerm = async () => {
 				},
 			],
 			onOk: async perm => {
-				if (perm === data["perm"]) return;
-				data["perm"] = perm;
+				if (perm === data.perm) return;
+				data.perm = perm;
 				permEl.innerHTML = perm.charAt(0).toUpperCase() + perm.slice(1);
 				await tb.fs.promises.writeFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, JSON.stringify(data));
 			},
@@ -122,9 +122,9 @@ const changePerm = async () => {
 			sudo: true,
 			title: "Authenticate to change your permissions",
 			defaultUsername: sessionStorage.getItem("currAcc"),
-			onOk: async (username, password) => {
+			onOk: async (_username, password) => {
 				const pass = await tb.crypto(password);
-				if (pass === data["password"]) {
+				if (pass === data.password) {
 					await tb.dialog.Select({
 						title: "Enter the permission level you wish to set (Ex: Admin, User, Group, Public)",
 						options: [
@@ -146,8 +146,8 @@ const changePerm = async () => {
 							},
 						],
 						onOk: async perm => {
-							if (perm === data["perm"]) return;
-							data["perm"] = perm;
+							if (perm === data.perm) return;
+							data.perm = perm;
 							permEl.innerHTML = perm.charAt(0).toUpperCase() + perm.slice(1);
 							await tb.fs.promises.writeFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, JSON.stringify(data));
 						},
@@ -160,7 +160,7 @@ const changePerm = async () => {
 	}
 };
 
-const changePfp = async id => {
+const _changePfp = async id => {
 	const data = JSON.parse(await tb.fs.promises.readFile(`/home/${id.id}/user.json`, "utf8"));
 	const pfpInp = document.createElement("input");
 	pfpInp.type = "file";
@@ -175,7 +175,7 @@ const changePfp = async id => {
 					title: "Crop Profile Picture",
 					img: e.target.result,
 					onOk: async img => {
-						data["pfp"] = img;
+						data.pfp = img;
 						await tb.fs.promises.writeFile(`/home/${id.id}/user.json`, JSON.stringify(data));
 						parent.window.dispatchEvent(new Event("accUpd"));
 						renderAccounts();
@@ -218,21 +218,21 @@ const renderAccounts = async () => {
 
 renderAccounts();
 
-const createAccount = async () => {
+const _createAccount = async () => {
 	const askNewAccountDetails = async () => {
 		await tb.dialog.Message({
 			title: "Create Username",
 			onOk: async username => {
 				const data = {};
-				data["id"] = username;
-				data["username"] = username;
+				data.id = username;
+				data.username = username;
 				await tb.dialog.Message({
 					title: "Create Password",
 					onOk: async password => {
 						if (password !== "") {
-							data["password"] = await tb.crypto(password);
+							data.password = await tb.crypto(password);
 						} else {
-							data["password"] = false;
+							data.password = false;
 						}
 						await tb.dialog.Select({
 							title: "Do you want to set up a security question?",
@@ -254,7 +254,7 @@ const createAccount = async () => {
 											await tb.dialog.Message({
 												title: "Set Security Answer",
 												onOk: async answer => {
-													data["securityQuestion"] = {
+													data.securityQuestion = {
 														question: question,
 														answer: await tb.crypto(answer),
 													};
@@ -296,8 +296,8 @@ const createAccount = async () => {
 					pfpInp.onchange = async e => {
 						if (e.target.files.length === 0) {
 							const randomColorStr = ["blue", "green", "orange", "pink", "purple", "red", "yellow"][Math.floor(Math.random() * 7)];
-							data["pfp"] = `/assets/img/default - ${randomColorStr}.png`;
-							data["perm"] = "user";
+							data.pfp = `/assets/img/default - ${randomColorStr}.png`;
+							data.perm = "user";
 							await tb.system.users.add(data);
 							renderAccounts();
 						} else {
@@ -308,8 +308,8 @@ const createAccount = async () => {
 									title: "Crop Profile Picture",
 									img: e.target.result,
 									onOk: async img => {
-										data["pfp"] = img;
-										data["perm"] = "user";
+										data.pfp = img;
+										data.perm = "user";
 										await tb.system.users.add(data);
 										renderAccounts();
 									},
@@ -320,8 +320,8 @@ const createAccount = async () => {
 					};
 				} else {
 					const randomColorStr = ["blue", "green", "orange", "pink", "purple", "red", "yellow"][Math.floor(Math.random() * 7)];
-					data["pfp"] = `/assets/img/default - ${randomColorStr}.png`;
-					data["perm"] = "user";
+					data.pfp = `/assets/img/default - ${randomColorStr}.png`;
+					data.perm = "user";
 					await tb.system.users.add(data);
 					renderAccounts();
 				}
@@ -350,7 +350,7 @@ const createAccount = async () => {
 				tb.dialog.Auth({
 					title: "Request Permission",
 					defaultUsername: sudoWithPassword,
-					onOk: async (username, password) => {
+					onOk: async (_username, password) => {
 						const pass = await tb.crypto(password);
 						if (pass === JSON.parse(await tb.fs.promises.readFile(`/home/${sudoWithPassword}/user.json`, "utf8")).password) {
 							askNewAccountDetails();
@@ -366,13 +366,13 @@ const createAccount = async () => {
 		});
 	} else {
 		const user = JSON.parse(await tb.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, "utf8"));
-		if (user["password"] === false) {
+		if (user.password === false) {
 			askNewAccountDetails();
 		} else {
 			await tb.dialog.Auth({
 				title: "Authenticate to Create Account",
 				defaultUsername: sessionStorage.getItem("currAcc"),
-				onOk: async (username, password) => {
+				onOk: async (_username, password) => {
 					const pass = await tb.crypto(password);
 					if (pass === JSON.parse(await tb.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, "utf8")).password) {
 						askNewAccountDetails();

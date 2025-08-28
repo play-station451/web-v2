@@ -5,5 +5,5 @@ export class Lib {
 	name: string;
 	versions: { [key: string]: any } = {};
 	latestVersion: string;
-	async getImport(version: string): Promise<any> {}
+	async getImport(_version: string): Promise<any> {}
 }

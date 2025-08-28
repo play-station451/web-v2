@@ -1,8 +1,8 @@
+import { init } from "@paralleldrive/cuid2";
 import React from "react";
 import { create } from "zustand";
-import { WindowConfig, cmprops, fileExists } from "./types";
-import { init } from "@paralleldrive/cuid2";
 import { updateInfo } from "./gui/AppIsland";
+import { type cmprops, fileExists, type WindowConfig } from "./types";
 
 interface WindowState {
 	windows: WindowConfig[];
@@ -48,7 +48,7 @@ export const createWID = () => {
 	const cuid = init({
 		length: 10,
 	});
-	return "w-" + cuid();
+	return `w-${cuid()}`;
 };
 
 const useWindowStore = create<WindowState>()(set => ({
@@ -62,7 +62,7 @@ const useWindowStore = create<WindowState>()(set => ({
 			const indexes = state.windows.map(w => w.zIndex ?? 0);
 			config.zIndex = Math.max(...indexes) + 1;
 			config.focused = true;
-			if (config.zIndex === -Infinity) {
+			if (config.zIndex === Number.NEGATIVE_INFINITY) {
 				config.zIndex = 2;
 			}
 			state.windows.forEach(w => {
@@ -96,7 +96,7 @@ const useWindowStore = create<WindowState>()(set => ({
 					...data,
 					weight: 1,
 				};
-			} catch (err) {
+			} catch (_err) {
 				configData = {
 					title: appName,
 					icon: config.icon,

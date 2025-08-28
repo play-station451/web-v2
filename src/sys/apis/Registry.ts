@@ -3,7 +3,7 @@ export const registry = {
 		state: "unready",
 	},
 	async get(data: any): Promise<any> {
-		if (this.cache.state == "unready") {
+		if (this.cache.state === "unready") {
 			// Defer if not loaded
 			console.log("Unable to get data, retrying in 2 seconds");
 			await new Promise(r => setTimeout(r, 2000));
@@ -14,7 +14,7 @@ export const registry = {
 		return this.cache[data.path] as any;
 	},
 	async set(data: any) {
-		if (this.cache.state == "unready") {
+		if (this.cache.state === "unready") {
 			// Defer if not loaded
 			console.log("Unable to get data, retrying in 2 seconds");
 			await new Promise(r => setTimeout(r, 2000));
@@ -23,7 +23,7 @@ export const registry = {
 		}
 
 		// void, nothing happens here for now other than storing changes for the session
-		//@ts-ignore
+		//@ts-expect-error
 		this.cache[data.path] = data.content;
 
 		if (window.Filer) {

@@ -1,8 +1,8 @@
 const tb = parent.window.tb;
 const tb_island = tb.window.island;
-const tb_window = tb.window;
-const tb_context_menu = tb.context_menu;
-const tb_dialog = tb.dialog;
+const _tb_window = tb.window;
+const _tb_context_menu = tb.context_menu;
+const _tb_dialog = tb.dialog;
 
 tb_island.addControl({
 	text: "Help",

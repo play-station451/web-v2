@@ -1,13 +1,13 @@
 import Mediaisland from "../apis/Mediaisland";
 import Battery from "./Battery";
 import "./styles/shell.css";
-import Wifi from "./Wifi";
-import getTime from "../apis/Time";
 import { useEffect, useState } from "react";
-import Weather from "./Weather";
-import NotificationCenter from "./NotificationCenter";
+import getTime from "../apis/Time";
 import AppIsland from "./AppIsland";
+import NotificationCenter from "./NotificationCenter";
 import Power from "./Power";
+import Weather from "./Weather";
+import Wifi from "./Wifi";
 
 const Shell = () => {
 	const [time, setTime] = useState<number>(0);
@@ -37,7 +37,7 @@ const Shell = () => {
 					<NotificationCenter />
 					<Battery />
 					{/* Desktop */}
-					<div className="show_desk bg-[#ffffff3e] h-[calc(48px-16px)] w-4 rounded-[5px] cursor-pointer" onClick={() => window.dispatchEvent(new Event("min-wins"))}></div>
+					<div className="show_desk bg-[#ffffff3e] h-[calc(48px-16px)] w-4 rounded-[5px] cursor-pointer" onClick={() => window.dispatchEvent(new Event("min-wins"))} />
 				</div>
 			</div>
 		</div>

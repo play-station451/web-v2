@@ -26,10 +26,10 @@
 	display: block;
 	height: 100%;
 	image-orientation: 0deg;
-	max-height: none !important;
-	max-width: none !important;
-	min-height: 0 !important;
-	min-width: 0 !important;
+	max-height: none;
+	max-width: none;
+	min-height: 0;
+	min-width: 0;
 	width: 100%;
 }
 
@@ -286,7 +286,7 @@
 }
 
 .cropper-hidden {
-	display: none !important;
+	display: none;
 }
 
 .cropper-move {

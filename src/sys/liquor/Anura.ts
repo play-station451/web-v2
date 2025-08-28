@@ -1,23 +1,21 @@
-// @ts-expect-error
-import { WindowInformation, AliceWM } from "./AliceWM";
-import { WMAPI } from "./api/WmApi";
 import { ContextMenuAPI } from "./api/ContextMenuAPI";
-import { FilesAPI } from "./api/Files";
-import { NotificationService } from "./api/NotificationService";
-import { Settings } from "./api/Settings";
-import { App } from "./coreapps/App";
-import { ExternalApp } from "./coreapps/ExternalApp";
-import { Networking } from "./api/Networking";
-import { URIHandlerAPI } from "./api/URIHandler";
-import { ExternalLib } from "./libs/ExternalLib";
-import { Lib } from "./libs/lib";
-import { Processes } from "./api/Process";
-import { Platform } from "./api/Platform";
 import { Dialog } from "./api/Dialog";
-import { Systray } from "./api/Systray";
-import { AnuraFilesystem } from "./api/Filesystem";
 import { FilerAFSProvider } from "./api/FilerFS";
+import { FilesAPI } from "./api/Files";
+import { AnuraFilesystem } from "./api/Filesystem";
+import { Networking } from "./api/Networking";
+import { NotificationService } from "./api/NotificationService";
+import { Platform } from "./api/Platform";
+import { Processes } from "./api/Process";
+import { Settings } from "./api/Settings";
+import { Systray } from "./api/Systray";
 import { AnuraUI } from "./api/UI";
+import { URIHandlerAPI } from "./api/URIHandler";
+import { WMAPI } from "./api/WmApi";
+import type { App } from "./coreapps/App";
+import { ExternalApp } from "./coreapps/ExternalApp";
+import { ExternalLib } from "./libs/ExternalLib";
+import type { Lib } from "./libs/lib";
 
 declare global {
 	interface Window {
@@ -72,29 +70,29 @@ export class Anura {
 		this.dialog = new Dialog();
 		this.systray = new Systray();
 		// @ts-expect-error
-		this.fs.readdir("/apps/anura", (err: Error, files: string[]) => {
+		this.fs.readdir("/apps/anura", (_err: Error, files: string[]) => {
 			// Fixes a weird edgecase that I was facing where no user apps are installed, nothing breaks it just throws an error which I would like to mitigate.
-			if (files == undefined) return;
+			if (files === undefined) return;
 			files.forEach(file => {
 				try {
-					this.registerExternalApp("/fs/apps/anura/" + file);
+					this.registerExternalApp(`/fs/apps/anura/${file}`);
 				} catch (e) {
-					this.logger.error("Anura failed to load an app " + e);
+					this.logger.error(`Anura failed to load an app ${e}`);
 				}
 			});
 		});
 
 		try {
 			// @ts-expect-error
-			this.fs.readdir("/system/lib/anura/", (err: Error, files: string[]) => {
+			this.fs.readdir("/system/lib/anura/", (_err: Error, files: string[]) => {
 				// Fixes a weird edgecase that I was facing where no user apps are installed, nothing breaks it just throws an error which I would like to mitigate.
-				if (files == undefined) return;
+				if (files === undefined) return;
 				files.forEach(file => {
 					try {
 						this.fs.readFile(
-							"/system/lib/anura//" + file,
+							`/system/lib/anura//${file}`,
 							// @ts-expect-error
-							function (err: Error, data: Uint8Array) {
+							(err: Error, data: Uint8Array) => {
 								if (err) throw "Failed to read file";
 								try {
 									eval(new TextDecoder("utf-8").decode(data));
@@ -104,7 +102,7 @@ export class Anura {
 							},
 						);
 					} catch (e) {
-						this.logger.error("Anura failed to load an app " + e);
+						this.logger.error(`Anura failed to load an app ${e}`);
 					}
 				});
 			});

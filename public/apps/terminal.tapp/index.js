@@ -1,6 +1,6 @@
-import parser from "yargs-parser";
-import http from "iso-http";
 import git from "git";
+import http from "iso-http";
+import parser from "yargs-parser";
 import * as webdav from "/fs/apps/system/files.tapp/webdav.js";
 
 /**
@@ -37,7 +37,7 @@ function htorgb(hex) {
 			.join("");
 	}
 	if (hex.length !== 6) return null;
-	const bigint = parseInt(hex, 16);
+	const bigint = Number.parseInt(hex, 16);
 	return {
 		r: (bigint >> 16) & 255,
 		g: (bigint >> 8) & 255,
@@ -237,7 +237,7 @@ async function getAppInfo(justNames = true) {
 	/**
 	 * @type {Response}
 	 */
-	const appInfoResSys = await fetch(`/fs/apps/system/terminal.tapp/scripts/info.json`);
+	const appInfoResSys = await fetch("/fs/apps/system/terminal.tapp/scripts/info.json");
 
 	/**
 	 * @type {Response}

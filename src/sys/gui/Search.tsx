@@ -1,8 +1,8 @@
-import { FC, useEffect, useRef, useState } from "react";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
+import { type FC, useEffect, useRef, useState } from "react";
+import { searchApps, searchFiles } from "../apis/SysSearch";
 import { useSearchMenuStore } from "../Store";
 import { StartItem } from "./Dock";
-import { searchApps, searchFiles } from "../apis/SysSearch";
 import { createWindow } from "./WindowArea";
 
 interface SearchProps {
@@ -34,7 +34,7 @@ const SearchMenu: FC<SearchProps> = ({ className, searchRef }) => {
 				return app;
 			});
 			setRecentApps(recentAppsList);
-			searchRefRef.current!.focus();
+			searchRefRef.current?.focus();
 		};
 		searchMenuStore.open ? getRecentApps() : null;
 		if (!searchMenuStore.open) {
@@ -45,12 +45,12 @@ const SearchMenu: FC<SearchProps> = ({ className, searchRef }) => {
 			setSearchHasText(false);
 			setResultOpen(false);
 			setTimeout(() => {
-				recentAppsRef.current!.classList.add("col-span-2");
-				containerRef.current!.classList.remove("grid-cols-2");
-				containerRef.current!.classList.add("grid-cols-1");
+				recentAppsRef.current?.classList.add("col-span-2");
+				containerRef.current?.classList.remove("grid-cols-2");
+				containerRef.current?.classList.add("grid-cols-1");
 			}, 200);
 			setTimeout(() => {
-				resultRef.current!.classList.add("absolute");
+				resultRef.current?.classList.add("absolute");
 			}, 300);
 			setResults([]);
 		}
@@ -98,11 +98,11 @@ const SearchMenu: FC<SearchProps> = ({ className, searchRef }) => {
 							const value = (e.target as HTMLInputElement).value;
 							if (value.length > 0) {
 								setSearchActive(true);
-								resultRef.current!.classList.remove("absolute");
-								recentAppsRef.current!.classList.remove("col-span-2");
+								resultRef.current?.classList.remove("absolute");
+								recentAppsRef.current?.classList.remove("col-span-2");
 								setTimeout(() => {
-									containerRef.current!.classList.remove("grid-cols-1");
-									containerRef.current!.classList.add("grid-cols-2");
+									containerRef.current?.classList.remove("grid-cols-1");
+									containerRef.current?.classList.add("grid-cols-2");
 								}, 200);
 								setTimeout(() => {
 									setResultOpen(true);
@@ -138,12 +138,12 @@ const SearchMenu: FC<SearchProps> = ({ className, searchRef }) => {
 													setSearchHasText(false);
 													setResultOpen(false);
 													setTimeout(() => {
-														recentAppsRef.current!.classList.add("col-span-2");
-														containerRef.current!.classList.remove("grid-cols-2");
-														containerRef.current!.classList.add("grid-cols-1");
+														recentAppsRef.current?.classList.add("col-span-2");
+														containerRef.current?.classList.remove("grid-cols-2");
+														containerRef.current?.classList.add("grid-cols-1");
 													}, 200);
 													setTimeout(() => {
-														resultRef.current!.classList.add("absolute");
+														resultRef.current?.classList.add("absolute");
 													}, 300);
 													setResults([]);
 												},
@@ -158,20 +158,19 @@ const SearchMenu: FC<SearchProps> = ({ className, searchRef }) => {
 									window.tb.fs.promises.readFile("/system/etc/terbium/file-icons.json", "utf8").then(async (data: string) => {
 										const fileIconsData = JSON.parse(data);
 										const getIcon = (ext: string) => {
-											let iconName = fileIconsData["ext-to-name"][ext];
-											let iconPath = fileIconsData["name-to-path"][iconName];
+											const iconName = fileIconsData["ext-to-name"][ext];
+											const iconPath = fileIconsData["name-to-path"][iconName];
 											if (iconPath) {
 												return iconPath;
-											} else {
-												return fileIconsData["name-to-path"]["Unknown"];
 											}
+											return fileIconsData["name-to-path"].Unknown;
 										};
 										const fileItems = await Promise.all(
 											filesres.map(async (f: any) => {
 												const iconSvg = await window.tb.fs.promises.readFile(getIcon(f.ext), "utf8");
 												function rewriteSvgSize(svg: string) {
-													return svg.replace(/<svg([^>]*)>/, (match, attrs) => {
-														let newAttrs = attrs.replace(/\swidth=['"][^'"]*['"]/, "").replace(/\sheight=['"][^'"]*['"]/, "");
+													return svg.replace(/<svg([^>]*)>/, (_match, attrs) => {
+														const newAttrs = attrs.replace(/\swidth=['"][^'"]*['"]/, "").replace(/\sheight=['"][^'"]*['"]/, "");
 														return `<svg${newAttrs} width="48" height="48">`;
 													});
 												}
@@ -183,12 +182,12 @@ const SearchMenu: FC<SearchProps> = ({ className, searchRef }) => {
 													ext: f.ext,
 													dir: f.dir,
 													onClick: async () => {
-														let handlers = JSON.parse(await window.tb.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"))["fileAssociatedApps"];
+														let handlers = JSON.parse(await window.tb.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8")).fileAssociatedApps;
 														handlers = Object.entries(handlers).filter(([type, app]) => {
 															return !((type === "text" && app === "text-editor") || (type === "image" && app === "media-viewer") || (type === "video" && app === "media-viewer") || (type === "audio" && app === "media-viewer"));
 														});
 														const dat = JSON.parse(await window.tb.fs.promises.readFile("/apps/system/files.tapp/extensions.json", "utf8"));
-														let hands: { text: string; value: string }[] = [];
+														const hands: { text: string; value: string }[] = [];
 														for (const [type, app] of handlers) {
 															hands.push({ text: app, value: type });
 														}
@@ -200,16 +199,17 @@ const SearchMenu: FC<SearchProps> = ({ className, searchRef }) => {
 																	case "text":
 																		parent.window.tb.file.handler.openFile(f.path, "text");
 																		break;
-																	case "media":
+																	case "media": {
 																		const ext = f.name.split(".").pop();
-																		if (dat["image"].includes(ext)) {
+																		if (dat.image.includes(ext)) {
 																			parent.window.tb.file.handler.openFile(f.path, "image");
-																		} else if (dat["video"].includes(ext)) {
+																		} else if (dat.video.includes(ext)) {
 																			parent.window.tb.file.handler.openFile(f.path, "video");
-																		} else if (dat["audio"].includes(ext)) {
+																		} else if (dat.audio.includes(ext)) {
 																			parent.window.tb.file.handler.openFile(f.path, "audio");
 																		}
 																		break;
+																	}
 																	case "webview":
 																		parent.window.tb.file.handler.openFile(f.path, "webpage");
 																		break;
@@ -242,12 +242,12 @@ const SearchMenu: FC<SearchProps> = ({ className, searchRef }) => {
 																setSearchHasText(false);
 																setResultOpen(false);
 																setTimeout(() => {
-																	recentAppsRef.current!.classList.add("col-span-2");
-																	containerRef.current!.classList.remove("grid-cols-2");
-																	containerRef.current!.classList.add("grid-cols-1");
+																	recentAppsRef.current?.classList.add("col-span-2");
+																	containerRef.current?.classList.remove("grid-cols-2");
+																	containerRef.current?.classList.add("grid-cols-1");
 																}, 200);
 																setTimeout(() => {
-																	resultRef.current!.classList.add("absolute");
+																	resultRef.current?.classList.add("absolute");
 																}, 300);
 																setResults([]);
 															},
@@ -271,12 +271,12 @@ const SearchMenu: FC<SearchProps> = ({ className, searchRef }) => {
 								setResultOpen(false);
 								setNoResults(false);
 								setTimeout(() => {
-									recentAppsRef.current!.classList.add("col-span-2");
-									containerRef.current!.classList.remove("grid-cols-2");
-									containerRef.current!.classList.add("grid-cols-1");
+									recentAppsRef.current?.classList.add("col-span-2");
+									containerRef.current?.classList.remove("grid-cols-2");
+									containerRef.current?.classList.add("grid-cols-1");
 								}, 200);
 								setTimeout(() => {
-									resultRef.current!.classList.add("absolute");
+									resultRef.current?.classList.add("absolute");
 								}, 300);
 							}
 						}}
@@ -393,7 +393,7 @@ const SearchMenu: FC<SearchProps> = ({ className, searchRef }) => {
 							<div className="flex flex-col items-center justify-center gap-1.5 h-full w-full text-[#ffffffa4] font-[680] text-lg">
 								Searching...
 								<div className="relative flex w-[80%] h-2 rounded-full bg-[#00000020] overflow-hidden shadow-tb-border-shadow">
-									<div className="absolute h-full bg-[#50bf66] rounded-full" style={{ animation: "2.1s cubic-bezier(0.165, 0.84, 0.44, 1) 1.15s infinite normal none running anim1" }}></div>
+									<div className="absolute h-full bg-[#50bf66] rounded-full" style={{ animation: "2.1s cubic-bezier(0.165, 0.84, 0.44, 1) 1.15s infinite normal none running anim1" }} />
 								</div>
 							</div>
 						) : (
