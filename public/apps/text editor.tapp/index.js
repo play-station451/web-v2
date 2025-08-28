@@ -9,7 +9,7 @@ function openFile(data) {
 }
 
 async function updateLineNumbers() {
-	const _textarea = document.querySelector("textarea");
+	const textarea = document.querySelector("textarea");
 	//const lines = textarea.value.split("\n");
 	//const lineNumbers = document.querySelector(".lines");
 	const obj = await hljs.highlightAuto(document.querySelector("textarea").value);
@@ -44,7 +44,7 @@ window.addEventListener("message", async function load(e) {
 	let data;
 	try {
 		data = JSON.parse(e.data);
-	} catch (_err) {
+	} catch (err) {
 		data = e.data;
 	}
 	if (data && data.type === "process" && data.path) {
@@ -57,7 +57,7 @@ window.addEventListener("message", async function load(e) {
 		} else {
 			try {
 				const davInstances = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
-				const davUrl = `${data.path.split("/dav/")[0]}/dav/`;
+				const davUrl = data.path.split("/dav/")[0] + "/dav/";
 				const dav = davInstances.find(d => d.url.toLowerCase().includes(davUrl));
 				if (!dav) throw new Error("No matching dav instance found");
 				const client = window.webdav.createClient(dav.url, {
@@ -67,8 +67,8 @@ window.addEventListener("message", async function load(e) {
 				});
 				let filePath;
 				if (data.path.startsWith("http")) {
-					const match = data.path.match(/^https?:\/\/[^/]+\/dav\/([^/]+\/)?(.+)$/);
-					filePath = match ? `/${match[2]}` : data.path;
+					const match = data.path.match(/^https?:\/\/[^\/]+\/dav\/([^\/]+\/)?(.+)$/);
+					filePath = match ? "/" + match[2] : data.path;
 				} else {
 					filePath = data.path.replace(davUrl, "/");
 				}
@@ -89,7 +89,7 @@ window.addEventListener("message", async function load(e) {
 	window.removeEventListener("message", load);
 });
 
-function _updateScroll(type, e) {
+function updateScroll(type, e) {
 	const textarea = document.querySelector("textarea");
 	if (type === "key") {
 		const scrollAmount = e === "ArrowUp" ? -20 : 20;
@@ -120,7 +120,7 @@ textarea.addEventListener("keydown", async e => {
 			if (document.body.getAttribute("isDav") === "true") {
 				try {
 					const davInstances = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
-					const davUrl = `${path.split("/dav/")[0]}/dav/`;
+					const davUrl = path.split("/dav/")[0] + "/dav/";
 					const dav = davInstances.find(d => d.url.toLowerCase().includes(davUrl));
 					if (!dav) throw new Error("No matching dav instance found");
 					const client = window.webdav.createClient(dav.url, {
@@ -130,8 +130,8 @@ textarea.addEventListener("keydown", async e => {
 					});
 					let filePath;
 					if (path.startsWith("http")) {
-						const match = path.match(/^https?:\/\/[^/]+\/dav\/([^/]+\/)?(.+)$/);
-						filePath = match ? `/${match[2]}` : path;
+						const match = path.match(/^https?:\/\/[^\/]+\/dav\/([^\/]+\/)?(.+)$/);
+						filePath = match ? "/" + match[2] : path;
 					} else {
 						filePath = path.replace(davUrl, "/");
 					}

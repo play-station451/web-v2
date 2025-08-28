@@ -1,10 +1,10 @@
 import * as htmlparser from "htmlparser2";
 
-var isNative = false;
+var isNative: boolean = false;
 var region: HTMLElement | null = null;
 var tbWindow: HTMLElement | null = null;
 // @ts-expect-error API Stub, Declaration will be read eventually
-var _appTitle: string | null = null;
+var appTitle: string | null = null;
 
 const parse = {
 	/**
@@ -22,7 +22,7 @@ const parse = {
 		const response = await window.tb.libcurl.fetch(baseURL);
 		if (!response) throw new Error(`Failed to fetch the source from ${src}`);
 		const data = await response.text();
-		if (data.startsWith("@native") || (src.endsWith(".tml") && !data.startsWith("<tb/>"))) {
+		if (data.startsWith(`@native`) || (src.endsWith(".tml") && !data.startsWith("<tb/>"))) {
 			isNative = true;
 		}
 		if (!isNative) return;
@@ -47,8 +47,8 @@ const parse = {
 			},
 			{ decodeEntities: true },
 		);
-		parser?.write(data);
-		parser?.end();
+		parser!.write(data);
+		parser!.end();
 
 		console.log(tbWindow);
 		return tbWindow;

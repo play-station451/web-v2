@@ -29,7 +29,7 @@ export class AnuraUI {
 	 */
 	async registerExternalComponent(lib: string, component: string, version?: string): Promise<any> {
 		if (version) {
-			lib += `@${version}`;
+			lib += "@" + version;
 		}
 
 		this.components.set(component, {
@@ -100,7 +100,7 @@ export class AnuraUI {
 		if (components) {
 			try {
 				this.components = new Map(components);
-			} catch (_e) {
+			} catch (e) {
 				this.components = new Map();
 			}
 		}

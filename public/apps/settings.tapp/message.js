@@ -1,4 +1,4 @@
-window.addEventListener("message", event => {
+window.addEventListener("message", function (event) {
 	var data;
 	if (typeof event.data === "object") {
 		try {
@@ -14,7 +14,7 @@ window.addEventListener("message", event => {
 		}
 	}
 	if (data && document.querySelector(`[data-category="${data.page}"]`)) {
-		const button = document.querySelector(`[data-category="${data.page}"]`);
+		let button = document.querySelector(`[data-category="${data.page}"]`);
 		button.click();
 	}
 });

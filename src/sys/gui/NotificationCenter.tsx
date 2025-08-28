@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import "./styles/notification.css";
 
 interface Notification {
@@ -14,7 +14,7 @@ export let totalNotifs: number;
 export default function NotificationCenter() {
 	const [notificationCount, setNotificationCount] = useState(() => {
 		const savedCount = JSON.parse(sessionStorage.getItem("notifications") || "[]").length;
-		return savedCount ? Number.parseInt(savedCount, 10) : 0;
+		return savedCount ? parseInt(savedCount) : 0;
 	});
 	const iconRef = useRef<HTMLImageElement>(null);
 	const updateIcon = () => {
@@ -32,7 +32,7 @@ export default function NotificationCenter() {
 		return () => {
 			window.removeEventListener("notification-count", updateCount as EventListener);
 		};
-	}, [updateIcon]);
+	}, [notificationCount]);
 	useEffect(() => {
 		totalNotifs = notificationCount;
 	});
@@ -55,7 +55,7 @@ export default function NotificationCenter() {
 			onMouseDown={() => {
 				iconRef.current?.classList.add("scale-90");
 			}}
-		/>
+		></img>
 	);
 }
 
@@ -136,7 +136,7 @@ const NotificationMenu = ({ isOpen }: INotificationProps) => {
 				>
 					{notifications.map((notification, index) => {
 						var time = "Now";
-						const currentTime = Date.now();
+						const currentTime = new Date().getTime();
 						const timeDiff = notification.time ? currentTime - new Date(notification.time).getTime() : 0;
 						if (timeDiff < 60000) {
 							time = "Just now";

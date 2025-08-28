@@ -1,8 +1,7 @@
-import type React from "react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./styles/win_switcher.css";
 import { useWindowStore } from "../Store";
-import type { WindowConfig } from "../types";
+import { WindowConfig } from "../types";
 
 const WinSwitcher: React.FC = () => {
 	const [isVisible, setIsVisible] = useState<boolean>(false);

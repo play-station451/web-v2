@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { dirExists, fileExists } from "./sys/types";
 import { hash } from "./hash.json";
 import paths from "./installer.json";
-import { dirExists, fileExists } from "./sys/types";
 
 export default function Updater() {
 	const [progress, setProgress] = useState(0);
@@ -30,8 +30,8 @@ export default function Updater() {
 
 	useEffect(() => {
 		const main = async () => {
-			const sysapps = ["about.tapp", "app store.tapp", "browser.tapp", "calculator.tapp", "feedback.tapp", "files.tapp", "media viewer.tapp", "settings.tapp", "task manager.tapp", "terminal.tapp", "text editor.tapp"];
-			const sysscripts = [
+			let sysapps = ["about.tapp", "app store.tapp", "browser.tapp", "calculator.tapp", "feedback.tapp", "files.tapp", "media viewer.tapp", "settings.tapp", "task manager.tapp", "terminal.tapp", "text editor.tapp"];
+			let sysscripts = [
 				"cat.js",
 				"cd.js",
 				"clear.js",
@@ -61,7 +61,7 @@ export default function Updater() {
 			];
 			if (await dirExists("/system/tmp/terb-upd/")) {
 				// @ts-expect-error
-				await new Filer.fs.Shell().promises.rm("/system/tmp/terb-upd/", { recursive: true });
+				await new Filer.fs.Shell().promises.rm(`/system/tmp/terb-upd/`, { recursive: true });
 			}
 			statusref.current!.innerText = "Installing latest version of TB...";
 			await Filer.fs.promises.mkdir("/system/tmp/terb-upd/");
@@ -133,7 +133,7 @@ export default function Updater() {
 			// v2.0-Beta2 update
 			if (!(await fileExists("/apps/installed.json"))) {
 				statusref.current!.innerText = "Installing Terbium v2.0-Beta2 prerequisites...";
-				const insapps = [
+				let insapps = [
 					{
 						name: "About",
 						config: "/apps/system/about.tapp/index.json",
@@ -269,13 +269,13 @@ export default function Updater() {
 			statusref.current!.innerText = "Cleaning up...";
 			setProgress(95);
 			// @ts-expect-error
-			await new Filer.fs.Shell().promises.rm("/system/tmp/terb-upd/", { recursive: true });
+			await new Filer.fs.Shell().promises.rm(`/system/tmp/terb-upd/`, { recursive: true });
 			setProgress(100);
 			statusref.current!.innerText = "Restarting...";
 			window.location.reload();
 		};
 		main();
-	}, [copyDir]);
+	}, []);
 
 	return (
 		<div className="bg-[#0e0e0e] h-full justify-center items-center flex flex-col lg:h-full md:h-full">
@@ -295,7 +295,7 @@ export default function Updater() {
 				Downloading Updates...
 			</p>
 			<div className="relative flex w-[30%] h-3 rounded-full bg-[#00000020] overflow-hidden mt-4">
-				<div className="absolute h-full bg-[#50bf66] rounded-full" style={{ width: `${progress}%` }} />
+				<div className="absolute h-full bg-[#50bf66] rounded-full" style={{ width: `${progress}%` }}></div>
 			</div>
 		</div>
 	);

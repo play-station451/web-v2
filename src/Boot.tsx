@@ -5,7 +5,7 @@ import { dirExists, fileExists } from "./sys/types";
 export default function Boot() {
 	const [selected, setSelected] = useState(0);
 	const [showCursor, setShowCursor] = useState(false);
-	const [bootentries, setentries] = useState<{ name: string; action: undefined | any }[]>([]);
+	const [bootentries, setentries] = useState<{ name: string; action: void | any }[]>([]);
 
 	const boot = () => {
 		sessionStorage.setItem("boot", "true");
@@ -14,7 +14,7 @@ export default function Boot() {
 
 	const cloak = () => {
 		const newWindow = window.open("about:blank", "_blank");
-		const newDocument = newWindow?.document.open();
+		const newDocument = newWindow!.document.open();
 		sessionStorage.setItem("boot", "true");
 		newDocument.write(`
             <!DOCTYPE html>
@@ -72,11 +72,11 @@ export default function Boot() {
 			const crosua = /CrOS/;
 			if (mobileuas.test(navigator.userAgent) && !crosua.test(navigator.userAgent)) {
 				return "mobile";
-			}
-			if (!mobileuas.test(navigator.userAgent) && navigator.maxTouchPoints > 1 && navigator.userAgent.indexOf("Macintosh") !== -1 && navigator.userAgent.indexOf("Safari") !== -1) {
+			} else if (!mobileuas.test(navigator.userAgent) && navigator.maxTouchPoints > 1 && navigator.userAgent.indexOf("Macintosh") !== -1 && navigator.userAgent.indexOf("Safari") !== -1) {
 				return "mobile";
+			} else {
+				return "desktop";
 			}
-			return "desktop";
 		};
 		if (getPlatform() === "mobile") {
 			setShowCursor(true);
@@ -98,7 +98,7 @@ export default function Boot() {
 		return () => {
 			window.removeEventListener("keydown", handleKeyDown);
 		};
-	}, [selected, bootentries, boot.toString, cloak.toString, recovery.toString]);
+	}, [selected, bootentries]);
 
 	return (
 		<div className={`overflow-hidden w-full h-full flex justify-center pt-[30px] bg-[#0e0e0e] ${showCursor ? null : "cursor-none"}`}>

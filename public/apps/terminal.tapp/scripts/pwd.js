@@ -1,4 +1,4 @@
-function pwd(_args) {
+function pwd(args) {
 	displayOutput(path);
 	createNewCommandInput();
 }

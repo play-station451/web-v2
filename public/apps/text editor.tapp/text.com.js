@@ -1,8 +1,8 @@
 const tb = parent.window.tb;
 const tb_island = tb.window.island;
-const _tb_window = tb.window;
-const _tb_context_menu = tb.context_menu;
-const _tb_dialog = tb.dialog;
+const tb_window = tb.window;
+const tb_context_menu = tb.context_menu;
+const tb_dialog = tb.dialog;
 
 const appisland = window.parent.document.querySelector(".app_island").clientHeight + 12;
 
@@ -68,7 +68,7 @@ tb_island.addControl({
 						const file = document.createElement("input");
 						file.type = "file";
 						file.onchange = async e => {
-							const blob = e.target.files[0];
+							let blob = e.target.files[0];
 							const fileReader = new FileReader();
 							fileReader.readAsText(blob);
 							fileReader.onload = () => {

@@ -1,13 +1,13 @@
-import { exec } from "node:child_process";
-import consola from "consola";
 import fs from "fs";
-import open from "open";
 import path from "path";
 import { fileURLToPath } from "url";
-import { version } from "./package.json";
+import consola from "consola";
 import { TServer } from "./server";
+import { version } from "./package.json";
+import open from "open";
+import { exec } from "child_process";
 
-consola.info(`Bootstrapping TerbiumOS [v${version}]`);
+consola.info("Bootstrapping TerbiumOS [v" + version + "]");
 
 export default async function Bootstrap() {
 	const args = process.argv;
@@ -23,11 +23,11 @@ export default async function Bootstrap() {
 
 export async function BuildApps() {
 	consola.start("Building apps...");
-	const __dirname = path.dirname(fileURLToPath(import.meta.url));
-	const baseDir = path.join(__dirname, "./public/apps");
-	const outputDir = path.join(__dirname, "./src");
-	const outputJsonPath = path.join(outputDir, "apps.json");
-	const result: { name: string; config: any }[] = [];
+	const __dirname = path.dirname(fileURLToPath(import.meta.url)),
+		baseDir = path.join(__dirname, "./public/apps"),
+		outputDir = path.join(__dirname, "./src"),
+		outputJsonPath = path.join(outputDir, "apps.json"),
+		result: { name: string; config: any }[] = [];
 	function scanDirectory(dir: string) {
 		fs.readdirSync(dir, { withFileTypes: true }).forEach(i => {
 			if (i.isDirectory()) {
@@ -82,11 +82,11 @@ export async function CreateAppsPaths() {
 	}
 	consola.start("Creating apps paths...");
 
-	const __dirname = path.dirname(fileURLToPath(import.meta.url));
-	const baseDir = path.join(__dirname, "./public/apps");
-	const outputDir = path.join(__dirname, "./src");
-	const outputJsonPath = path.join(outputDir, "installer.json");
-	const output: string[] = [];
+	const __dirname = path.dirname(fileURLToPath(import.meta.url)),
+		baseDir = path.join(__dirname, "./public/apps"),
+		outputDir = path.join(__dirname, "./src"),
+		outputJsonPath = path.join(outputDir, "installer.json"),
+		output: string[] = [];
 
 	function collectPaths(dir: string, base: string = dir): void {
 		const files: fs.Dirent[] = fs.readdirSync(dir, { withFileTypes: true });
@@ -94,7 +94,7 @@ export async function CreateAppsPaths() {
 			const fullPath = path.join(dir, file.name);
 			const relativePath = path.relative(baseDir, fullPath).replace(/\\/g, "/");
 			if (file.isDirectory()) {
-				output.push(`${relativePath}/`);
+				output.push(relativePath + "/");
 				collectPaths(fullPath, base);
 			} else {
 				output.push(relativePath);
@@ -177,10 +177,10 @@ export async function Updater() {
 						await CreateAppsPaths();
 					});
 					return;
-				}
-				return;
+				} else return;
+			} else {
+				consola.success("Terbium is up to date");
 			}
-			consola.success("Terbium is up to date");
 		} catch (e) {
 			consola.error(`Failed to check for updates, ${e}`);
 		}

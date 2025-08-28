@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import type { NotificationProps } from "../types";
+import { NotificationProps } from "../types";
+import { useState, useEffect } from "react";
 import "../gui/styles/notification.css";
 
 export let setNotifFn: (type: "message" | "toast" | "installing", props: NotificationProps) => void;
@@ -21,17 +21,15 @@ export default function NotificationContainer() {
 	 */
 	useEffect(() => {
 		setNotifFn = setNotif;
-	}, [setNotif]);
+	}, []);
 	return (
 		<div className="absolute grid grid-cols-1 h-max max-h-[calc(100%-calc(60px+1.5rem))] w-[380px] top-[60px] right-1.5 z-9999 gap-2">
 			{notifications.map(({ id, type, props }) => {
 				if (type === "message") {
 					return <Message key={id} {...props} remove={() => remove(id)} />;
-				}
-				if (type === "toast") {
+				} else if (type === "toast") {
 					return <Toast key={id} {...props} remove={() => remove(id)} />;
-				}
-				if (type === "installing") {
+				} else if (type === "installing") {
 					return <Installing key={id} {...props} remove={() => remove(id)} />;
 				}
 			})}
@@ -64,7 +62,7 @@ export function Message({ iconSrc, application, message, txt, onOk, onCancel, ti
 			clearInterval(int);
 			clearTimeout(tID);
 		};
-	}, [time, Cancel]);
+	}, [time]);
 	const OK = () => {
 		setTimeout(() => {
 			remove();
@@ -90,7 +88,7 @@ export function Message({ iconSrc, application, message, txt, onOk, onCancel, ti
 		}
 	};
 	return (
-		<div className={"flex flex-col shadow-tb-border-shadow bg-[#00000088] rounded-lg backdrop-blur-lg fade-in"}>
+		<div className={`flex flex-col shadow-tb-border-shadow bg-[#00000088] rounded-lg backdrop-blur-lg fade-in`}>
 			<div className="flex justify-between items-center p-2 bg-[#ffffff20] rounded-t-lg">
 				<div className="flex gap-2 items-center">
 					<img className="size-6" src={iconSrc || "/assets/img/logo.png"} alt={application} />
@@ -137,7 +135,7 @@ export function Toast({ iconSrc, application, message, time, onOk, onCancel, rem
 			clearInterval(int);
 			clearTimeout(tID);
 		};
-	}, [time, Cancel]);
+	}, [time]);
 	const Cancel = () => {
 		setTimeout(() => {
 			remove();
@@ -158,7 +156,7 @@ export function Toast({ iconSrc, application, message, time, onOk, onCancel, rem
 		}, 200);
 	};
 	return (
-		<div className={"flex flex-col shadow-tb-border-shadow bg-[#00000088] rounded-lg backdrop-blur-lg fade-in"}>
+		<div className={`flex flex-col shadow-tb-border-shadow bg-[#00000088] rounded-lg backdrop-blur-lg fade-in`}>
 			<div className="flex justify-between items-center p-2 bg-[#ffffff20] rounded-t-lg">
 				<div className="flex gap-2 items-center">
 					<img className="size-6" src={iconSrc || "/assets/img/logo.png"} alt={application} />
@@ -191,10 +189,10 @@ export function Installing({ iconSrc, application, message, time, onOk, remove }
 		return () => {
 			clearTimeout(tID);
 		};
-	}, [time, OK]);
+	}, [time]);
 
-	const anim0 = "anim0 2.1s cubic-bezier(0.65, 0.815, 0.735, 0.395) infinite";
-	const anim1 = "anim1 2.1s cubic-bezier(0.165, 0.84, 0.44, 1) 1.15s infinite";
+	const anim0 = `anim0 2.1s cubic-bezier(0.65, 0.815, 0.735, 0.395) infinite`;
+	const anim1 = `anim1 2.1s cubic-bezier(0.165, 0.84, 0.44, 1) 1.15s infinite`;
 
 	useEffect(() => {
 		const int = setInterval(() => {
@@ -210,14 +208,16 @@ export function Installing({ iconSrc, application, message, time, onOk, remove }
 		}, 200);
 	};
 	return (
-		<div className={"flex flex-col shadow-tb-border-shadow bg-[#00000088] rounded-lg backdrop-blur-lg fade-in"}>
+		<div className={`flex flex-col shadow-tb-border-shadow bg-[#00000088] rounded-lg backdrop-blur-lg fade-in`}>
 			<div className="flex items-center gap-2 p-2 bg-[#ffffff20] rounded-t-lg">
 				<img src={iconSrc || "/assets/img/logo.png"} alt="Icon" style={{ width: "25px", height: "25px" }} />
 				<div className="notification-application">{application || "com.tb.genericapp"}</div>
 			</div>
 			<div className="flex flex-col gap-2 p-2.5">
 				<div className="text-lg font-semibold">{message}</div>
-				<div className="relative flex w-full h-3 rounded-full bg-[#00000020] overflow-hidden">{currentAnimation === 0 ? <div className="absolute h-full bg-[#50bf66] rounded-full" style={{ animation: anim0 }} /> : <div className="absolute h-full bg-[#50bf66] rounded-full" style={{ animation: anim1 }} />}</div>
+				<div className="relative flex w-full h-3 rounded-full bg-[#00000020] overflow-hidden">
+					{currentAnimation === 0 ? <div className="absolute h-full bg-[#50bf66] rounded-full" style={{ animation: anim0 }}></div> : <div className="absolute h-full bg-[#50bf66] rounded-full" style={{ animation: anim1 }}></div>}
+				</div>
 				<div className="flex gap-2 justify-between">
 					<button className="leading-none p-2.5 px-4 bg-[#53f67463] shadow-tb-border rounded-md hover:bg-[#53f67473] duration-150 cursor-pointer" style={{ position: "sticky", left: "100%" }} onClick={OK}>
 						OK

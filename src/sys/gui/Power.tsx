@@ -1,5 +1,5 @@
-import { ArrowPathIcon, LockClosedIcon, MoonIcon, PowerIcon } from "@heroicons/react/24/solid";
-import { useEffect, useRef, useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { PowerIcon, MoonIcon, LockClosedIcon, ArrowPathIcon } from "@heroicons/react/24/solid";
 
 export default function Power() {
 	const [showMenu, setShowMenu] = useState(false);

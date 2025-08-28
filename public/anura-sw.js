@@ -27,8 +27,8 @@ const filerfs = new Filer.FileSystem({
 });
 const filersh = new filerfs.Shell();
 
-let opfs;
-let opfssh;
+let opfs = undefined;
+let opfssh = undefined;
 
 async function currentFs() {
 	// isConnected will return true if the anura instance is running, and otherwise infinitely wait.
@@ -150,14 +150,14 @@ async function handleDavRequest({ request, url }) {
 					};
 
 					if (isDirectory) {
-						responses = await renderEntry(href.endsWith("/") ? href : `${href}/`, stats);
+						responses = await renderEntry(href.endsWith("/") ? href : href + "/", stats);
 
 						const files = await fs.readdir(path);
 						const fileResponses = await Promise.all(
 							files.map(async file => {
 								const fullPath = path.endsWith("/") ? path + file : `${path}/${file}`;
 								const stat = await fs.stat(fullPath);
-								const entryHref = `${href.endsWith("/") ? href : `${href}/`}${file}`;
+								const entryHref = `${href.endsWith("/") ? href : href + "/"}${file}`;
 								return renderEntry(entryHref, stat);
 							}),
 						);
@@ -309,7 +309,7 @@ const filepickerCallbacks = {};
 
 addEventListener("message", event => {
 	if (event.data.anura_target === "anura.x86.proxy") {
-		const callback = callbacks[event.data.id];
+		let callback = callbacks[event.data.id];
 		callback(event.data.value);
 	}
 	if (event.data.anura_target === "anura.cache") {
@@ -317,7 +317,7 @@ addEventListener("message", event => {
 		idbKeyval.set("cacheenabled", event.data.value);
 	}
 	if (event.data.anura_target === "anura.filepicker.result") {
-		const callback = filepickerCallbacks[event.data.id];
+		let callback = filepickerCallbacks[event.data.id];
 		callback(event.data.value);
 	}
 	if (event.data.anura_target === "anura.comlink.init") {
@@ -336,7 +336,7 @@ workbox.routing.registerRoute(/\/extension\//, async ({ url }) => {
 	console.debug("Caught a aboutbrowser extension request");
 	try {
 		return new Response(await fs.promises.readFile(url.pathname));
-	} catch (_e) {
+	} catch (e) {
 		return new Response("File not found bruh", { status: 404 });
 	}
 });
@@ -344,13 +344,13 @@ workbox.routing.registerRoute(/\/extension\//, async ({ url }) => {
 workbox.routing.registerRoute(
 	/\/showFilePicker/,
 	async ({ url }) => {
-		const id = crypto.randomUUID();
-		const clients = (await self.clients.matchAll()).filter(v => new URL(v.url).pathname === "/");
+		let id = crypto.randomUUID();
+		let clients = (await self.clients.matchAll()).filter(v => new URL(v.url).pathname === "/");
 		if (clients.length < 1) return new Response("no clients were available to take your request");
-		const client = clients[0];
+		let client = clients[0];
 
-		const regex = url.searchParams.get("regex") || ".*";
-		const type = url.searchParams.get("type") || "file";
+		let regex = url.searchParams.get("regex") || ".*";
+		let type = url.searchParams.get("type") || "file";
 
 		client.postMessage({
 			anura_target: "anura.filepicker",
@@ -372,15 +372,15 @@ workbox.routing.registerRoute(
 
 async function serveFile(path, fsOverride, shOverride) {
 	let fs;
-	let _sh;
+	let sh;
 
 	if (fsOverride && shOverride) {
 		fs = fsOverride;
-		_sh = shOverride;
+		sh = shOverride;
 	} else {
 		const { fs: fs_, sh: sh_ } = await currentFs();
 		fs = fsOverride || fs_;
-		_sh = shOverride || sh_;
+		sh = shOverride || sh_;
 	}
 
 	if (!fs) {
@@ -404,7 +404,7 @@ async function serveFile(path, fsOverride, shOverride) {
 		const stats = await fs.promises.stat(path);
 		if (stats.type === "DIRECTORY") {
 			// Can't do withFileTypes because it is unserializable
-			const entries = await Promise.all((await fs.promises.readdir(path)).map(async e => await fs.promises.stat(`${path}/${e}`)));
+			let entries = await Promise.all((await fs.promises.readdir(path)).map(async e => await fs.promises.stat(`${path}/${e}`)));
 			function page() {
 				return `<!DOCTYPE html>
 					<html>
@@ -602,7 +602,7 @@ workbox.routing.registerRoute(
 	fsRegex,
 	async ({ url, request }) => {
 		let path = url.pathname.match(fsRegex)[1];
-		const action = request.headers.get("x-fs-action") || url.searchParams.get("action");
+		let action = request.headers.get("x-fs-action") || url.searchParams.get("action");
 		if (!action) {
 			return new Response(
 				JSON.stringify({
@@ -619,7 +619,7 @@ workbox.routing.registerRoute(
 			);
 		}
 		path = decodeURI(path);
-		const body = await request.arrayBuffer();
+		let body = await request.arrayBuffer();
 		return updateFile(path, {
 			action,
 			contents: Buffer.from(body),
@@ -631,7 +631,7 @@ workbox.routing.registerRoute(
 workbox.routing.registerRoute(/^(?!.*(\/config.json|\/MILESTONE|\/x86images\/|\/service\/))/, async ({ url }) => {
 	if (cacheenabled === undefined) {
 		console.debug("retrieving cache value");
-		const result = await idbKeyval.get("cacheenabled");
+		let result = await idbKeyval.get("cacheenabled");
 		if (result !== undefined || result !== null) {
 			cacheenabled = result;
 		}
@@ -657,12 +657,12 @@ workbox.routing.registerRoute(/^(?!.*(\/config.json|\/MILESTONE|\/x86images\/|\/
 		url.pathname = "/index.html";
 	}
 	if (url.password) return new Response("<script>window.location.href = window.location.href</script>", { headers: { "content-type": "text/html" } });
-	const _basepath = "/anura_files";
-	const _path = decodeURI(url.pathname);
+	const basepath = "/anura_files";
+	let path = decodeURI(url.pathname);
 
 	// Force Filer to be used in cache routes, as it does not require waiting for anura to be connected
-	const _fs = opfs || filerfs;
-	const _sh = opfssh || filersh;
+	const fs = opfs || filerfs;
+	const sh = opfssh || filersh;
 
 	// Terbium already has its own way for caching files to the file system so doing it again is just a waste of space
 	/*

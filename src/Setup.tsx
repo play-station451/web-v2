@@ -1,14 +1,13 @@
-import Compressor from "compressorjs";
 import Cropper from "cropperjs";
-import { useRef, useState } from "react";
+import Compressor from "compressorjs";
+import { useState, useRef } from "react";
 import "./sys/gui/styles/login.css";
 import "./sys/gui/styles/cropper.css";
 import "./sys/gui/styles/oobe.css";
 import "./sys/gui/styles/dropdown.css";
-import { init } from "./init";
 import pwd from "./sys/apis/Crypto";
-import { fileExists, type User } from "./sys/types";
-
+import { init } from "./init";
+import { fileExists, User } from "./sys/types";
 const pw = new pwd();
 
 export default function Setup() {
@@ -27,13 +26,13 @@ export default function Setup() {
 	};
 	const saveData = async () => {
 		await init();
-		const data: User = JSON.parse(sessionStorage.getItem("new-user") as string);
+		let data: User = JSON.parse(sessionStorage.getItem("new-user") as string);
 		sessionStorage.setItem("new-user", JSON.stringify(data));
-		const usr = data.username;
-		data.id = usr;
+		const usr = data["username"];
+		data["id"] = usr;
 		let pass: any;
-		if (typeof data.password === "string" && data.password.length > 0) {
-			pass = pw.harden(data.password);
+		if (typeof data["password"] === "string" && data["password"].length > 0) {
+			pass = pw.harden(data["password"]);
 		} else {
 			pass = false;
 		}
@@ -41,11 +40,11 @@ export default function Setup() {
 			id: usr,
 			username: usr,
 			password: pass,
-			pfp: data.pfp,
-			perm: data.perm,
+			pfp: data["pfp"],
+			perm: data["perm"],
 		};
 		if (data.securityQuestion) {
-			userInf.securityQuestion = {
+			userInf["securityQuestion"] = {
 				question: data.securityQuestion.question,
 				answer: pw.harden(data.securityQuestion.answer),
 			};
@@ -56,22 +55,22 @@ export default function Setup() {
 		await Filer.fs.promises.mkdir(`/home/${usr}/images/`);
 		await Filer.fs.promises.mkdir(`/home/${usr}/videos/`);
 		await Filer.fs.promises.mkdir(`/home/${usr}/music/`);
-		const settings = JSON.parse(await Filer.fs.promises.readFile(`/home/${usr}/settings.json`, "utf8"));
-		const syssettings = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"));
-		if (!syssettings.setup || syssettings.setup === false) {
-			syssettings.setup = true;
+		let settings = JSON.parse(await Filer.fs.promises.readFile(`/home/${usr}/settings.json`, "utf8"));
+		let syssettings = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"));
+		if (!syssettings["setup"] || syssettings["setup"] === false) {
+			syssettings["setup"] = true;
 		}
-		syssettings.defaultUser = usr;
+		syssettings["defaultUser"] = usr;
 		const transport = sessionStorage.getItem("selectedTransport") || "Default (Epoxy)";
 		if (transport === "Default (Epoxy)") {
-			settings.transport = "Default (Epoxy)";
+			settings["transport"] = "Default (Epoxy)";
 		} else if (transport === "Anura BCC") {
-			settings.transport = "Anura BCC";
+			settings["transport"] = "Anura BCC";
 		} else {
-			settings.transport = "Libcurl";
+			settings["transport"] = "Libcurl";
 		}
 		const wsrv = sessionStorage.getItem("selectedBare") || `${location.protocol.replace("http", "ws")}//${location.hostname}:${location.port}/wisp/`;
-		settings.wispServer = wsrv;
+		settings["wispServer"] = wsrv;
 		await Filer.fs.promises.writeFile(`/home/${usr}/settings.json`, JSON.stringify(settings), "utf8");
 		await Filer.fs.promises.writeFile("/system/etc/terbium/settings.json", JSON.stringify(syssettings), "utf8");
 		const wispExist = await fileExists("//apps/system/settings.tapp/wisp-servers.json");
@@ -83,7 +82,7 @@ export default function Setup() {
 			await Filer.fs.promises.writeFile("//apps/system/settings.tapp/wisp-servers.json", JSON.stringify(stockDat));
 		}
 		localStorage.setItem("setup", "true");
-		if (sessionStorage?.getItem("logged-in") === null || sessionStorage?.getItem("logged-in") === undefined || sessionStorage?.getItem("logged-in") === "false") {
+		if (sessionStorage!.getItem("logged-in") === null || sessionStorage!.getItem("logged-in") === undefined || sessionStorage!.getItem("logged-in") === "false") {
 			window.location.reload();
 			sessionStorage.setItem("firstRun", "true");
 		} else {
@@ -132,17 +131,17 @@ export default function Setup() {
 			const pfp = pfpRef.current?.getAttribute("data-src");
 			const randomColors = ["orange", "red", "green", "blue", "purple", "pink", "yellow"];
 			const finalPfp = pfp || `/assets/img/default - ${randomColors[Math.floor(Math.random() * randomColors.length)]}.png`;
-			const passdata: any = JSON.parse(sessionStorage.getItem("new-user") as string) || {};
-			passdata.pfp = finalPfp;
+			let passdata: any = JSON.parse(sessionStorage.getItem("new-user") as string) || {};
+			passdata["pfp"] = finalPfp;
 			sessionStorage.setItem("new-user", JSON.stringify(passdata));
 			const password = passwordRef.current?.value || false;
 			const username = usernameRef.current?.value || "Guest";
-			const data: any = JSON.parse(sessionStorage.getItem("new-user") as string) || {};
-			data.username = username;
-			data.password = password;
-			data.perm = "admin";
+			let data: any = JSON.parse(sessionStorage.getItem("new-user") as string) || {};
+			data["username"] = username;
+			data["password"] = password;
+			data["perm"] = "admin";
 			if (secA.current?.value && secQ.current?.value && secA.current.value.length > 0 && secQ.current.value.length > 0) {
-				data.securityQuestion = {
+				data["securityQuestion"] = {
 					question: secQ.current.value,
 					answer: secA.current.value,
 				};
@@ -172,8 +171,8 @@ export default function Setup() {
 								uploader.type = "file";
 								uploader.accept = "img/*";
 								uploader.onchange = () => {
-									const files = uploader?.files;
-									const file = files?.[0];
+									const files = uploader!.files;
+									const file = files![0];
 									const reader = new FileReader();
 									reader.onload = () => {
 										const img = document.createElement("img");
@@ -185,7 +184,7 @@ export default function Setup() {
 											cropper_container_styles.forEach(style => cropper_container.classList.add(style));
 											const cropper_img_container = document.createElement("div");
 											cropper_img_container.className = "cropper-img-container";
-											const cropper_img_container_sizes = ["bg-[#ffffff0a]", "lg:w-[500px]", "lg:h-[500px]", "md:w-[400px]", "md:h-[400px]", "sm:w-[300px]", "sm:h-[300px]", "flex", "justify-center", "items-center", "rounded-[8px]", "overflow-hidden"];
+											let cropper_img_container_sizes = ["bg-[#ffffff0a]", "lg:w-[500px]", "lg:h-[500px]", "md:w-[400px]", "md:h-[400px]", "sm:w-[300px]", "sm:h-[300px]", "flex", "justify-center", "items-center", "rounded-[8px]", "overflow-hidden"];
 											cropper_img_container_sizes.forEach(size => cropper_img_container.classList.add(size));
 											const cropper_img = document.createElement("img");
 											cropper_img.src = img.src;
@@ -288,7 +287,7 @@ export default function Setup() {
 								uploader.click();
 							}}
 						>
-							<div className="uploader opacity-0 size-full rounded-[50%] bg-[#00000060] transition duration-150 group-hover:opacity-100 cursor-pointer" />
+							<div className="uploader opacity-0 size-full rounded-[50%] bg-[#00000060] transition duration-150 group-hover:opacity-100 cursor-pointer"></div>
 							<p className="absolute top-1/2 cursor-pointer left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 text-[#cccccc] text-[16px] font-[600] group-hover:opacity-100 transition duration-150 pointer-events-none">Upload</p>
 						</div>
 						<div className="inputs flex flex-col gap-[10px] justify-center items-left">
@@ -425,7 +424,7 @@ export default function Setup() {
 			} else if (label === "Backend (Default)") {
 				sessionStorage.setItem("selectedBare", `${location.protocol.replace("http", "ws")}//${location.hostname}:${location.port}/wisp/`);
 			} else if (label === "TB Wisp Instance") {
-				sessionStorage.setItem("selectedBare", "wss://wisp.terbiumon.top/wisp/");
+				sessionStorage.setItem("selectedBare", `wss://wisp.terbiumon.top/wisp/`);
 			}
 			setBareDropdownOpen(false);
 		};
@@ -525,7 +524,7 @@ export default function Setup() {
 		}, 150);
 
 		return (
-			<div className={"absolute bottom-2.5 left-2.5 right-2.5 h-max flex justify-center items-center max-w-full overflow-x-auto overflow-y-hidden"}>
+			<div className={`absolute bottom-2.5 left-2.5 right-2.5 h-max flex justify-center items-center max-w-full overflow-x-auto overflow-y-hidden`}>
 				{currentStep === 1 ? (
 					<button
 						ref={el => {

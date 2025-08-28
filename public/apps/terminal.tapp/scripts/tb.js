@@ -376,7 +376,7 @@ async function tb(args) {
 						displayOutput("Container restarted.");
 						window.parent.tb.setCommandProcessing(false);
 						createNewCommandInput();
-					} catch (_e) {
+					} catch (e) {
 						error("tb > node > restart > Could not restart the NodeJS container.");
 					}
 					window.parent.tb.setCommandProcessing(false);

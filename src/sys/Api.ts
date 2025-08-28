@@ -1,30 +1,29 @@
-import { BareMuxConnection } from "@mercuryworkshop/bare-mux";
-import * as fflate from "fflate";
-import { libcurl } from "libcurl.js/bundled";
-import apps from "../apps.json";
-import { hash } from "../hash.json";
-import pwd from "./apis/Crypto";
 import { setDialogFn } from "./apis/Dialogs";
-import { hideFn, isExistingFn, setMusicFn, setVideoFn } from "./apis/Mediaisland";
 import { setNotifFn } from "./apis/Notifications";
-import { registry } from "./apis/Registry";
-import { System } from "./apis/System";
-import { XOR } from "./apis/Xor";
-import { type AppIslandProps, clearControls, clearInfo, updateControls } from "./gui/AppIsland";
-import type { TDockItem } from "./gui/Dock";
-import { createWindow } from "./gui/WindowArea";
-import { Lemonade } from "./lemonade";
-import { AliceWM } from "./liquor/AliceWM";
 import { Anura } from "./liquor/Anura";
+import { AliceWM } from "./liquor/AliceWM";
 import { LocalFS } from "./liquor/api/LocalFS";
-import { AnuraBareClient } from "./liquor/bcc";
 import { ExternalApp } from "./liquor/coreapps/ExternalApp";
 import { ExternalLib } from "./liquor/libs/ExternalLib";
-import { initializeWebContainer } from "./Node/runtimes/Webcontainers/nodeProc";
+import { registry } from "./apis/Registry";
+import { type MediaProps, type cmprops, type dialogProps, type launcherProps, type NotificationProps, type COM, type User, type WindowConfig, fileExists, UserSettings, SysSettings } from "./types";
+import { System } from "./apis/System";
+import { setMusicFn, setVideoFn, isExistingFn, hideFn } from "./apis/Mediaisland";
+import { XOR } from "./apis/Xor";
+import { libcurl } from "libcurl.js/bundled";
+import { BareMuxConnection } from "@mercuryworkshop/bare-mux";
+import pwd from "./apis/Crypto";
+import * as fflate from "fflate";
 import parse from "./Parser";
+import { AppIslandProps, clearControls, clearInfo, updateControls } from "./gui/AppIsland";
+import { createWindow } from "./gui/WindowArea";
+import { TDockItem } from "./gui/Dock";
 import { useWindowStore } from "./Store";
-import { type COM, type cmprops, type dialogProps, fileExists, type launcherProps, type MediaProps, type NotificationProps, type SysSettings, type User, type UserSettings, type WindowConfig } from "./types";
-
+import { AnuraBareClient } from "./liquor/bcc";
+import apps from "../apps.json";
+import { hash } from "../hash.json";
+import { Lemonade } from "./lemonade";
+import { initializeWebContainer } from "./Node/runtimes/Webcontainers/nodeProc";
 const system = new System();
 const Filer = window.Filer;
 const pw = new pwd();
@@ -43,14 +42,14 @@ export default async function Api() {
 		sh: new Filer.fs.Shell(),
 		battery: {
 			async showPercentage() {
-				const settings: UserSettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
+				let settings: UserSettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
 				settings["battery-percent"] = true;
 				await Filer.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, JSON.stringify(settings));
 				window.dispatchEvent(new CustomEvent("controlBatteryPercentVisibility", { detail: true }));
 				return "Success";
 			},
 			async hidePercentage() {
-				const settings: UserSettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
+				let settings: UserSettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
 				settings["battery-percent"] = false;
 				await Filer.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, JSON.stringify(settings));
 				window.dispatchEvent(new CustomEvent("controlBatteryPercentVisibility", { detail: false }));
@@ -59,7 +58,7 @@ export default async function Api() {
 			async canUse() {
 				if ("BatteryManager" in window) {
 					const battery = await navigator.getBattery();
-					return !!battery;
+					return battery ? true : false;
 				}
 				return false;
 			},
@@ -100,12 +99,12 @@ export default async function Api() {
 		},
 		theme: {
 			async get() {
-				return JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8")).theme;
+				return JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"))["theme"];
 			},
 			async set(data: string) {
 				return new Promise(async resolve => {
 					const settings: SysSettings = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"));
-					settings.theme = data;
+					settings["theme"] = data;
 					await Filer.fs.promises.writeFile("/system/etc/terbium/settings.json", JSON.stringify(settings), "utf8");
 					resolve(true);
 				});
@@ -117,56 +116,56 @@ export default async function Api() {
 					color.toString().includes('"') ? (color = color.replace(/"/g, "")) : (color = color);
 					document.body.setAttribute("theme", color);
 					const settings: SysSettings = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"));
-					settings.theme = color;
+					settings["theme"] = color;
 					await Filer.fs.promises.writeFile("/system/etc/terbium/settings.json", JSON.stringify(settings), "utf8");
 				},
 				async theme() {
 					const settings: SysSettings = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"));
-					return settings.theme;
+					return settings["theme"];
 				},
 				async setAccent(color: string) {
 					const settings: UserSettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
-					settings.accent = color;
+					settings["accent"] = color;
 					await Filer.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, JSON.stringify(settings), "utf8");
 				},
 				async getAccent() {
-					return JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8")).accent;
+					return JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"))["accent"];
 				},
 			},
 			wallpaper: {
 				async set(path: string) {
 					const settings: UserSettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
-					settings.wallpaper = path;
+					settings["wallpaper"] = path;
 					await Filer.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, JSON.stringify(settings));
 					window.dispatchEvent(new Event("updWallpaper"));
 				},
 				async contain() {
 					const settings: UserSettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
-					settings.wallpaperMode = "contain";
+					settings["wallpaperMode"] = "contain";
 					await Filer.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, JSON.stringify(settings), "utf8");
 					window.dispatchEvent(new Event("updWallpaper"));
 				},
 				async stretch() {
 					const settings: UserSettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
-					settings.wallpaperMode = "stretch";
+					settings["wallpaperMode"] = "stretch";
 					await Filer.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, JSON.stringify(settings), "utf8");
 					window.dispatchEvent(new Event("updWallpaper"));
 				},
 				async cover() {
 					const settings: UserSettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
-					settings.wallpaperMode = "cover";
+					settings["wallpaperMode"] = "cover";
 					await Filer.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, JSON.stringify(settings), "utf8");
 					window.dispatchEvent(new Event("updWallpaper"));
 				},
 				async fillMode() {
 					return new Promise(async resolve => {
-						resolve(JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8")).wallpaperMode);
+						resolve(JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"))["wallpaperMode"]);
 					});
 				},
 			},
 			dock: {
 				async pin(app: any) {
-					const apps: Array<TDockItem> = JSON.parse(await Filer.fs.promises.readFile("/system/var/terbium/dock.json"));
+					let apps: Array<TDockItem> = JSON.parse(await Filer.fs.promises.readFile("/system/var/terbium/dock.json"));
 					apps.push(app);
 					await Filer.fs.promises.writeFile("/system/var/terbium/dock.json", JSON.stringify(apps));
 					window.dispatchEvent(new Event("updPins"));
@@ -301,7 +300,7 @@ export default async function Api() {
 		user: {
 			async username() {
 				try {
-					const username = JSON.parse(await Filer.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, "utf8")).username;
+					const username = JSON.parse(await Filer.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, "utf8"))["username"];
 					return username || "Guest";
 				} catch (error) {
 					console.error("Error Fetching username:", error);
@@ -310,7 +309,7 @@ export default async function Api() {
 			},
 			async pfp() {
 				try {
-					return JSON.parse(await Filer.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, "utf8")).pfp || "/assets/img/defualt - blue.png";
+					return JSON.parse(await Filer.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, "utf8"))["pfp"] || "/assets/img/defualt - blue.png";
 				} catch (error) {
 					console.error("Error Fetching pfp:", error);
 					return "/assets/img/defualt - blue.png";
@@ -320,11 +319,11 @@ export default async function Api() {
 		proxy: {
 			async get() {
 				const settings: UserSettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
-				return settings.proxy;
+				return settings["proxy"];
 			},
 			async set(proxy: "Ultraviolet" | "Scramjet") {
 				const settings: UserSettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
-				settings.proxy = proxy;
+				settings["proxy"] = proxy;
 				await Filer.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, JSON.stringify(settings, null, 2), "utf8");
 				window.tb.proxy.updateSWs();
 				return true;
@@ -344,13 +343,13 @@ export default async function Api() {
 						db.close();
 						const deleteRequest = indexedDB.deleteDatabase("$scramjet");
 						deleteRequest.onsuccess = () => {
-							console.log("Cleared SJ DB");
+							console.log(`Cleared SJ DB`);
 						};
 						deleteRequest.onerror = err => {
 							console.error(err);
 						};
 					} else {
-						console.log("Scramjet is fine");
+						console.log(`Scramjet is fine`);
 					}
 				};
 				request.onerror = err => {
@@ -416,7 +415,7 @@ export default async function Api() {
 					await updateTransport();
 				});
 				if (settings.wispServer === null) {
-					// @ts-expect-error
+					// @ts-ignore
 					window.tb.libcurl.set_websocket(`${location.protocol.replace("http", "ws")}//${location.hostname}:${location.port}/wisp/`);
 				} else {
 					window.tb.libcurl.set_websocket(settings.wispServer);
@@ -426,16 +425,18 @@ export default async function Api() {
 				if (encoder === "xor" || encoder === "XOR") {
 					const enc = await XOR.encode(url);
 					return enc;
+				} else {
+					throw new Error("Encoder not found");
 				}
-				throw new Error("Encoder not found");
 				// Stubbed for future addition of say AES
 			},
 			async decode(url: string, decoder: string) {
 				if (decoder === "xor" || decoder === "XOR") {
 					const dec = await XOR.decode(url);
 					return dec;
+				} else {
+					throw new Error("Encoder not found");
 				}
-				throw new Error("Encoder not found");
 				// Stubbed for future addition of say AES
 			},
 		},
@@ -545,7 +546,7 @@ export default async function Api() {
 				}
 			},
 			exportfs: async () => {
-				const zip: { [key: string]: Uint8Array } = {};
+				let zip: { [key: string]: Uint8Array } = {};
 				async function addzip(inp: string, aPath = "") {
 					const files = await Filer.fs.promises.readdir(inp);
 					for (const file of files) {
@@ -587,7 +588,7 @@ export default async function Api() {
 						};
 					}
 					await Filer.fs.promises.writeFile(`${userDir}/user.json`, JSON.stringify(userJson));
-					const userSettings = {
+					let userSettings = {
 						wallpaper: "/assets/wallpapers/1.png",
 						wallpaperMode: "cover",
 						animations: true,
@@ -640,18 +641,18 @@ export default async function Api() {
 								Images: `/home/${username}/images`,
 								Videos: `/home/${username}/videos`,
 								Music: `/home/${username}/music`,
-								Trash: "/system/trash",
+								Trash: `/system/trash`,
 							},
 						}),
 						"utf8",
 					);
-					const items: any[] = [];
-					const r2 = [];
+					let items: any[] = [];
+					let r2 = [];
 					for (let i = 0; i < apps.length; i++) {
 						const app = apps[i];
 						const name = app.name.toLowerCase();
-						var topPos = 0;
-						var leftPos = 0;
+						var topPos: number = 0;
+						var leftPos: number = 0;
 						if (i % 12 === 0) {
 							topPos = 0;
 						} else {
@@ -790,8 +791,9 @@ export default async function Api() {
 					window.tb.node.webContainer.teardown();
 					window.tb.node.isReady = false;
 					return true;
+				} else {
+					throw new Error("No WebContainer is running");
 				}
-				throw new Error("No WebContainer is running");
 			},
 		},
 		crypto: async (pass: string, file?: string) => {
@@ -799,8 +801,9 @@ export default async function Api() {
 			if (file) {
 				await Filer.fs.promises.writeFile(file, newpw);
 				return "Complete";
+			} else {
+				return newpw;
 			}
-			return newpw;
 		},
 		platform: {
 			async getPlatform() {
@@ -809,11 +812,11 @@ export default async function Api() {
 				const crosua = /CrOS/;
 				if (mobileuas.test(navigator.userAgent) && !crosua.test(navigator.userAgent)) {
 					return "mobile";
-				}
-				if (!mobileuas.test(navigator.userAgent) && navigator.maxTouchPoints > 1 && navigator.userAgent.indexOf("Macintosh") !== -1 && navigator.userAgent.indexOf("Safari") !== -1) {
+				} else if (!mobileuas.test(navigator.userAgent) && navigator.maxTouchPoints > 1 && navigator.userAgent.indexOf("Macintosh") !== -1 && navigator.userAgent.indexOf("Safari") !== -1) {
 					return "mobile";
+				} else {
+					return "desktop";
 				}
-				return "desktop";
 			},
 		},
 		process: {
@@ -826,7 +829,7 @@ export default async function Api() {
 				}
 			},
 			list() {
-				const list = {};
+				let list = {};
 				const wins = useWindowStore.getState().windows;
 				wins.forEach((win: WindowConfig, index: number) => {
 					const winID = win.pid || `win-${index}`;
@@ -920,7 +923,7 @@ export default async function Api() {
 			handler: {
 				openFile: async (path: string, type: string) => {
 					const settings = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"));
-					const fApps = settings.fileAssociatedApps;
+					const fApps = settings["fileAssociatedApps"];
 					const app = fApps[type];
 					try {
 						let appInfo;
@@ -999,13 +1002,13 @@ export default async function Api() {
 					}
 				},
 				addHandler: async (app: string, ext: string) => {
-					const settings: SysSettings = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"));
+					let settings: SysSettings = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"));
 					(settings.fileAssociatedApps as Record<string, string>)[ext] = app;
 					await Filer.fs.promises.writeFile("/system/etc/terbium/settings.json", JSON.stringify(settings, null, 2), "utf8");
 					return true;
 				},
 				removeHandler: async (ext: string) => {
-					const settings: SysSettings = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"));
+					let settings: SysSettings = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"));
 					delete (settings.fileAssociatedApps as Record<string, string>)[ext];
 					await Filer.fs.promises.writeFile("/system/etc/terbium/settings.json", JSON.stringify(settings, null, 2), "utf8");
 					return true;
@@ -1020,7 +1023,7 @@ export default async function Api() {
 		return;
 	(window as any).loadLock = true;
 
-	const anura = await Anura.new({
+	let anura = await Anura.new({
 		milestone: 5,
 		FileExts: {
 			txt: { handler_type: "module", id: "anura.fileviewer" },

@@ -26,7 +26,7 @@ export class NotificationService {
 			onOk: params.callback,
 		});
 	}
-	remove(_notification: any) {
+	remove(notification: any) {
 		// API STUB
 	}
 }

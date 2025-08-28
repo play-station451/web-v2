@@ -4,12 +4,14 @@ import Desktop from "./sys/gui/Desktop";
 function App() {
 	Api();
 	return (
-		<Desktop
-			desktop={1}
-			onContextMenu={(e: MouseEvent) => {
-				e.preventDefault();
-			}}
-		/>
+		<>
+			<Desktop
+				desktop={1}
+				onContextMenu={(e: MouseEvent) => {
+					e.preventDefault();
+				}}
+			/>
+		</>
 	);
 }
 

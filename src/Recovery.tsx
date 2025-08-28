@@ -1,10 +1,10 @@
-import { unzipSync } from "fflate";
-import { libcurl } from "libcurl.js/bundled";
 import { useEffect, useRef, useState } from "react";
 import { version } from "../package.json";
-import apps from "./apps.json";
-import { hash } from "./hash.json";
+import { unzipSync } from "fflate";
+import { libcurl } from "libcurl.js/bundled";
 import { dirExists } from "./sys/types";
+import { hash } from "./hash.json";
+import apps from "./apps.json";
 
 export default function Recovery() {
 	const [selected, setSelected] = useState(0);
@@ -48,10 +48,10 @@ export default function Recovery() {
 
 	const prodins = async () => {
 		setShowCursor(false);
-		msgbox.current?.classList.remove("flex");
-		msgbox.current?.classList.add("hidden");
-		progresscheck.current?.classList.remove("hidden");
-		progresscheck.current?.classList.add("flex");
+		msgbox.current!.classList.remove("flex");
+		msgbox.current!.classList.add("hidden");
+		progresscheck.current!.classList.remove("hidden");
+		progresscheck.current!.classList.add("flex");
 		if (await dirExists("/system/")) {
 			// @ts-expect-error types
 			await new Filer.fs.Shell().promises.rm("/system/", { recursive: true });
@@ -71,14 +71,14 @@ export default function Recovery() {
 		// @ts-expect-error types
 		await new Filer.fs.Shell().promises.rm("/home/Guest/desktop/", { recursive: true });
 		await Filer.fs.promises.mkdir("/home/Guest/desktop/");
-		const r2 = [];
-		const sysapps: { name: string; config: string; user: string }[] = [];
-		const items: { name: string; item: string; position: { custom: boolean; top: number; left: number } }[] = [];
+		let r2 = [];
+		let sysapps: { name: string; config: string; user: string }[] = [];
+		let items: { name: string; item: string; position: { custom: boolean; top: number; left: number } }[] = [];
 		for (let i = 0; i < apps.length; i++) {
 			const app = apps[i];
 			const name = app.name.toLowerCase();
-			var topPos = 0;
-			var leftPos = 0;
+			var topPos: number = 0;
+			var leftPos: number = 0;
 			if (i % 12 === 0) {
 				topPos = 0;
 			} else {
@@ -114,7 +114,7 @@ export default function Recovery() {
 				config: `/apps/system/${name}.tapp/index.json`,
 				user: "System",
 			});
-			await Filer.fs.promises.writeFile("/home/Guest/desktop/.desktop.json", JSON.stringify(items));
+			await Filer.fs.promises.writeFile(`/home/Guest/desktop/.desktop.json`, JSON.stringify(items));
 			await Filer.fs.promises.symlink(`/apps/system/${name}.tapp/index.json`, `/home/Guest/desktop/${name}.lnk`);
 		}
 		statusref.current!.innerText = "Cleaning up...";
@@ -137,7 +137,7 @@ export default function Recovery() {
 		fauxput.accept = ".zip";
 		fauxput.onchange = async e => {
 			const target = e.target as HTMLInputElement;
-			if (target?.files) {
+			if (target && target.files) {
 				const file = target.files[0];
 				const content = await file.arrayBuffer();
 				setProgress(10);
@@ -157,10 +157,10 @@ export default function Recovery() {
 				await Filer.fs.promises.writeFile("//uploaded.zip", Filer.Buffer.from(content));
 				setProgress(35);
 				setShowCursor(false);
-				main.current?.classList.remove("flex");
-				main.current?.classList.add("hidden");
-				progresscheck.current?.classList.remove("hidden");
-				progresscheck.current?.classList.add("flex");
+				main.current!.classList.remove("flex");
+				main.current!.classList.add("hidden");
+				progresscheck.current!.classList.remove("hidden");
+				progresscheck.current!.classList.add("flex");
 				await unzip("//uploaded.zip", "//");
 				setProgress(72);
 				const users = await Filer.fs.promises.readdir("/home/");
@@ -169,14 +169,14 @@ export default function Recovery() {
 					// @ts-expect-error types
 					await new Filer.fs.Shell().promises.rm(`/home/${user}/desktop/`, { recursive: true });
 					await Filer.fs.promises.mkdir(`/home/${user}/desktop/`);
-					const r2 = [];
-					const sysapps: { name: string; config: string; user: string }[] = [];
-					const items: { name: string; item: string; position: { custom: boolean; top: number; left: number } }[] = [];
+					let r2 = [];
+					let sysapps: { name: string; config: string; user: string }[] = [];
+					let items: { name: string; item: string; position: { custom: boolean; top: number; left: number } }[] = [];
 					for (let i = 0; i < apps.length; i++) {
 						const app = apps[i];
 						const name = app.name.toLowerCase();
-						var topPos = 0;
-						var leftPos = 0;
+						var topPos: number = 0;
+						var leftPos: number = 0;
 						if (i % 12 === 0) {
 							topPos = 0;
 						} else {
@@ -232,7 +232,7 @@ export default function Recovery() {
 	};
 
 	async function unzip(path: string, target: string) {
-		const response = await fetch(`/fs/${path}`);
+		const response = await fetch("/fs/" + path);
 		const zipFileContent = await response.arrayBuffer();
 		if (!(await dirExists(target))) {
 			// @ts-expect-error types
@@ -244,7 +244,7 @@ export default function Recovery() {
 			const pathParts = fullPath.split("/");
 			let currentPath = "";
 			for (let i = 0; i < pathParts.length; i++) {
-				currentPath += `${pathParts[i]}/`;
+				currentPath += pathParts[i] + "/";
 				if (i === pathParts.length - 1 && !relativePath.endsWith("/")) {
 					await Filer.fs.promises.writeFile(currentPath.slice(0, -1), Filer.Buffer.from(content));
 				} else if (!(await dirExists(currentPath))) {
@@ -295,10 +295,10 @@ export default function Recovery() {
 						await new Filer.fs.Shell().promises.rm("/home/", { recursive: true });
 					}
 				} else if (selected === 1) {
-					msgbox.current?.classList.remove("hidden");
-					msgbox.current?.classList.add("flex");
-					main.current?.classList.add("hidden");
-					main.current?.classList.remove("flex");
+					msgbox.current!.classList.remove("hidden");
+					msgbox.current!.classList.add("flex");
+					main.current!.classList.add("hidden");
+					main.current!.classList.remove("flex");
 					setShowCursor(true);
 					setMsg("BE AWARE if your static hosting this download will NOT work. Proceed?");
 					setAction("prodins()");
@@ -306,10 +306,10 @@ export default function Recovery() {
 					zipins();
 				} else if (selected === 3 && updCache) {
 					setShowCursor(false);
-					msgbox.current?.classList.remove("flex");
-					msgbox.current?.classList.add("hidden");
-					progresscheck.current?.classList.remove("hidden");
-					progresscheck.current?.classList.add("flex");
+					msgbox.current!.classList.remove("flex");
+					msgbox.current!.classList.add("hidden");
+					progresscheck.current!.classList.remove("hidden");
+					progresscheck.current!.classList.add("flex");
 					await copyDir("/system/tmp/terb-upd/", "/apps/", true);
 					await Filer.fs.promises.writeFile("/system/etc/terbium/hash.cache", hash);
 					// @ts-expect-error
@@ -329,11 +329,11 @@ export default function Recovery() {
 			const crosua = /CrOS/;
 			if (mobileuas.test(navigator.userAgent) && !crosua.test(navigator.userAgent)) {
 				return "mobile";
-			}
-			if (!mobileuas.test(navigator.userAgent) && navigator.maxTouchPoints > 1 && navigator.userAgent.indexOf("Macintosh") !== -1 && navigator.userAgent.indexOf("Safari") !== -1) {
+			} else if (!mobileuas.test(navigator.userAgent) && navigator.maxTouchPoints > 1 && navigator.userAgent.indexOf("Macintosh") !== -1 && navigator.userAgent.indexOf("Safari") !== -1) {
 				return "mobile";
+			} else {
+				return "desktop";
 			}
-			return "desktop";
 		};
 		if (getPlatform() === "mobile") {
 			setShowCursor(true);
@@ -343,7 +343,7 @@ export default function Recovery() {
 		return () => {
 			window.removeEventListener("keydown", handleKeyDown);
 		};
-	}, [selected, copyDir, updCache, zipins]);
+	}, [selected]);
 
 	return (
 		<div className={`overflow-hidden w-full h-full flex justify-center pt-[30px] bg-[#0e0e0e] ${showCursor ? null : "cursor-none"}`}>
@@ -368,10 +368,10 @@ export default function Recovery() {
 								className="cursor-pointer bg-[#ffffff0a] text-[#ffffff38] border-[#ffffff22] hover:bg-[#ffffff10] hover:text-[#ffffff8d] focus:bg-[#ffffff1f] focus:text-[#ffffff8d] focus:border-[#73a9ffd6] focus:ring-[#73a9ff74] focus:outline-hidden focus:ring-2 ring-[transparent] ring-0 border-[1px] font-[600] px-[20px] py-[8px] rounded-[6px] duration-150"
 								onClick={() => {
 									setShowCursor(false);
-									msgbox.current?.classList.remove("flex");
-									msgbox.current?.classList.add("hidden");
-									main.current?.classList.add("flex");
-									main.current?.classList.remove("hidden");
+									msgbox.current!.classList.remove("flex");
+									msgbox.current!.classList.add("hidden");
+									main.current!.classList.add("flex");
+									main.current!.classList.remove("hidden");
 								}}
 							>
 								Cancel
@@ -396,7 +396,7 @@ export default function Recovery() {
 						Downloading...
 					</p>
 					<div className="relative flex w-[30%] h-3 rounded-full bg-[#00000020] overflow-hidden mt-4">
-						<div className="absolute h-full bg-[#50bf66] rounded-full" style={{ width: `${progress}%` }} />
+						<div className="absolute h-full bg-[#50bf66] rounded-full" style={{ width: `${progress}%` }}></div>
 					</div>
 				</div>
 				<div ref={main} className="mt-1 p-2 flex flex-col flex-grow overflow-auto w-full border-solid border-[#ffffff68] border-2 rounded-xl">
@@ -440,10 +440,10 @@ export default function Recovery() {
                         `
 						}
 						onClick={() => {
-							msgbox.current?.classList.remove("hidden");
-							msgbox.current?.classList.add("flex");
-							main.current?.classList.add("hidden");
-							main.current?.classList.remove("flex");
+							msgbox.current!.classList.remove("hidden");
+							msgbox.current!.classList.add("flex");
+							main.current!.classList.add("hidden");
+							main.current!.classList.remove("flex");
 							setShowCursor(true);
 							setMsg("BE AWARE if your static hosting this download will NOT work. Proceed?");
 							setAction("prodins()");
@@ -478,10 +478,10 @@ export default function Recovery() {
 							}
 							onClick={async () => {
 								setShowCursor(false);
-								msgbox.current?.classList.remove("flex");
-								msgbox.current?.classList.add("hidden");
-								progresscheck.current?.classList.remove("hidden");
-								progresscheck.current?.classList.add("flex");
+								msgbox.current!.classList.remove("flex");
+								msgbox.current!.classList.add("hidden");
+								progresscheck.current!.classList.remove("hidden");
+								progresscheck.current!.classList.add("flex");
 								await copyDir("/system/tmp/terb-upd/", "/apps/", true);
 								await Filer.fs.promises.writeFile("/system/etc/terbium/hash.cache", hash);
 								// @ts-expect-error

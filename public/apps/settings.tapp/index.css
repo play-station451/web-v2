@@ -124,7 +124,7 @@ h6 {
 }
 
 .cat-option.selected {
-	color: #ffffff;
+	color: #ffffff !important;
 }
 
 .cat-option .icon {

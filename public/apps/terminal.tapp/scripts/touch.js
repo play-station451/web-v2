@@ -7,7 +7,7 @@ async function touch(args) {
 
 	if (path.includes("/mnt/")) {
 		try {
-			const match = path.match(/\/mnt\/([^/]+)\//);
+			const match = path.match(/\/mnt\/([^\/]+)\//);
 			const davName = match ? match[1].toLowerCase() : "";
 			const davInstances = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
 			const dav = davInstances.find(d => d.name.toLowerCase() === davName);

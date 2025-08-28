@@ -1,7 +1,7 @@
-import { Dialog } from "./dialog";
-import { Net } from "./net";
 import { Notification } from "./notification";
 import { BrowserWindow } from "./window";
+import { Dialog } from "./dialog";
+import { Net } from "./net";
 
 export class Lemonade {
 	get version(): string {

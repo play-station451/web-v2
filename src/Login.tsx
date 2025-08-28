@@ -1,10 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import "./sys/gui/styles/login.css";
+import { GetTime, GetDate } from "./sys/apis/Date";
 import pwd from "./sys/apis/Crypto";
-import { GetDate, GetTime } from "./sys/apis/Date";
 import DialogContainer, { setDialogFn } from "./sys/apis/Dialogs";
-import type { User } from "./sys/types";
-
+import { User } from "./sys/types";
 const pw = new pwd();
 
 export default function Login() {
@@ -36,7 +35,7 @@ export default function Login() {
 						try {
 							await Filer.fs.promises.access(`/home/${entry}/user.json`);
 							return entry;
-						} catch (_error) {
+						} catch (error) {
 							return null;
 						}
 					}
@@ -150,9 +149,9 @@ export default function Login() {
 					backgroundImage: `url("${wallpaper?.includes("/system/etc/") ? `/fs/${wallpaper}` : wallpaper || ""}")`,
 					backgroundSize: "cover",
 				}}
-			/>
+			></div>
 			<div
-				className={"login_container relative flex flex-col justify-center items-center size-full gap-5"}
+				className={`login_container relative flex flex-col justify-center items-center size-full gap-5`}
 				onMouseDown={() => {
 					if (!isLoggingIn) {
 						const user = JSON.parse(localStorage.getItem("setup") || "{}");
@@ -186,7 +185,7 @@ export default function Login() {
 									setSelectedUser(account);
 									setWallpaper(JSON.parse(await Filer.fs.promises.readFile(`/home/${account}/settings.json`)).wallpaper);
 								}}
-							/>
+							></div>
 						))}
 					</div>
 				) : null}
@@ -293,12 +292,12 @@ export default function Login() {
 													onMouseDown={async () => {
 														const changepw = async () => {
 															setChangepw(true);
-															const settings: User = JSON.parse(await Filer.fs.promises.readFile(`/home/${selectedUser}/user.json`, "utf8"));
+															let settings: User = JSON.parse(await Filer.fs.promises.readFile(`/home/${selectedUser}/user.json`, "utf8"));
 															if (settings.securityQuestion) {
 																setDialogFn("message", {
 																	title: `${settings.securityQuestion.question}`,
 																	onOk: (val: string) => {
-																		if (pw.harden(val) === settings.securityQuestion?.answer) {
+																		if (pw.harden(val) === settings.securityQuestion!.answer) {
 																			setDialogFn("message", {
 																				title: `Enter a new Password for the account: ${selectedUser}`,
 																				onOk: (val: string) => {
@@ -312,7 +311,7 @@ export default function Login() {
 																			});
 																		} else {
 																			setDialogFn("alert", {
-																				title: "Incorrect answer to the security question",
+																				title: `Incorrect answer to the security question`,
 																				onOk: () => {
 																					changepw();
 																				},

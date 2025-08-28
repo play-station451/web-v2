@@ -7,16 +7,16 @@ window.addEventListener("load", async () => {
 });
 
 async function openFile(url, ext, dav) {
-	const exts = JSON.parse(await window.parent.tb.fs.promises.readFile("/apps/system/files.tapp/extensions.json", "utf8"));
-	if (exts.animated.includes(ext)) {
-		const imgObj = new Image();
+	let exts = JSON.parse(await window.parent.tb.fs.promises.readFile("/apps/system/files.tapp/extensions.json", "utf8"));
+	if (exts["animated"].includes(ext)) {
+		let imgObj = new Image();
 		imgObj.src = url;
 		imgObj.setAttribute("draggable", false);
 		document.querySelector(".media").innerHTML = "";
 		document.querySelector(".media").appendChild(imgObj);
 		let scale = 1;
 
-		window.addEventListener("wheel", e => {
+		window.addEventListener("wheel", function (e) {
 			const zoomSpeed = 0.1;
 			e.preventDefault();
 			if (e.deltaY < 0) {
@@ -34,21 +34,21 @@ async function openFile(url, ext, dav) {
 		imgObj.addEventListener("load", () => {
 			imgObj.style.transform = `scale(${scale})`;
 		});
-	} else if (exts.image.includes(ext)) {
-		const canvas = document.createElement("canvas");
-		const ctx = canvas.getContext("2d");
+	} else if (exts["image"].includes(ext)) {
+		let canvas = document.createElement("canvas");
+		let ctx = canvas.getContext("2d");
 		document.querySelector(".media").innerHTML = "";
 		document.querySelector(".media").appendChild(canvas);
 		let isDragging = false;
 		let isMouseDown = false;
 		let startCoords = { x: 0, y: 0 };
-		const offset = { x: 0, y: 0 };
+		let offset = { x: 0, y: 0 };
 		let scale = 0.5;
-		const imgObj = new Image();
+		let imgObj = new Image();
 		if (dav) {
 			try {
 				const davInstances = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
-				const davUrl = `${url.split("/dav/")[0]}/dav/`;
+				const davUrl = url.split("/dav/")[0] + "/dav/";
 				const dav = davInstances.find(d => d.url.toLowerCase().includes(davUrl));
 				if (!dav) throw new Error("No matching dav instance found");
 				const client = window.webdav.createClient(dav.url, {
@@ -58,13 +58,13 @@ async function openFile(url, ext, dav) {
 				});
 				let filePath;
 				if (url.startsWith("http")) {
-					const match = url.match(/^https?:\/\/[^/]+\/dav\/([^/]+\/)?(.+)$/);
-					filePath = match ? `/${match[2]}` : url;
+					const match = url.match(/^https?:\/\/[^\/]+\/dav\/([^\/]+\/)?(.+)$/);
+					filePath = match ? "/" + match[2] : url;
 				} else {
 					filePath = url.replace(davUrl, "/");
 				}
 				const response = await client.getFileContents(filePath);
-				const blob = new Blob([response], { type: `image/${ext}` });
+				const blob = new Blob([response], { type: "image/" + ext });
 				imgObj.src = URL.createObjectURL(blob);
 			} catch (err) {
 				window.tb.dialog.Alert({
@@ -85,22 +85,22 @@ async function openFile(url, ext, dav) {
 			drawImageWithOffsetAndScale();
 		}
 
-		window.addEventListener("resize", () => {
+		window.addEventListener("resize", function () {
 			initializeCanvas();
 		});
 
-		canvas.addEventListener("mousedown", e => {
+		canvas.addEventListener("mousedown", function (e) {
 			isDragging = true;
 			isMouseDown = true;
 			startCoords = { x: e.clientX, y: e.clientY };
 		});
 
-		window.addEventListener("mouseup", () => {
+		window.addEventListener("mouseup", function () {
 			isDragging = false;
 			isMouseDown = false;
 		});
 
-		canvas.addEventListener("mousemove", e => {
+		canvas.addEventListener("mousemove", function (e) {
 			if (isDragging) {
 				const deltaX = e.clientX - startCoords.x;
 				const deltaY = e.clientY - startCoords.y;
@@ -143,7 +143,7 @@ async function openFile(url, ext, dav) {
 			}
 		});
 
-		canvas.addEventListener("wheel", e => {
+		canvas.addEventListener("wheel", function (e) {
 			const zoomSpeed = 0.1;
 			e.preventDefault();
 			if (e.deltaY < 0) {
@@ -162,7 +162,7 @@ async function openFile(url, ext, dav) {
 			const y = offset.y + (canvas.height - newHeight) / 2;
 			ctx.drawImage(imgObj, x, y, newWidth, newHeight);
 		}
-	} else if (exts.pdf.includes(ext)) {
+	} else if (exts["pdf"].includes(ext)) {
 		document.querySelector(".media").innerHTML = "";
 		const canvas = document.createElement("canvas");
 		canvas.style.width = "75%";
@@ -182,7 +182,7 @@ async function openFile(url, ext, dav) {
 		};
 		await page.render(renderContext).promise;
 
-		window.addEventListener("wheel", e => {
+		window.addEventListener("wheel", function (e) {
 			const zoomSpeed = 0.1;
 			e.preventDefault();
 			if (e.deltaY < 0) {
@@ -200,12 +200,12 @@ async function openFile(url, ext, dav) {
 		canvas.addEventListener("load", () => {
 			canvas.style.transform = `scale(${scale})`;
 		});
-	} else if (exts.video.includes(ext)) {
-		const videoElem = document.createElement("video");
+	} else if (exts["video"].includes(ext)) {
+		let videoElem = document.createElement("video");
 		if (dav) {
 			try {
 				const davInstances = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
-				const davUrl = `${url.split("/dav/")[0]}/dav/`;
+				const davUrl = url.split("/dav/")[0] + "/dav/";
 				const dav = davInstances.find(d => d.url.toLowerCase().includes(davUrl));
 				if (!dav) throw new Error("No matching dav instance found");
 				const client = window.webdav.createClient(dav.url, {
@@ -215,13 +215,13 @@ async function openFile(url, ext, dav) {
 				});
 				let filePath;
 				if (url.startsWith("http")) {
-					const match = url.match(/^https?:\/\/[^/]+\/dav\/([^/]+\/)?(.+)$/);
-					filePath = match ? `/${match[2]}` : url;
+					const match = url.match(/^https?:\/\/[^\/]+\/dav\/([^\/]+\/)?(.+)$/);
+					filePath = match ? "/" + match[2] : url;
 				} else {
 					filePath = url.replace(davUrl, "/");
 				}
 				const response = await client.getFileContents(filePath);
-				const blob = new Blob([response], { type: `video/${ext}` });
+				const blob = new Blob([response], { type: "video/" + ext });
 				videoElem.src = URL.createObjectURL(blob);
 			} catch (err) {
 				window.tb.dialog.Alert({
@@ -240,7 +240,7 @@ async function openFile(url, ext, dav) {
 		videoElem.play();
 		let scale = 1;
 
-		window.addEventListener("wheel", e => {
+		window.addEventListener("wheel", function (e) {
 			const zoomSpeed = 0.1;
 			e.preventDefault();
 			if (e.deltaY < 0) {
@@ -258,12 +258,12 @@ async function openFile(url, ext, dav) {
 		videoElem.addEventListener("load", () => {
 			videoElem.style.transform = `scale(${scale})`;
 		});
-	} else if (exts.audio.includes(ext)) {
-		const audioElem = document.createElement("audio");
+	} else if (exts["audio"].includes(ext)) {
+		let audioElem = document.createElement("audio");
 		if (dav) {
 			try {
 				const davInstances = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
-				const davUrl = `${url.split("/dav/")[0]}/dav/`;
+				const davUrl = url.split("/dav/")[0] + "/dav/";
 				const dav = davInstances.find(d => d.url.toLowerCase().includes(davUrl));
 				if (!dav) throw new Error("No matching dav instance found");
 				const client = window.webdav.createClient(dav.url, {
@@ -273,13 +273,13 @@ async function openFile(url, ext, dav) {
 				});
 				let filePath;
 				if (url.startsWith("http")) {
-					const match = url.match(/^https?:\/\/[^/]+\/dav\/([^/]+\/)?(.+)$/);
-					filePath = match ? `/${match[2]}` : url;
+					const match = url.match(/^https?:\/\/[^\/]+\/dav\/([^\/]+\/)?(.+)$/);
+					filePath = match ? "/" + match[2] : url;
 				} else {
 					filePath = url.replace(davUrl, "/");
 				}
 				const response = await client.getFileContents(filePath);
-				const blob = new Blob([response], { type: `audio/${ext}` });
+				const blob = new Blob([response], { type: "audio/" + ext });
 				audioElem.src = URL.createObjectURL(blob);
 			} catch (err) {
 				window.tb.dialog.Alert({
@@ -311,7 +311,7 @@ async function openFile(url, ext, dav) {
 									for (let i = 0; i < tag.tags.picture.data.length; i++) {
 										b64s += String.fromCharCode(tag.tags.picture.data[i]);
 									}
-									image = `data:${tag.tags.picture.format};base64,${window.btoa(b64s)}`;
+									image = "data:" + tag.tags.picture.format + ";base64," + window.btoa(b64s);
 								}
 								let artist = tag.tags.artist;
 								if (!artist) {
@@ -339,7 +339,7 @@ async function openFile(url, ext, dav) {
 			}
 		});
 
-		window.addEventListener("wheel", e => {
+		window.addEventListener("wheel", function (e) {
 			const zoomSpeed = 0.1;
 			e.preventDefault();
 			if (e.deltaY < 0) {
@@ -374,33 +374,33 @@ window.addEventListener("message", async e => {
 			title: "Open a file",
 			onOk: async file => {
 				const ext = file.split(".").pop();
-				const json = JSON.parse(await window.parent.tb.fs.promises.readFile("/apps/system/files.tapp/extensions.json", "utf8"));
+				let json = JSON.parse(await window.parent.tb.fs.promises.readFile("/apps/system/files.tapp/extensions.json", "utf8"));
 				if (file.includes("http")) {
 					openFile(file, ext, true);
-				} else if (json.image.includes(ext)) {
-					const img = await window.parent.tb.fs.promises.readFile(file);
-					const blob = new Blob([img], { type: `image/${ext}` });
-					const url = URL.createObjectURL(blob);
+				} else if (json["image"].includes(ext)) {
+					let img = await window.parent.tb.fs.promises.readFile(file);
+					let blob = new Blob([img], { type: "image/" + ext });
+					let url = URL.createObjectURL(blob);
 					openFile(url, ext);
-				} else if (json.animated.includes(ext)) {
-					const img = await window.parent.tb.fs.promises.readFile(file);
-					const blob = new Blob([img], { type: `image/${ext}` });
-					const url = URL.createObjectURL(blob);
+				} else if (json["animated"].includes(ext)) {
+					let img = await window.parent.tb.fs.promises.readFile(file);
+					let blob = new Blob([img], { type: "image/" + ext });
+					let url = URL.createObjectURL(blob);
 					openFile(url, ext);
-				} else if (json.pdf.includes(ext)) {
-					const pdf = await window.parent.tb.fs.promises.readFile(file);
-					const blob = new Blob([pdf], { type: "application/pdf" });
-					const url = URL.createObjectURL(blob);
+				} else if (json["pdf"].includes(ext)) {
+					let pdf = await window.parent.tb.fs.promises.readFile(file);
+					let blob = new Blob([pdf], { type: "application/pdf" });
+					let url = URL.createObjectURL(blob);
 					openFile(url, ext);
-				} else if (json.video.includes(ext)) {
-					const video = await window.parent.tb.fs.promises.readFile(file);
-					const blob = new Blob([video], { type: `video/${ext}` });
-					const url = URL.createObjectURL(blob);
+				} else if (json["video"].includes(ext)) {
+					let video = await window.parent.tb.fs.promises.readFile(file);
+					let blob = new Blob([video], { type: "video/" + ext });
+					let url = URL.createObjectURL(blob);
 					openFile(url, ext);
-				} else if (json.audio.includes(ext)) {
-					const audio = await window.parent.tb.fs.promises.readFile(file);
-					const blob = new Blob([audio], { type: `audio/${ext}` });
-					const url = URL.createObjectURL(blob);
+				} else if (json["audio"].includes(ext)) {
+					let audio = await window.parent.tb.fs.promises.readFile(file);
+					let blob = new Blob([audio], { type: "audio/" + ext });
+					let url = URL.createObjectURL(blob);
 					openFile(url, ext);
 				}
 			},
@@ -410,33 +410,33 @@ window.addEventListener("message", async e => {
 		asked = false;
 		if (data.path) {
 			const ext = data.path.split(".").pop();
-			const json = JSON.parse(await window.parent.tb.fs.promises.readFile("/apps/system/files.tapp/extensions.json", "utf8"));
+			let json = JSON.parse(await window.parent.tb.fs.promises.readFile("/apps/system/files.tapp/extensions.json", "utf8"));
 			if (data.path.includes("http")) {
 				openFile(data.path, ext, true);
-			} else if (json.image.includes(ext)) {
-				const img = await window.parent.tb.fs.promises.readFile(data.path);
-				const blob = new Blob([img], { type: `image/${ext}` });
-				const url = URL.createObjectURL(blob);
+			} else if (json["image"].includes(ext)) {
+				let img = await window.parent.tb.fs.promises.readFile(data.path);
+				let blob = new Blob([img], { type: "image/" + ext });
+				let url = URL.createObjectURL(blob);
 				openFile(url, ext);
-			} else if (json.animated.includes(ext)) {
-				const img = await window.parent.tb.fs.promises.readFile(data.path);
-				const blob = new Blob([img], { type: `image/${ext}` });
-				const url = URL.createObjectURL(blob);
+			} else if (json["animated"].includes(ext)) {
+				let img = await window.parent.tb.fs.promises.readFile(data.path);
+				let blob = new Blob([img], { type: "image/" + ext });
+				let url = URL.createObjectURL(blob);
 				openFile(url, ext);
-			} else if (json.pdf.includes(ext)) {
-				const pdf = await window.parent.tb.fs.promises.readFile(data.path);
-				const blob = new Blob([pdf], { type: "application/pdf" });
-				const url = URL.createObjectURL(blob);
+			} else if (json["pdf"].includes(ext)) {
+				let pdf = await window.parent.tb.fs.promises.readFile(data.path);
+				let blob = new Blob([pdf], { type: "application/pdf" });
+				let url = URL.createObjectURL(blob);
 				openFile(url, ext);
-			} else if (json.video.includes(ext)) {
-				const video = await window.parent.tb.fs.promises.readFile(data.path);
-				const blob = new Blob([video], { type: `video/${ext}` });
-				const url = URL.createObjectURL(blob);
+			} else if (json["video"].includes(ext)) {
+				let video = await window.parent.tb.fs.promises.readFile(data.path);
+				let blob = new Blob([video], { type: "video/" + ext });
+				let url = URL.createObjectURL(blob);
 				openFile(url, ext);
-			} else if (json.audio.includes(ext)) {
-				const audio = await window.parent.tb.fs.promises.readFile(data.path);
-				const blob = new Blob([audio], { type: `audio/${ext}` });
-				const url = URL.createObjectURL(blob);
+			} else if (json["audio"].includes(ext)) {
+				let audio = await window.parent.tb.fs.promises.readFile(data.path);
+				let blob = new Blob([audio], { type: "audio/" + ext });
+				let url = URL.createObjectURL(blob);
 				openFile(url, ext);
 			}
 		}

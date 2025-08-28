@@ -1,18 +1,18 @@
+import express, { Response, Request } from "express";
 import { createServer } from "node:http";
+import { fileURLToPath } from "url";
+import path from "path";
+import fs from "fs";
+import cookieParser from "cookie-parser";
+import { server as wisp } from "@mercuryworkshop/wisp-js/server";
+import { libcurlPath } from "@mercuryworkshop/libcurl-transport";
 import { baremuxPath } from "@mercuryworkshop/bare-mux/node";
 // @ts-expect-error types
 import { epoxyPath } from "@mercuryworkshop/epoxy-transport";
-import { libcurlPath } from "@mercuryworkshop/libcurl-transport";
-import { server as wisp } from "@mercuryworkshop/wisp-js/server";
-import cookieParser from "cookie-parser";
+import Socket from "ws";
+import Head from "ws";
 import cors from "cors";
 import config from "dotenv";
-import express, { type Request, type Response } from "express";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
-import type Socket from "ws";
-import type Head from "ws";
 
 export function TServer() {
 	config.config();
@@ -25,25 +25,25 @@ export function TServer() {
 
 	const masqrCheck = process.env.MASQR && process.env.MASQR.toLowerCase() === "true";
 	if (masqrCheck) {
-		console.log("Masqr is Enabled");
+		console.log(`Masqr is Enabled`);
 	} else {
-		console.log("Masqr is Disabled");
+		console.log(`Masqr is Disabled`);
 	}
 
 	async function MasqFail(req, res) {
 		if (!req.headers.host) {
 			return;
 		}
-		const unsafeSuffix = `${req.headers.host}.html`;
+		const unsafeSuffix = req.headers.host + ".html";
 		const safeSuffix = path.normalize(unsafeSuffix).replace(/^(\.\.(\/|\\|$))+/, "");
-		const safeJoin = path.join(`${process.cwd()}/Masqrd`, safeSuffix);
+		const safeJoin = path.join(process.cwd() + "/Masqrd", safeSuffix);
 		try {
 			await fs.promises.access(safeJoin);
 			const failureFileLocal = await fs.promises.readFile(safeJoin, "utf8");
 			res.setHeader("Content-Type", "text/html");
 			res.send(failureFileLocal);
 			return;
-		} catch (_e) {
+		} catch (e) {
 			res.setHeader("Content-Type", "text/html");
 			res.send(fs.readFileSync("fail.html", "utf8"));
 			return;
@@ -62,11 +62,11 @@ export function TServer() {
 				return;
 			}
 			const authheader = req.headers.authorization;
-			if (req.cookies.authcheck) {
+			if (req.cookies["authcheck"]) {
 				next();
 				return;
 			}
-			if (req.cookies.refreshcheck !== "true") {
+			if (req.cookies["refreshcheck"] != "true") {
 				res.cookie("refreshcheck", "true", { maxAge: 10000 });
 				MasqFail(req, res);
 				return;
@@ -79,13 +79,13 @@ export function TServer() {
 			}
 
 			const auth = Buffer.from(authheader.split(" ")[1], "base64").toString().split(":");
-			const _user = auth[0];
+			const user = auth[0];
 			const pass = auth[1];
-			const licenseCheck = (await (await fetch(`${process.env.LICENSE_SERVER_URL + pass}&host=${req.headers.host}`)).json()).status;
+			const licenseCheck = (await (await fetch(process.env.LICENSE_SERVER_URL + pass + "&host=" + req.headers.host)).json())["status"];
 			console.log(`\x1b[0m${process.env.LICENSE_SERVER_URL}${pass}&host=${req.headers.host} ` + `returned: ${licenseCheck}`);
-			if (licenseCheck === "License valid") {
+			if (licenseCheck == "License valid") {
 				res.cookie("authcheck", "true", { expires: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) });
-				res.send("<script> window.location.href = window.location.href </script>");
+				res.send(`<script> window.location.href = window.location.href </script>`);
 				return;
 			}
 			MasqFail(req, res);
@@ -120,7 +120,7 @@ export function TServer() {
 		}
 	});
 
-	const port = Number.parseInt(process.env.PORT || "8080", 10);
+	const port = parseInt(process.env.PORT || "8080");
 	const corsOptions = {
 		origin: `http://localhost:${port}`,
 		methods: "GET,HEAD,PUT,PATCH,POST,DELETE",

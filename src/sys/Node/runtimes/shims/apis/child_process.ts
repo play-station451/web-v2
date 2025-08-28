@@ -9,32 +9,32 @@ import type { Readable, Writable } from "node:stream";
 // Re-export the types from Node
 export type {
 	ChildProcess,
-	ChildProcessByStdio,
 	ChildProcessWithoutNullStreams,
-	ExecException,
-	ExecFileException,
-	ExecFileOptions,
-	ExecFileOptionsWithBufferEncoding,
-	ExecFileOptionsWithOtherEncoding,
-	ExecFileOptionsWithStringEncoding,
-	ExecFileSyncOptions,
-	ExecFileSyncOptionsWithBufferEncoding,
-	ExecFileSyncOptionsWithStringEncoding,
+	ChildProcessByStdio,
 	ExecOptions,
+	ExecException,
+	ExecFileOptions,
+	ExecFileException,
+	ExecFileOptionsWithBufferEncoding,
+	ExecFileOptionsWithStringEncoding,
+	ExecFileOptionsWithOtherEncoding,
 	ExecSyncOptions,
-	ExecSyncOptionsWithBufferEncoding,
 	ExecSyncOptionsWithStringEncoding,
-	ForkOptions,
-	PromiseWithChild,
+	ExecSyncOptionsWithBufferEncoding,
+	ExecFileSyncOptions,
+	ExecFileSyncOptionsWithStringEncoding,
+	ExecFileSyncOptionsWithBufferEncoding,
 	SpawnOptions,
 	SpawnOptionsWithoutStdio,
 	SpawnOptionsWithStdioTuple,
 	SpawnSyncOptions,
-	SpawnSyncOptionsWithBufferEncoding,
 	SpawnSyncOptionsWithStringEncoding,
+	SpawnSyncOptionsWithBufferEncoding,
 	SpawnSyncReturns,
-	StdioNull,
+	ForkOptions,
+	PromiseWithChild,
 	StdioPipe,
+	StdioNull,
 } from "node:child_process";
 
 /**
@@ -216,7 +216,7 @@ export function execSync(command: string): Buffer;
 export function execSync(command: string, options: NodeChildProcess.ExecSyncOptionsWithStringEncoding): string;
 export function execSync(command: string, options: NodeChildProcess.ExecSyncOptionsWithBufferEncoding): Buffer;
 export function execSync(command: string, options?: NodeChildProcess.ExecSyncOptions): string | Buffer;
-export function execSync(_command: string, _options?: NodeChildProcess.ExecSyncOptions): string | Buffer {
+export function execSync(command: string, options?: NodeChildProcess.ExecSyncOptions): string | Buffer {
 	// TODO: Implement the actual execSync functionality
 	throw new Error("execSync is not yet implemented");
 }
@@ -230,7 +230,7 @@ export function execFileSync(file: string, args: readonly string[]): Buffer;
 export function execFileSync(file: string, args: readonly string[], options: NodeChildProcess.ExecFileSyncOptionsWithStringEncoding): string;
 export function execFileSync(file: string, args: readonly string[], options: NodeChildProcess.ExecFileSyncOptionsWithBufferEncoding): Buffer;
 export function execFileSync(file: string, args?: readonly string[], options?: NodeChildProcess.ExecFileSyncOptions): string | Buffer;
-export function execFileSync(_file: string, ..._args: any[]): string | Buffer {
+export function execFileSync(file: string, ...args: any[]): string | Buffer {
 	// TODO: Implement the actual execFileSync functionality
 	throw new Error("execFileSync is not yet implemented");
 }
@@ -243,4 +243,4 @@ export function spawnSync(command: string, options?: NodeChildProcess.SpawnSyncO
 export function spawnSync(command: string, args: readonly string[]): NodeChildProcess.SpawnSyncReturns<Buffer>;
 export function spawnSync(command: string, args: readonly string[], options: NodeChildProcess.SpawnSyncOptionsWithStringEncoding): NodeChildProcess.SpawnSyncReturns<string>;
 export function spawnSync(command: string, args: readonly string[], options: NodeChildProcess.SpawnSyncOptionsWithBufferEncoding): NodeChildProcess.SpawnSyncReturns<Buffer>;
-export function spawnSync(_command: string, _args?: readonly string[], _options?: NodeChildProcess.SpawnSyncOptions): NodeChildProcess.SpawnSyncReturns<string | Buffer> {}
+export function spawnSync(command: string, args?: readonly string[], options?: NodeChildProcess.SpawnSyncOptions): NodeChildProcess.SpawnSyncReturns<string | Buffer> {}

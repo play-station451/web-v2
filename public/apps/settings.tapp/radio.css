@@ -34,11 +34,11 @@ button.radio span.radio {
 }
 
 button.radio.selected {
-	color: #ffffff;
+	color: #ffffff !important;
 }
 
 button.radio.selected span.radio {
-	background-color: #ffffff;
+	background-color: #ffffff !important;
 }
 
 button.radio.selected span.radio span.radio-check {

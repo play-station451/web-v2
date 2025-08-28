@@ -41,7 +41,7 @@ body {
 	height: 18px;
 	stroke-width: 2px;
 	stroke: currentColor;
-	cursor: var(--cursor-pointer);
+	cursor: var(--cursor-pointer) !important;
 }
 
 .nav-input {
@@ -64,7 +64,7 @@ button {
 	background-color: transparent;
 	border-color: transparent;
 	color: #ffffff;
-	cursor: var(--cursor-pointer);
+	cursor: var(--cursor-pointer) !important;
 }
 
 button.path-button {
@@ -84,7 +84,7 @@ button.path-button svg {
 	height: 18px;
 	stroke-width: 2px;
 	stroke: currentColor;
-	cursor: var(--cursor-pointer);
+	cursor: var(--cursor-pointer) !important;
 }
 
 .sidebar {
@@ -123,7 +123,7 @@ button.path-button svg {
 	gap: 8px;
 	padding: 4px 8px 4px 6px;
 	border-radius: 6px;
-	cursor: var(--cursor-pointer);
+	cursor: var(--cursor-pointer) !important;
 	transition: 150ms ease-in-out;
 	user-select: none;
 }
@@ -163,7 +163,7 @@ button.path-button svg {
 	align-items: center;
 	gap: 8px;
 	width: max-content;
-	cursor: var(--cursor-pointer);
+	cursor: var(--cursor-pointer) !important;
 	padding: 4px 6px;
 	border-radius: 6px;
 	transition: 150ms ease-in-out;
@@ -212,7 +212,7 @@ button.path-button svg {
 	gap: 8px;
 	padding: 4px 8px 4px 6px;
 	border-radius: 6px;
-	cursor: var(--cursor-pointer);
+	cursor: var(--cursor-pointer) !important;
 	transition: 150ms ease-in-out;
 	user-select: none;
 }
@@ -281,7 +281,7 @@ main {
 	border: 1px solid transparent;
 	padding: 4px 8px 4px 6px;
 	border-radius: 6px;
-	cursor: var(--cursor-pointer);
+	cursor: var(--cursor-pointer) !important;
 	transition: 150ms ease-in-out;
 	transition-property: background-color;
 	user-select: none;

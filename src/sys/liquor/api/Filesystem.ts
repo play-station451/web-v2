@@ -1,5 +1,4 @@
-import type { Anura } from "../Anura";
-
+import { Anura } from "../Anura";
 const AnuraFDSymbol = Symbol.for("AnuraFD");
 const Filer = window.Filer;
 // @ts-expect-error
@@ -175,7 +174,7 @@ export class AFSShell {
 		if (path.startsWith("/")) {
 			return path;
 		}
-		return `${this.env.PWD}/${path}`.replace(/\/+/g, "/");
+		return (this.env.PWD + "/" + path).replace(/\/+/g, "/");
 	}
 
 	cat(files: string[], callback: (err: Error | null, contents: string) => void) {
@@ -187,7 +186,7 @@ export class AFSShell {
 					callback(err, contents);
 					return;
 				}
-				contents += `${data.toString()}\n`;
+				contents += data.toString() + "\n";
 				remaining--;
 				if (remaining === 0) {
 					callback(null, contents.replace(/\n$/, ""));
@@ -246,14 +245,14 @@ export class AFSShell {
 					return;
 				}
 				list.forEach(file => {
-					file = `${dir}/${file}`;
+					file = dir + "/" + file;
 					anura.fs.stat(file, (err, stat) => {
 						if (err) {
 							done(err, results);
 							return;
 						}
 						if (stat.isDirectory()) {
-							walk(file, (_err, res) => {
+							walk(file, (err, res) => {
 								results.push(...res);
 								pending--;
 								if (!pending) {
@@ -274,11 +273,11 @@ export class AFSShell {
 
 		walk(this.#relativeToAbsolute(path), (err, results) => {
 			if (err) {
-				callback?.(err, []);
+				callback!(err, []);
 				return;
 			}
 			if (options.regex) {
-				results = results.filter(file => options.regex?.test(file));
+				results = results.filter(file => options.regex!.test(file));
 			}
 			if (options.name) {
 				results = results.filter(file => file.includes(options.name!));
@@ -287,9 +286,9 @@ export class AFSShell {
 				results = results.filter(file => file.includes(options.path!));
 			}
 			if (options.exec) {
-				results.forEach(file => options.exec?.(file));
+				results.forEach(file => options.exec!(file));
 			} else {
-				callback?.(null, results);
+				callback!(null, results);
 			}
 		});
 	}
@@ -314,32 +313,32 @@ export class AFSShell {
 		if (options.recursive) {
 			this.find(dir, (err, files) => {
 				if (err) {
-					callback?.(err, []);
+					callback!(err, []);
 					return;
 				}
-				callback?.(null, files);
+				callback!(null, files);
 			});
 		} else {
 			anura.fs.readdir(this.#relativeToAbsolute(dir), (err: Error | null, files: string[]) => {
 				if (err) {
-					callback?.(err, []);
+					callback!(err, []);
 					return;
 				}
 				if (files.length === 0) {
-					callback?.(null, []);
+					callback!(null, []);
 					return;
 				}
 				let pending = files.length;
 				files.forEach(file => {
-					anura.fs.stat(`${this.#relativeToAbsolute(dir)}/${file}`, (err, stats: { isDirectory: () => boolean }) => {
+					anura.fs.stat(this.#relativeToAbsolute(dir) + "/" + file, (err, stats: { isDirectory: () => boolean }) => {
 						if (err) {
-							callback?.(err, []);
+							callback!(err, []);
 							return;
 						}
 						entries.push(stats);
 						pending--;
 						if (!pending) {
-							callback?.(null, entries);
+							callback!(null, entries);
 						}
 					});
 				});
@@ -349,7 +348,7 @@ export class AFSShell {
 	mkdirp(path: string, callback: (err: Error | null) => void) {
 		this.promises
 			.mkdirp(path)
-			.then(() => callback?.(null))
+			.then(() => callback!(null))
 			.catch(err => {
 				callback(err);
 			});
@@ -377,7 +376,7 @@ export class AFSShell {
 					return;
 				}
 				list.forEach((file: string) => {
-					file = `${dir}/${file}`;
+					file = dir + "/" + file;
 					anura.fs.stat(
 						file,
 						(
@@ -421,7 +420,7 @@ export class AFSShell {
 
 		anura.fs.stat(path, (err: Error | null, stats: { isDirectory: () => boolean }) => {
 			if (err) {
-				callback?.(err);
+				callback!(err);
 				return;
 			}
 			if (!stats.isDirectory()) {
@@ -434,11 +433,11 @@ export class AFSShell {
 			} else {
 				anura.fs.readdir(path, (err: Error | null, files: string[]) => {
 					if (err) {
-						callback?.(err);
+						callback!(err);
 						return;
 					}
 					if (files.length > 0) {
-						callback?.(new Error("Directory not empty! Pass { recursive: true } instead to remove it and all its contents."));
+						callback!(new Error("Directory not empty! Pass { recursive: true } instead to remove it and all its contents."));
 						return;
 					}
 				});
@@ -449,7 +448,7 @@ export class AFSShell {
 		callback ||= () => {};
 		const tmp = this.env.TMP;
 		anura.fs.mkdir(tmp, () => {
-			callback?.(null, tmp);
+			callback!(null, tmp);
 		});
 	}
 	touch(path: string, options?: { updateOnly?: boolean; date?: Date }, callback?: (err: Error | null) => void): void;
@@ -480,10 +479,11 @@ export class AFSShell {
 		anura.fs.stat(path, (err: Error | null) => {
 			if (err) {
 				if (options.updateOnly) {
-					callback?.(new Error("File does not exist and updateOnly is true"));
+					callback!(new Error("File does not exist and updateOnly is true"));
 					return;
+				} else {
+					createFile();
 				}
-				createFile();
 			} else {
 				updateTimes();
 			}
@@ -586,7 +586,7 @@ export class AFSShell {
 			let builder = "";
 			for (const part of parts) {
 				if (part === "") continue;
-				builder += `/${part}`;
+				builder += "/" + part;
 				try {
 					await anura.fs.promises.mkdir(builder);
 				} catch (e: any) {
@@ -664,7 +664,7 @@ export class AnuraFilesystem implements AnuraFSOperations<any> {
 		fs: undefined,
 		getFolder: async () => {
 			// @ts-expect-error
-			const _fs = await import(/* @vite-ignore */ "/public/apps/nfsadapter/nfsadapter.js");
+			const fs = await import(/* @vite-ignore */ "/public/apps/nfsadapter/nfsadapter.js");
 			// @ts-expect-error
 			return await this.whatwgfs.fs.getOriginPrivateDirectory(
 				// @ts-expect-error
@@ -683,7 +683,7 @@ export class AnuraFilesystem implements AnuraFSOperations<any> {
 				}
 			}
 		},
-		directoryHandleFromPath: async (_path: string) => {
+		directoryHandleFromPath: async (path: string) => {
 			const picker = await window.anura.import("anura.filepicker");
 			const selectedPath = (await picker.selectFolder()).split("/");
 			// prettier-ignore
@@ -702,7 +702,7 @@ export class AnuraFilesystem implements AnuraFSOperations<any> {
 			const workingPath = await anura.fs.whatwgfs.directoryHandleFromPath(path);
 			return await workingPath.getFileHandle(file);
 		},
-		async showDirectoryPicker(_options: object) {
+		async showDirectoryPicker(options: object) {
 			const picker = await window.anura.import("anura.filepicker");
 			const path = (await picker.selectFolder()).split("/");
 			// prettier-ignore
@@ -712,7 +712,7 @@ export class AnuraFilesystem implements AnuraFSOperations<any> {
 			}
 			return workingPath;
 		},
-		async showOpenFilePicker(_options: object) {
+		async showOpenFilePicker(options: object) {
 			const picker = await window.anura.import("anura.filepicker");
 			const path = (await picker.selectFile()).split("/");
 			// prettier-ignore
@@ -735,13 +735,13 @@ export class AnuraFilesystem implements AnuraFSOperations<any> {
 		// These paths must be TS ignore'd since they are in build/
 
 		(async () => {
-			// @ts-expect-error
+			// @ts-ignore
 			const fs = await import("/public/apps/nfsadapter/nfsadapter.js");
-			// @ts-expect-error
+			// @ts-ignore
 			this.whatwgfs.FileSystemDirectoryHandle = fs.FileSystemDirectoryHandle;
-			// @ts-expect-error
+			// @ts-ignore
 			this.whatwgfs.FileSystemFileHandle = fs.FileSystemFileHandle;
-			// @ts-expect-error
+			// @ts-ignore
 			this.whatwgfs.FileSystemHandle = fs.FileSystemHandle;
 			this.whatwgfs.fs = fs;
 		})();
@@ -773,7 +773,7 @@ export class AnuraFilesystem implements AnuraFSOperations<any> {
 		parts.shift();
 		parts.pop();
 		while (!provider && parts.length > 0) {
-			const checkPath = `/${parts.join("/")}`;
+			const checkPath = "/" + parts.join("/");
 			// @ts-expect-error
 			provider = this.providers.get(checkPath);
 			parts.pop();
@@ -824,7 +824,7 @@ export class AnuraFilesystem implements AnuraFSOperations<any> {
 	}
 
 	symlink(path: string, ...rest: any[]) {
-		// @ts-expect-error - Overloaded methods are scary
+		// @ts-ignore - Overloaded methods are scary
 		this.processPath(rest[0]).symlink(path, ...rest);
 	}
 
@@ -850,7 +850,7 @@ export class AnuraFilesystem implements AnuraFSOperations<any> {
 
 	mkdtemp(...args: any[]) {
 		// Temp directories should remain in the root filesystem for now
-		// @ts-expect-error - Overloaded methods are scary
+		// @ts-ignore - Overloaded methods are scary
 		this.processPath(path).mkdtemp(...args);
 	}
 
@@ -877,7 +877,7 @@ export class AnuraFilesystem implements AnuraFSOperations<any> {
 	}
 
 	futimes(fd: AnuraFD, ...rest: any[]) {
-		// @ts-expect-error - Overloaded methods are scary
+		// @ts-ignore - Overloaded methods are scary
 		this.processFD(fd).futimes(fd, ...rest);
 	}
 
@@ -886,7 +886,7 @@ export class AnuraFilesystem implements AnuraFSOperations<any> {
 	}
 
 	fchown(fd: AnuraFD, ...rest: any[]) {
-		// @ts-expect-error - Overloaded methods are scary
+		// @ts-ignore - Overloaded methods are scary
 		this.processFD(fd).fchown(fd, ...rest);
 	}
 
@@ -895,22 +895,22 @@ export class AnuraFilesystem implements AnuraFSOperations<any> {
 	}
 
 	fchmod(fd: AnuraFD, ...rest: any[]) {
-		// @ts-expect-error - Overloaded methods are scary
+		// @ts-ignore - Overloaded methods are scary
 		this.processFD(fd).fchmod(fd, ...rest);
 	}
 
 	fsync(fd: AnuraFD, ...rest: any[]) {
-		// @ts-expect-error - Overloaded methods are scary
+		// @ts-ignore - Overloaded methods are scary
 		this.processFD(fd).fsync(fd, ...rest);
 	}
 
 	write(fd: AnuraFD, ...rest: any[]) {
-		// @ts-expect-error - Overloaded methods are scary
+		// @ts-ignore - Overloaded methods are scary
 		this.processFD(fd).write(fd, ...rest);
 	}
 
 	read(fd: AnuraFD, ...rest: any[]) {
-		// @ts-expect-error - Overloaded methods are scary
+		// @ts-ignore - Overloaded methods are scary
 		this.processFD(fd).read(fd, ...rest);
 	}
 

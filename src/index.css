@@ -89,7 +89,7 @@ body {
 }
 
 iframe {
-	background: transparent;
+	background: transparent !important;
 }
 
 .grainy {

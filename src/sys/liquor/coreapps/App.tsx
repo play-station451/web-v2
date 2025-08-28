@@ -5,5 +5,5 @@ export class App {
 	name: string;
 	hidden = false;
 	windows: any[] = [];
-	open(_args: string[] = []): void {}
+	open(args: string[] = []): void {}
 }

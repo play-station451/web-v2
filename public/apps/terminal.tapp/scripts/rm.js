@@ -1,5 +1,5 @@
 async function rm(args) {
-	const availableOptions = [
+	let availableOptions = [
 		"-f: ignore nonexistent files and arguments, never prompt.",
 		"-r: remove directories and their contents recursively.; optionally you can also use -rf to remove directories and their contents recursively without prompt.",
 		"-v: explain what is being done (not default).",
@@ -11,10 +11,10 @@ async function rm(args) {
 		displayOutput("Remove (unlink) the FILE(s).");
 		displayOutput(" ");
 		displayOutput("Options:");
-		for (const option of availableOptions) {
-			const nspace = " ";
+		for (let option of availableOptions) {
+			let nspace = " ";
 			let [opt, desc] = option.split(": ");
-			const optionally = desc.split(";")[1];
+			let optionally = desc.split(";")[1];
 			desc = desc.replace(";", "").replace(optionally, "");
 			displayOutput(`  ${opt.padEnd(10)} ${desc}`);
 			if (optionally) {
@@ -27,7 +27,7 @@ async function rm(args) {
 	const user = sessionStorage.getItem("currAcc");
 	const systemDirs = ["/home", `/home/${user}/documents`, `/home/${user}/videos`, `/home/${user}/pictures`, `/home/${user}/music`];
 
-	for (const sdir of systemDirs) {
+	for (let sdir of systemDirs) {
 		if (path === sdir) {
 			displayOutput(`rm: cannot remove "${path}": Is a system directory`);
 			createNewCommandInput();
@@ -35,7 +35,7 @@ async function rm(args) {
 		}
 	}
 
-	const options = {
+	let options = {
 		force: false,
 		recursive: false,
 		verbose: false,
@@ -62,7 +62,7 @@ async function rm(args) {
 	console.log(toDel);
 	if (path.includes("/mnt/")) {
 		try {
-			const match = path.match(/\/mnt\/([^/]+)\//);
+			const match = path.match(/\/mnt\/([^\/]+)\//);
 			const davName = match ? match[1].toLowerCase() : "";
 			const davInstances = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
 			const dav = davInstances.find(d => d.name.toLowerCase() === davName);
