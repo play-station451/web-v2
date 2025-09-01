@@ -94,48 +94,144 @@ window.parent.tb.fs.readFile("/system/etc/terbium/settings.json", "utf8", (err, 
 });
 
 const customWallpaper = () => {
-	const input = document.createElement("input");
-	input.type = "file";
-	input.setAttribute("accept", "image/*");
-	input.click();
-	input.addEventListener("change", async e => {
-		const file = input.files[0];
-		const buffer = await file.arrayBuffer();
-		const reader = new FileReader();
-		reader.readAsDataURL(file);
-		reader.onload = async () => {
-			const imgdata = reader.result;
-			const path = "/system/etc/terbium/wallpapers/" + file.name;
+	window.parent.tb.dialog.Select({
+		title: "Where do you want to load the wallpaper from?",
+		options: [
+			{
+				text: "System Storage",
+				value: "sys",
+			},
+			{
+				text: "Terbium File System",
+				value: "fs",
+			},
+			{
+				text: "Internet Url",
+				value: "url",
+			},
+		],
+		onOk: async perm => {
+			switch (perm) {
+				case "sys":
+					const input = document.createElement("input");
+					input.type = "file";
+					input.setAttribute("accept", "image/*");
+					input.click();
+					input.addEventListener("change", async e => {
+						const file = input.files[0];
+						const buffer = await file.arrayBuffer();
+						const reader = new FileReader();
+						reader.readAsDataURL(file);
+						reader.onload = async () => {
+							const imgdata = reader.result;
+							const path = "/system/etc/terbium/wallpapers/" + file.name;
 
-			tb_wallpaper.set(path);
-			const img_container = document.createElement("div");
-			img_container.classList.add("wallpaper-container");
-			const wimg = document.createElement("img");
-			wimg.src = imgdata;
-			wimg.classList.add("wallpaper-option");
+							tb_wallpaper.set(path);
+							const img_container = document.createElement("div");
+							img_container.classList.add("wallpaper-container");
+							const wimg = document.createElement("img");
+							wimg.src = imgdata;
+							wimg.classList.add("wallpaper-option");
 
-			const delete_button = document.createElement("img");
-			delete_button.src = "/fs/apps/system/settings.tapp/delete.svg";
-			delete_button.classList.add("delete-wallpaper");
-			delete_button.addEventListener("click", async e => {
-				let data = JSON.parse(await window.parent.tb.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
-				if (data["wallpaper"] === path) {
-					tb_wallpaper.set("/assets/wallpapers/1.png");
-				}
-				await window.parent.tb.fs.promises.unlink(path);
-				img_container.remove();
-			});
-			wimg.addEventListener("click", async e => {
-				tb_wallpaper.set(path);
-			});
-			await window.parent.tb.fs.promises.writeFile(path, Filer.Buffer.from(buffer));
-			tb_wallpaper.set(path);
-			img_container.append(wimg);
-			img_container.append(delete_button);
-			document.querySelector(".custom-wallpaper").remove();
-			document.querySelector(".wallpapers").append(img_container);
-			appendCustomWallpaper();
-		};
+							const delete_button = document.createElement("img");
+							delete_button.src = "/fs/apps/system/settings.tapp/delete.svg";
+							delete_button.classList.add("delete-wallpaper");
+							delete_button.addEventListener("click", async e => {
+								let data = JSON.parse(await window.parent.tb.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
+								if (data["wallpaper"] === path) {
+									tb_wallpaper.set("/assets/wallpapers/1.png");
+								}
+								await window.parent.tb.fs.promises.unlink(path);
+								img_container.remove();
+							});
+							wimg.addEventListener("click", async e => {
+								tb_wallpaper.set(path);
+							});
+							await window.parent.tb.fs.promises.writeFile(path, Filer.Buffer.from(buffer));
+							tb_wallpaper.set(path);
+							img_container.append(wimg);
+							img_container.append(delete_button);
+							document.querySelector(".custom-wallpaper").remove();
+							document.querySelector(".wallpapers").append(img_container);
+							appendCustomWallpaper();
+						};
+					});
+					break;
+				case "fs":
+					tb.dialog.FileBrowser({
+						title: "Select a wallpaper from the file system",
+						onOk: async filePath => {
+							const imgdata = await window.parent.tb.fs.promises.readFile(filePath, "base64");
+							tb.desktop.wallpaper.set("/system/etc/terbium/wallpapers/" + filePath.split("/").pop());
+							await window.parent.tb.fs.promises.writeFile("/system/etc/terbium/wallpapers/" + filePath.split("/").pop(), imgdata);
+							document.querySelector(".wallpapers").innerHTML = `
+								<img src="/assets/wallpapers/1.png" class="wallpaper-option"></img>
+								<img src="/assets/wallpapers/2.png" class="wallpaper-option"></img>
+								<img src="/assets/wallpapers/3.png" class="wallpaper-option"></img>
+								<img src="/assets/wallpapers/4.png" class="wallpaper-option"></img>
+								<img src="/assets/wallpapers/5.png" class="wallpaper-option"></img>
+								<img src="/assets/wallpapers/6.png" class="wallpaper-option"></img>
+								<img src="/assets/wallpapers/7.png" class="wallpaper-option"></img>
+							`;
+							const wallpaper_options = document.querySelectorAll(".wallpaper-option");
+							wallpaper_options.forEach(option => {
+								option.addEventListener("click", async e => {
+									const parent_origin = parent.parent.window.location.origin;
+									const wallpaper = option.src.toString().split(parent_origin)[1];
+									const color = option.getAttribute("color-type");
+									let data = JSON.parse(await window.parent.tb.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, "utf8"));
+									data["wallpaper"] = wallpaper;
+									tb_wallpaper.set(wallpaper);
+									const fillMode = parent.window.tb.desktop.wallpaper.fillMode();
+									if (fillMode === null) parent.window.tb.desktop.wallpaper.cover();
+									if (color !== parent.window.tb.desktop.preferences.theme()) {
+										// parent.window.tb.desktop.preferences.setTheme(`${color`)
+										document.body.setAttribute("theme", color);
+									}
+								});
+							});
+							getWallpapers();
+						},
+					});
+					break;
+				case "url":
+					tb.dialog.Message({
+						title: "Enter a URL of the wallpaper",
+						onOk: async value => {
+							await window.parent.tb.system.download(value, `/system/etc/terbium/wallpapers/${value.split("/").pop()}`);
+							tb.desktop.wallpaper.set("/system/etc/terbium/wallpapers/" + value.split("/").pop());
+							document.querySelector(".wallpapers").innerHTML = `
+								<img src="/assets/wallpapers/1.png" class="wallpaper-option"></img>
+								<img src="/assets/wallpapers/2.png" class="wallpaper-option"></img>
+								<img src="/assets/wallpapers/3.png" class="wallpaper-option"></img>
+								<img src="/assets/wallpapers/4.png" class="wallpaper-option"></img>
+								<img src="/assets/wallpapers/5.png" class="wallpaper-option"></img>
+								<img src="/assets/wallpapers/6.png" class="wallpaper-option"></img>
+								<img src="/assets/wallpapers/7.png" class="wallpaper-option"></img>
+							`;
+							const wallpaper_options = document.querySelectorAll(".wallpaper-option");
+							wallpaper_options.forEach(option => {
+								option.addEventListener("click", async e => {
+									const parent_origin = parent.parent.window.location.origin;
+									const wallpaper = option.src.toString().split(parent_origin)[1];
+									const color = option.getAttribute("color-type");
+									let data = JSON.parse(await window.parent.tb.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, "utf8"));
+									data["wallpaper"] = wallpaper;
+									tb_wallpaper.set(wallpaper);
+									const fillMode = parent.window.tb.desktop.wallpaper.fillMode();
+									if (fillMode === null) parent.window.tb.desktop.wallpaper.cover();
+									if (color !== parent.window.tb.desktop.preferences.theme()) {
+										// parent.window.tb.desktop.preferences.setTheme(`${color`)
+										document.body.setAttribute("theme", color);
+									}
+								});
+							});
+							getWallpapers();
+						},
+					});
+					break;
+			}
+		},
 	});
 };
 
