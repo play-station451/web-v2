@@ -911,7 +911,7 @@ const cm = async e => {
 				text: "Cut",
 				click: async () => {
 					copied = { path: e.target.getAttribute("path"), name: e.target.getAttribute("name") };
-					e.target.classList.add("opacity-50")
+					e.target.classList.add("opacity-50");
 					cut = true;
 				},
 			},
@@ -1338,18 +1338,19 @@ const cm = async e => {
 			isTrash
 				? null
 				: copied || cut
-				? {
-						text: "Paste",
-						click: async () => {
-							await window.parent.tb.fs.promises.writeFile(`${document.querySelector(".exp").getAttribute("path")}/${copied.name}`, await window.parent.tb.fs.promises.readFile(copied.path, "utf8"));
-							if (cut) {
-								await window.parent.tb.fs.promises.unlink(copied.path);
-								cut = false;
-							}
-							copied = null;
-							openPath(`${document.querySelector(".exp").getAttribute("path")}`);
-						},
-					} : null,
+					? {
+							text: "Paste",
+							click: async () => {
+								await window.parent.tb.fs.promises.writeFile(`${document.querySelector(".exp").getAttribute("path")}/${copied.name}`, await window.parent.tb.fs.promises.readFile(copied.path, "utf8"));
+								if (cut) {
+									await window.parent.tb.fs.promises.unlink(copied.path);
+									cut = false;
+								}
+								copied = null;
+								openPath(`${document.querySelector(".exp").getAttribute("path")}`);
+							},
+						}
+					: null,
 			isTrash
 				? null
 				: {
@@ -1404,26 +1405,27 @@ const cm = async e => {
 							fauxput.click();
 						},
 					},
-					isTrash
+			isTrash
 				? null
 				: !showHidden
-				? {
-						text: "Show hidden files",
-						click: async () => {
-							const config = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${user}/files/config.json`, "utf8"));
-							config["show-hidden-files"] = true;
-							await window.parent.tb.fs.promises.writeFile(`/apps/user/${user}/files/config.json`, JSON.stringify(config));
-							openPath(document.querySelector(".nav-input.dir").value);
+					? {
+							text: "Show hidden files",
+							click: async () => {
+								const config = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${user}/files/config.json`, "utf8"));
+								config["show-hidden-files"] = true;
+								await window.parent.tb.fs.promises.writeFile(`/apps/user/${user}/files/config.json`, JSON.stringify(config));
+								openPath(document.querySelector(".nav-input.dir").value);
+							},
 						}
-					} : {
-						text: "Hide hidden files",
-						click: async () => {
-							const config = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${user}/files/config.json`, "utf8"));
-							config["show-hidden-files"] = false;
-							await window.parent.tb.fs.promises.writeFile(`/apps/user/${user}/files/config.json`, JSON.stringify(config));
-							openPath(document.querySelector(".nav-input.dir").value);
-						}
-					},
+					: {
+							text: "Hide hidden files",
+							click: async () => {
+								const config = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${user}/files/config.json`, "utf8"));
+								config["show-hidden-files"] = false;
+								await window.parent.tb.fs.promises.writeFile(`/apps/user/${user}/files/config.json`, JSON.stringify(config));
+								openPath(document.querySelector(".nav-input.dir").value);
+							},
+						},
 			// isTrash ? null : {
 			//     text: "Paste",
 			//     click: () => {}

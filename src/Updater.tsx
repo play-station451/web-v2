@@ -30,7 +30,7 @@ export default function Updater() {
 
 	useEffect(() => {
 		const main = async () => {
-			window.onbeforeunload = (e) => {
+			window.onbeforeunload = e => {
 				e.preventDefault();
 				e.returnValue = "Terbium is still updating";
 			};
