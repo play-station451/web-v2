@@ -557,6 +557,9 @@ const getItemDetails = async path => {
 	}
 };
 
+let copied = null;
+let cut = null;
+
 const cm = async e => {
 	e.preventDefault();
 	if (document.querySelector(".context-menu")) document.querySelector(".context-menu").remove();
@@ -896,6 +899,20 @@ const cm = async e => {
 					} catch (error) {
 						console.error(error);
 					}
+				},
+			},
+			{
+				text: "Copy",
+				click: async () => {
+					copied = { path: e.target.getAttribute("path"), name: e.target.getAttribute("name") };
+				},
+			},
+			{
+				text: "Cut",
+				click: async () => {
+					copied = { path: e.target.getAttribute("path"), name: e.target.getAttribute("name") };
+					e.target.classList.add("opacity-50")
+					cut = true;
 				},
 			},
 			{
@@ -1320,6 +1337,21 @@ const cm = async e => {
 					},
 			isTrash
 				? null
+				: copied || cut
+				? {
+						text: "Paste",
+						click: async () => {
+							await window.parent.tb.fs.promises.writeFile(`${document.querySelector(".exp").getAttribute("path")}/${copied.name}`, await window.parent.tb.fs.promises.readFile(copied.path, "utf8"));
+							if (cut) {
+								await window.parent.tb.fs.promises.unlink(copied.path);
+								cut = false;
+							}
+							copied = null;
+							openPath(`${document.querySelector(".exp").getAttribute("path")}`);
+						},
+					} : null,
+			isTrash
+				? null
 				: {
 						text: "Upload from Computer",
 						click: () => {
@@ -1371,6 +1403,26 @@ const cm = async e => {
 							};
 							fauxput.click();
 						},
+					},
+					isTrash
+				? null
+				: !showHidden
+				? {
+						text: "Show hidden files",
+						click: async () => {
+							const config = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${user}/files/config.json`, "utf8"));
+							config["show-hidden-files"] = true;
+							await window.parent.tb.fs.promises.writeFile(`/apps/user/${user}/files/config.json`, JSON.stringify(config));
+							openPath(document.querySelector(".nav-input.dir").value);
+						}
+					} : {
+						text: "Hide hidden files",
+						click: async () => {
+							const config = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${user}/files/config.json`, "utf8"));
+							config["show-hidden-files"] = false;
+							await window.parent.tb.fs.promises.writeFile(`/apps/user/${user}/files/config.json`, JSON.stringify(config));
+							openPath(document.querySelector(".nav-input.dir").value);
+						}
 					},
 			// isTrash ? null : {
 			//     text: "Paste",
@@ -1424,12 +1476,13 @@ const cm = async e => {
 window.addEventListener("contextmenu", cm);
 window.addEventListener("touchhold", cm);
 
-const navigate = path => {};
+let showHidden = false;
 
 const createPath = async (title, path, type) => {
 	const config = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${user}/files/config.json`, "utf8"));
 	if (config["show-hidden-files"] === false && title.startsWith(".")) return;
 
+	showHidden = config["show-hidden-files"];
 	let item = document.createElement("div");
 	item.classList.add("path-item");
 	item.setAttribute("path", path);
@@ -1457,6 +1510,9 @@ const createPath = async (title, path, type) => {
 		} else {
 			const imgData = await window.parent.tb.fs.promises.readFile(unknown, "utf8");
 			icon.innerHTML = imgData;
+		}
+		if (copied && copied.name === item.getAttribute("name").toLowerCase() && cut) {
+			item.classList.add("opacity-50");
 		}
 		item.ondblclick = async e => {
 			let ext = path.split(".");

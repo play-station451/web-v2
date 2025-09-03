@@ -30,6 +30,10 @@ export default function Updater() {
 
 	useEffect(() => {
 		const main = async () => {
+			window.onbeforeunload = (e) => {
+				e.preventDefault();
+				e.returnValue = "Terbium is still updating";
+			};
 			let sysapps = ["about.tapp", "app store.tapp", "browser.tapp", "calculator.tapp", "feedback.tapp", "files.tapp", "media viewer.tapp", "settings.tapp", "task manager.tapp", "terminal.tapp", "text editor.tapp"];
 			let sysscripts = [
 				"cat.js",
@@ -236,7 +240,7 @@ export default function Updater() {
 				await window.tb.fs.promises.writeFile("/apps/installed.json", JSON.stringify(insapps));
 				await window.tb.fs.promises.writeFile("/system/var/terbium/recent.json", JSON.stringify([]));
 			}
-			// v2.1-beta update
+			// v2.1 update
 			if (!(await fileExists(`/apps/user/${user}/app store/repos.json`))) {
 				await window.tb.fs.promises.mkdir(`/apps/user/${user}/app store/`);
 				await window.tb.fs.promises.writeFile(
@@ -267,6 +271,7 @@ export default function Updater() {
 			statusref.current!.innerText = "Cleaning up...";
 			setProgress(95);
 			await window.tb.sh.promises.rm(`/system/tmp/terb-upd/`, { recursive: true });
+			window.onbeforeunload = null;
 			setProgress(100);
 			statusref.current!.innerText = "Restarting...";
 			window.location.reload();

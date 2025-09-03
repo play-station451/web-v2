@@ -10,7 +10,7 @@ interface SearchProps {
 	searchRef?: React.RefObject<HTMLInputElement | null>;
 }
 
-const SearchMenu: FC<SearchProps> = ({ className, searchRef }) => {
+const SearchMenu: FC<SearchProps> = ({ className }) => {
 	const searchMenuStore = useSearchMenuStore();
 
 	const [searchMatch, setSearchMatch] = useState<boolean>(false);
@@ -170,7 +170,7 @@ const SearchMenu: FC<SearchProps> = ({ className, searchRef }) => {
 											filesres.map(async (f: any) => {
 												const iconSvg = await window.tb.fs.promises.readFile(getIcon(f.ext), "utf8");
 												function rewriteSvgSize(svg: string) {
-													return svg.replace(/<svg([^>]*)>/, (match, attrs) => {
+													return svg.replace(/<svg([^>]*)>/, (_, attrs) => {
 														let newAttrs = attrs.replace(/\swidth=['"][^'"]*['"]/, "").replace(/\sheight=['"][^'"]*['"]/, "");
 														return `<svg${newAttrs} width="48" height="48">`;
 													});
