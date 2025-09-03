@@ -31,17 +31,10 @@ interface SearchMenuState {
 	searchMenuRef: React.RefObject<HTMLDivElement | null>;
 }
 
+let lastPID = 1;
+
 export const createPID = () => {
-	const chars = "0123456789";
-	let result = "";
-	const length = Math.floor(Math.random() * (5 - 1 + 1)) + 1;
-	const idGen = (): string => {
-		for (let i = 0; i < length; i++) {
-			result += chars[Math.floor(Math.random() * chars.length)];
-		}
-		return result;
-	};
-	return idGen();
+	return (lastPID++).toString();
 };
 
 export const createWID = () => {
@@ -69,7 +62,7 @@ const useWindowStore = create<WindowState>()(set => ({
 				if (w.wid !== config.wid) {
 					w.focused = false;
 					if (w.zIndex !== undefined) {
-						w.zIndex -= 1;
+						Math.max(0, w.zIndex - 1);
 					}
 				}
 			});
@@ -196,7 +189,7 @@ const useWindowStore = create<WindowState>()(set => ({
 				if (w.wid !== wid) {
 					w.focused = false;
 					if (w.zIndex !== undefined) {
-						w.zIndex -= 1;
+						Math.max(0, w.zIndex - 1);
 					}
 				}
 			});
