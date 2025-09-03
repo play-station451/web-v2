@@ -161,7 +161,7 @@ async function loadApp(app, type) {
 	if (installedApps.some(a => a.name === app.name)) {
 		isInstalled = true;
 		const config = JSON.parse(await window.parent.tb.fs.promises.readFile(`${installedApps.find(a => a.name === app.name).config}`, "utf8"));
-		if (app.version && config.version && app.version !== config.version) {
+		if (app.version && config.version && semverCompare(app.version, config.version) > 0) {
 			uptodate = false;
 		}
 	}
@@ -529,21 +529,47 @@ async function search(input) {
 }
 
 /**
+ * Compares two semantic version strings.
+ * @param {string} a - The first version string.
+ * @param {string} b - The second version string.
+ * @returns {number} - Returns 1 if a > b, -1 if a < b, 0 if they are equal.
+ */
+const semverCompare = (a, b) => {
+	const pa = a.split(/[-.]/);
+	const pb = b.split(/[-.]/);
+	for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+		const na = pa[i] || "0";
+		const nb = pb[i] || "0";
+		if (!isNaN(na) && !isNaN(nb)) {
+			if (+na > +nb) return 1;
+			if (+na < +nb) return -1;
+		} else {
+			if (na > nb) return 1;
+			if (na < nb) return -1;
+		}
+	}
+	return 0;
+};
+
+/**
  * Installs the requested app
  * @param {string} type - The type of app (Terbium, tb-PWA, Anura, Xen)
  * @returns {Promise<boolean>} - Returns true if the installation was successful, false otherwise
  */
 async function install(app, type) {
 	if (app.requirements) {
-		if (app.requirements.os && app.requirements.os.replace("v", "") !== window.parent.tb.system.version()) {
-			window.parent.tb.notification.Toast({
-				message: `Failed to install ${app.name}. Your version of Terbium does not meet the minimum requirements.`,
-				application: "App Store",
-				iconSrc: "/fs/apps/system/app store.tapp/icon.svg",
-				time: 5000,
-			});
-			return false;
-		} else if (app.requirements.proxy && app.requirements.proxy !== window.parent.tb.proxy.get()) {
+		if (app.requirements.os) {
+			if (semverCompare(window.parent.tb.system.version(), app.requirements.os.replace(/^v/, "")) < 0) {
+				window.parent.tb.notification.Toast({
+					message: `Failed to install ${app.name}. Your version of Terbium does not meet the minimum requirements.`,
+					application: "App Store",
+					iconSrc: "/fs/apps/system/app store.tapp/icon.svg",
+					time: 5000,
+				});
+				return false;
+			}
+		}
+		if (app.requirements.proxy && app.requirements.proxy !== window.parent.tb.proxy.get()) {
 			window.parent.tb.notification.Toast({
 				message: `Failed to install ${app.name}. The current selected proxy does not meet the minimum requirements.`,
 				application: "App Store",
