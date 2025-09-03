@@ -183,6 +183,7 @@ const useWindowStore = create<WindowState>()(set => ({
 			set({ currentPID: window.pid });
 
 			const indexes = state.windows.map(w => w.zIndex ?? 0);
+			console.log(indexes);
 			window.zIndex = Math.max(...indexes) + 1;
 			window.focused = true;
 			state.windows.forEach(w => {

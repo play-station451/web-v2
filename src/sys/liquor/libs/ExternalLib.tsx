@@ -1,4 +1,3 @@
-import { Anura } from "../Anura";
 import { Lib } from "./lib";
 // API Stub: TODO Later
 interface LibManifest {
@@ -12,8 +11,6 @@ interface LibManifest {
 	cache?: boolean;
 	currentVersion: string;
 }
-
-let anura: Anura;
 
 export class ExternalLib extends Lib {
 	source: string;
@@ -43,8 +40,7 @@ export class ExternalLib extends Lib {
 		if (manifest.installHook) {
 			import(/* @vite-ignore */ source + "/" + manifest.installHook).then(module => {
 				try {
-					// @ts-expect-error
-					module.default(anura, this);
+					module.default(window.anura, this);
 				} catch (err) {
 					console.warn(err);
 				}

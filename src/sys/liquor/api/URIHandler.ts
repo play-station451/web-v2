@@ -1,6 +1,3 @@
-import { Anura } from "../Anura";
-let anura: Anura;
-
 interface LibURIHandler {
 	tag: "lib";
 	pkg: string;

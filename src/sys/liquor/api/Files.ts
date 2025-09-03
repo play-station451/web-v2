@@ -1,23 +1,16 @@
-import { Anura } from "../Anura";
-
 // Depends on Settings.ts, must be loaded AFTER
-let anura: Anura;
-if (typeof window !== "undefined") {
-	anura = window.anura;
-}
 
 export class FilesAPI {
 	fallbackIcon = "/assets/img/missing_icon.svg";
 	folderIcon = "/assets/img/folder.svg";
 	open = async function (path: string): Promise<void> {
-		anura = window.anura;
 		const ext = path.split("/").pop()!.split(".").pop();
-		const extHandlers = anura.settings.get("FileExts") || {};
+		const extHandlers = window.anura.settings.get("FileExts") || {};
 		if (extHandlers[ext!]) {
 			const handler = extHandlers[ext!];
 			console.log(`Opening ${path} with ${handler}`);
 			if (handler.handler_type === "module") {
-				const handlerModule = await anura.import(handler.id);
+				const handlerModule = await window.anura.import(handler.id);
 				if (!handlerModule) {
 					console.log(`Failed to load handler ${handler}`);
 					// @ts-expect-error stfu
@@ -45,13 +38,12 @@ export class FilesAPI {
 	};
 
 	async defaultOpen(path: string): Promise<void> {
-		anura = window.anura;
-		const extHandlers = anura.settings.get("FileExts") || {};
+		const extHandlers = window.anura.settings.get("FileExts") || {};
 		if (extHandlers["default"]) {
 			const handler = extHandlers["default"];
 			console.log(`Opening ${path} with ${handler}`);
 			if (handler.handler_type === "module") {
-				const handlerModule = await anura.import(handler.id);
+				const handlerModule = await window.anura.import(handler.id);
 				if (!handlerModule) {
 					console.log(`Failed to load handler ${handler}`);
 					return;
@@ -72,11 +64,11 @@ export class FilesAPI {
 
 	getIcon = async (path: string) => {
 		const ext = path.split("/").pop()!.split(".").pop();
-		const extHandlers = anura.settings.get("FileExts") || {};
+		const extHandlers = window.anura.settings.get("FileExts") || {};
 		if (extHandlers[ext!]) {
 			const handler = extHandlers[ext!];
 			if (handler.handler_type === "module") {
-				const handlerModule = await anura.import(handler.id);
+				const handlerModule = await window.anura.import(handler.id);
 				if (!handlerModule) {
 					console.log(`Failed to load handler ${handler}`);
 					return await this.defaultIcon(path);
@@ -102,12 +94,11 @@ export class FilesAPI {
 	};
 
 	async defaultIcon(path: string) {
-		anura = window.anura;
-		const extHandlers = anura.settings.get("FileExts") || {};
+		const extHandlers = window.anura.settings.get("FileExts") || {};
 		if (extHandlers["default"]) {
 			const handler = extHandlers["default"];
 			if (handler.handler_type === "module") {
-				const handlerModule = await anura.import(handler.id);
+				const handlerModule = await window.anura.import(handler.id);
 				if (!handlerModule) {
 					console.log(`Failed to load handler ${handler}`);
 					return this.fallbackIcon;
@@ -134,14 +125,13 @@ export class FilesAPI {
 	}
 
 	async getFileType(path: string) {
-		anura = window.anura;
 		const ext = path.split("/").pop()!.split(".").pop();
-		const extHandlers = anura.settings.get("FileExts") || {};
+		const extHandlers = window.anura.settings.get("FileExts") || {};
 		if (extHandlers[ext!]) {
 			const handler = extHandlers[ext!];
 			console.log(handler);
 			if (handler.handler_type === "module") {
-				const handlerModule = await anura.import(handler.id);
+				const handlerModule = await window.anura.import(handler.id);
 				if (!handlerModule) {
 					console.log(`Failed to load handler ${handler}`);
 					return "Anura File";
@@ -173,21 +163,19 @@ export class FilesAPI {
 	}
 
 	set(path: string, extension: string) {
-		anura = window.anura;
-		const extHandlers = anura.settings.get("FileExts") || {};
+		const extHandlers = window.anura.settings.get("FileExts") || {};
 		extHandlers[extension] = {
 			handler_type: "cjs",
 			path,
 		};
-		anura.settings.set("FileExts", extHandlers);
+		window.anura.settings.set("FileExts", extHandlers);
 	}
 	setModule(id: string, extension: string) {
-		anura = window.anura;
-		const extHandlers = anura.settings.get("FileExts") || {};
+		const extHandlers = window.anura.settings.get("FileExts") || {};
 		extHandlers[extension] = {
 			handler_type: "module",
 			id,
 		};
-		anura.settings.set("FileExts", extHandlers);
+		window.anura.settings.set("FileExts", extHandlers);
 	}
 }
