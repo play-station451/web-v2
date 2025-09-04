@@ -13,10 +13,5 @@
 			"purpose": "any maskable"
 		}
 	],
-	"display_override": [
-		"window-controls-overlay",
-		"standalone",
-		"minimal-ui",
-		"browser"
-	]
+	"display_override": ["window-controls-overlay", "standalone", "minimal-ui", "browser"]
 }
