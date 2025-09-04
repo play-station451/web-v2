@@ -843,7 +843,7 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 					</div>
 				)}
 			</div>
-			<div ref={contentRef}>
+			<div ref={contentRef} className="w-full h-full">
 				<iframe
 					key={config.src}
 					ref={srcRef}
