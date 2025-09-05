@@ -52,14 +52,65 @@ export default function Recovery() {
 		msgbox.current!.classList.add("hidden");
 		progresscheck.current!.classList.remove("hidden");
 		progresscheck.current!.classList.add("flex");
-		if (await dirExists("/system/")) {
-			await window.tb.sh.promises.rm("/system/", { recursive: true });
-		}
-		if (await dirExists("/apps/")) {
-			await window.tb.sh.promises.rm("/apps/", { recursive: true });
-		}
-		if (await dirExists("/home/")) {
-			await window.tb.sh.promises.rm("/home/", { recursive: true });
+		if (localStorage.getItem("setup")) {
+			const dbOpen = indexedDB.open("local");
+			dbOpen.onsuccess = () => {
+				const db = dbOpen.result;
+				const tx = db.transaction(db.objectStoreNames, "readwrite");
+				tx.oncomplete = async () => {
+					const boot = () => {
+						sessionStorage.setItem("boot", "true");
+						window.location.reload();
+					};
+
+					const cloak = () => {
+						const newWindow = window.open("about:blank", "_blank");
+						const newDocument = newWindow!.document.open();
+						sessionStorage.setItem("boot", "true");
+						newDocument.write(`
+							<!DOCTYPE html>
+							<html>
+							<head>
+    				            <style type="text/css">
+                    				body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+                				</style>
+            				</head>
+            				<body>
+                				<iframe style="border: none; width: 100%; height: 100vh;" src="${window.location.href}?boot=true"></iframe>
+            				</body>
+            				</html>
+        				`);
+						newDocument.close();
+						window.location.href = "https://google.com";
+						console.log("Cloak Opened!");
+					};
+
+					const recovery = () => {
+						sessionStorage.setItem("recovery", "true");
+						window.location.reload();
+					};
+
+					window.Filer.fs = new Filer.FileSystem();
+					await window.tb.fs.promises.writeFile(
+						"/bootentries.json",
+						JSON.stringify([
+							{ name: "TB React", action: boot.toString() },
+							{ name: "TB React (Cloaked)", action: cloak.toString() },
+							{ name: "TB System Recovery", action: recovery.toString() },
+						]),
+					);
+				};
+				for (const storeName of db.objectStoreNames) {
+					const store = tx.objectStore(storeName);
+					const req = store.clear();
+					req.onerror = e => {
+						console.error(`Can't delete ${storeName}:`, e);
+					};
+				}
+			};
+			dbOpen.onerror = e => {
+				console.error(e);
+			};
 		}
 		await download("https://cdn.terbiumon.top/recovery/latest.zip", "/uploaded.zip");
 		setShowCursor(false);
@@ -137,14 +188,65 @@ export default function Recovery() {
 				const file = target.files[0];
 				const content = await file.arrayBuffer();
 				setProgress(10);
-				if (await dirExists("/system/")) {
-					await window.tb.sh.promises.rm("/system/", { recursive: true });
-				}
-				if (await dirExists("/apps/")) {
-					await window.tb.sh.promises.rm("/apps/", { recursive: true });
-				}
-				if (await dirExists("/home/")) {
-					await window.tb.sh.promises.rm("/home/", { recursive: true });
+				if (localStorage.getItem("setup")) {
+					const dbOpen = indexedDB.open("local");
+					dbOpen.onsuccess = () => {
+						const db = dbOpen.result;
+						const tx = db.transaction(db.objectStoreNames, "readwrite");
+						tx.oncomplete = async () => {
+							const boot = () => {
+								sessionStorage.setItem("boot", "true");
+								window.location.reload();
+							};
+
+							const cloak = () => {
+								const newWindow = window.open("about:blank", "_blank");
+								const newDocument = newWindow!.document.open();
+								sessionStorage.setItem("boot", "true");
+								newDocument.write(`
+									<!DOCTYPE html>
+									<html>
+									<head>
+    				    		        <style type="text/css">
+                    						body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+                						</style>
+		            				</head>
+        		    				<body>
+                						<iframe style="border: none; width: 100%; height: 100vh;" src="${window.location.href}?boot=true"></iframe>
+            						</body>
+            						</html>
+        						`);
+								newDocument.close();
+								window.location.href = "https://google.com";
+								console.log("Cloak Opened!");
+							};
+
+							const recovery = () => {
+								sessionStorage.setItem("recovery", "true");
+								window.location.reload();
+							};
+
+							window.Filer.fs = new Filer.FileSystem();
+							await window.tb.fs.promises.writeFile(
+								"/bootentries.json",
+								JSON.stringify([
+									{ name: "TB React", action: boot.toString() },
+									{ name: "TB React (Cloaked)", action: cloak.toString() },
+									{ name: "TB System Recovery", action: recovery.toString() },
+								]),
+							);
+						};
+						for (const storeName of db.objectStoreNames) {
+							const store = tx.objectStore(storeName);
+							const req = store.clear();
+							req.onerror = e => {
+								console.error(`Can't delete ${storeName}:`, e);
+							};
+						}
+					};
+					dbOpen.onerror = e => {
+						console.error(e);
+					};
 				}
 				setProgress(25);
 				await window.tb.fs.promises.writeFile("//uploaded.zip", Filer.Buffer.from(content));
