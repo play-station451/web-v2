@@ -1,29 +1,30 @@
-import { setDialogFn } from "./apis/Dialogs";
-import { setNotifFn } from "./apis/Notifications";
-import { Anura } from "./liquor/Anura";
-import { AliceWM } from "./liquor/AliceWM";
-import { LocalFS } from "./liquor/api/LocalFS";
-import { ExternalApp } from "./liquor/coreapps/ExternalApp";
-import { ExternalLib } from "./liquor/libs/ExternalLib";
-import { registry } from "./apis/Registry";
-import { type MediaProps, type cmprops, type dialogProps, type launcherProps, type NotificationProps, type COM, type User, type WindowConfig, fileExists, UserSettings, SysSettings } from "./types";
-import { System } from "./apis/System";
-import { setMusicFn, setVideoFn, isExistingFn, hideFn } from "./apis/Mediaisland";
-import { XOR } from "./apis/Xor";
-import { libcurl } from "libcurl.js/bundled";
 import { BareMuxConnection } from "@mercuryworkshop/bare-mux";
-import pwd from "./apis/Crypto";
 import * as fflate from "fflate";
-import parse from "./Parser";
-import { AppIslandProps, clearControls, clearInfo, updateControls } from "./gui/AppIsland";
-import { createWindow } from "./gui/WindowArea";
-import { TDockItem } from "./gui/Dock";
-import { useWindowStore } from "./Store";
-import { AnuraBareClient } from "./liquor/bcc";
+import { libcurl } from "libcurl.js/bundled";
 import apps from "../apps.json";
 import { hash } from "../hash.json";
+import pwd from "./apis/Crypto";
+import { setDialogFn } from "./apis/Dialogs";
+import { hideFn, isExistingFn, setMusicFn, setVideoFn } from "./apis/Mediaisland";
+import { setNotifFn } from "./apis/Notifications";
+import { registry } from "./apis/Registry";
+import { System } from "./apis/System";
+import { XOR } from "./apis/Xor";
+import { type AppIslandProps, clearControls, clearInfo, updateControls } from "./gui/AppIsland";
+import type { TDockItem } from "./gui/Dock";
+import { createWindow } from "./gui/WindowArea";
 import { Lemonade } from "./lemonade";
+import { AliceWM } from "./liquor/AliceWM";
+import { Anura } from "./liquor/Anura";
+import { LocalFS } from "./liquor/api/LocalFS";
+import { AnuraBareClient } from "./liquor/bcc";
+import { ExternalApp } from "./liquor/coreapps/ExternalApp";
+import { ExternalLib } from "./liquor/libs/ExternalLib";
 import { initializeWebContainer } from "./Node/runtimes/Webcontainers/nodeProc";
+import parse from "./Parser";
+import { useWindowStore } from "./Store";
+import { type COM, type cmprops, type dialogProps, fileExists, type launcherProps, type MediaProps, type NotificationProps, type SysSettings, type User, type UserSettings, type WindowConfig } from "./types";
+
 const system = new System();
 const pw = new pwd();
 declare const tb: COM;
@@ -41,14 +42,14 @@ export default async function Api() {
 		sh: window.tb.sh,
 		battery: {
 			async showPercentage() {
-				let settings: UserSettings = JSON.parse(await window.tb.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
+				const settings: UserSettings = JSON.parse(await window.tb.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
 				settings["battery-percent"] = true;
 				await window.tb.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, JSON.stringify(settings));
 				window.dispatchEvent(new CustomEvent("controlBatteryPercentVisibility", { detail: true }));
 				return "Success";
 			},
 			async hidePercentage() {
-				let settings: UserSettings = JSON.parse(await window.tb.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
+				const settings: UserSettings = JSON.parse(await window.tb.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
 				settings["battery-percent"] = false;
 				await window.tb.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, JSON.stringify(settings));
 				window.dispatchEvent(new CustomEvent("controlBatteryPercentVisibility", { detail: false }));
@@ -164,7 +165,7 @@ export default async function Api() {
 			},
 			dock: {
 				async pin(app: any) {
-					let apps: Array<TDockItem> = JSON.parse(await window.tb.fs.promises.readFile("/system/var/terbium/dock.json"));
+					const apps: Array<TDockItem> = JSON.parse(await window.tb.fs.promises.readFile("/system/var/terbium/dock.json"));
 					apps.push(app);
 					await window.tb.fs.promises.writeFile("/system/var/terbium/dock.json", JSON.stringify(apps));
 					window.dispatchEvent(new Event("updPins"));
@@ -342,13 +343,13 @@ export default async function Api() {
 						db.close();
 						const deleteRequest = indexedDB.deleteDatabase("$scramjet");
 						deleteRequest.onsuccess = () => {
-							console.log(`Cleared SJ DB`);
+							console.log("Cleared SJ DB");
 						};
 						deleteRequest.onerror = err => {
 							console.error(err);
 						};
 					} else {
-						console.log(`Scramjet is fine`);
+						console.log("Scramjet is fine");
 					}
 				};
 				request.onerror = err => {
@@ -367,41 +368,8 @@ export default async function Api() {
 						await connection.setTransport("/libcurl/index.mjs", [{ wisp: wispserver }]);
 					}
 				};
-				const scramjet = new window.ScramjetController({
-					prefix: "/service/",
-					files: {
-						wasm: "/scramjet/scramjet.wasm.wasm",
-						worker: "/scramjet/scramjet.worker.js",
-						client: "/scramjet/scramjet.client.js",
-						shared: "/scramjet/scramjet.shared.js",
-						sync: "/scramjet/scramjet.sync.js",
-					},
-					defaultFlags: {
-						rewriterLogs: false,
-					},
-					codec: {
-						encode: `
-							let result = "";
-							let len = url.length;
-							for (let i = 0; i < len; i++) {
-								const char = url[i];
-								result += i % 2 ? String.fromCharCode(char.charCodeAt(0) ^ 2) : char;
-							}
-							return encodeURIComponent(result);
-						`,
-						decode: `
-							if (!url) return url;
-							url = decodeURIComponent(url);
-							let result = "";
-							let len = url.length;
-							for (let i = 0; i < len; i++) {
-								const char = url[i];
-								result += i % 2 ? String.fromCharCode(char.charCodeAt(0) ^ 2) : char;
-							}
-							return result;
-						`,
-					},
-				});
+				const { ScramjetController } = $scramjetLoadController();
+				window.scramjet = new ScramjetController(scramjetTb);
 				scramjet.init();
 				navigator.serviceWorker
 					.register("anura-sw.js", {
@@ -414,7 +382,7 @@ export default async function Api() {
 					await updateTransport();
 				});
 				if (settings.wispServer === null) {
-					// @ts-ignore
+					// @ts-expect-error
 					window.tb.libcurl.set_websocket(`${location.protocol.replace("http", "ws")}//${location.hostname}:${location.port}/wisp/`);
 				} else {
 					window.tb.libcurl.set_websocket(settings.wispServer);
@@ -424,18 +392,16 @@ export default async function Api() {
 				if (encoder === "xor" || encoder === "XOR") {
 					const enc = await XOR.encode(url);
 					return enc;
-				} else {
-					throw new Error("Encoder not found");
 				}
+				throw new Error("Encoder not found");
 				// Stubbed for future addition of say AES
 			},
 			async decode(url: string, decoder: string) {
 				if (decoder === "xor" || decoder === "XOR") {
 					const dec = await XOR.decode(url);
 					return dec;
-				} else {
-					throw new Error("Encoder not found");
 				}
+				throw new Error("Encoder not found");
 				// Stubbed for future addition of say AES
 			},
 		},
@@ -545,7 +511,7 @@ export default async function Api() {
 				}
 			},
 			exportfs: async () => {
-				let zip: { [key: string]: Uint8Array } = {};
+				const zip: { [key: string]: Uint8Array } = {};
 				async function addzip(inp: string, aPath = "") {
 					const files = await window.tb.fs.promises.readdir(inp);
 					for (const file of files) {
@@ -587,7 +553,7 @@ export default async function Api() {
 						};
 					}
 					await window.tb.fs.promises.writeFile(`${userDir}/user.json`, JSON.stringify(userJson));
-					let userSettings = {
+					const userSettings = {
 						wallpaper: "/assets/wallpapers/1.png",
 						wallpaperMode: "cover",
 						animations: true,
@@ -640,18 +606,18 @@ export default async function Api() {
 								Images: `/home/${username}/images`,
 								Videos: `/home/${username}/videos`,
 								Music: `/home/${username}/music`,
-								Trash: `/system/trash`,
+								Trash: "/system/trash",
 							},
 						}),
 						"utf8",
 					);
-					let items: any[] = [];
-					let r2 = [];
+					const items: any[] = [];
+					const r2 = [];
 					for (let i = 0; i < apps.length; i++) {
 						const app = apps[i];
 						const name = app.name.toLowerCase();
-						var topPos: number = 0;
-						var leftPos: number = 0;
+						var topPos = 0;
+						var leftPos = 0;
 						if (i % 12 === 0) {
 							topPos = 0;
 						} else {
@@ -788,9 +754,8 @@ export default async function Api() {
 					window.tb.node.webContainer.teardown();
 					window.tb.node.isReady = false;
 					return true;
-				} else {
-					throw new Error("No WebContainer is running");
 				}
+				throw new Error("No WebContainer is running");
 			},
 		},
 		crypto: async (pass: string, file?: string) => {
@@ -798,9 +763,8 @@ export default async function Api() {
 			if (file) {
 				await window.tb.fs.promises.writeFile(file, newpw);
 				return "Complete";
-			} else {
-				return newpw;
 			}
+			return newpw;
 		},
 		platform: {
 			async getPlatform() {
@@ -809,11 +773,11 @@ export default async function Api() {
 				const crosua = /CrOS/;
 				if (mobileuas.test(navigator.userAgent) && !crosua.test(navigator.userAgent)) {
 					return "mobile";
-				} else if (!mobileuas.test(navigator.userAgent) && navigator.maxTouchPoints > 1 && navigator.userAgent.indexOf("Macintosh") !== -1 && navigator.userAgent.indexOf("Safari") !== -1) {
-					return "mobile";
-				} else {
-					return "desktop";
 				}
+				if (!mobileuas.test(navigator.userAgent) && navigator.maxTouchPoints > 1 && navigator.userAgent.indexOf("Macintosh") !== -1 && navigator.userAgent.indexOf("Safari") !== -1) {
+					return "mobile";
+				}
+				return "desktop";
 			},
 		},
 		process: {
@@ -826,7 +790,7 @@ export default async function Api() {
 				}
 			},
 			list() {
-				let list = {};
+				const list = {};
 				const wins = useWindowStore.getState().windows;
 				wins.forEach((win: WindowConfig, index: number) => {
 					const winID = win.pid || `win-${index}`;
@@ -998,13 +962,13 @@ export default async function Api() {
 					}
 				},
 				addHandler: async (app: string, ext: string) => {
-					let settings: SysSettings = JSON.parse(await window.tb.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"));
+					const settings: SysSettings = JSON.parse(await window.tb.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"));
 					(settings.fileAssociatedApps as Record<string, string>)[ext] = app;
 					await window.tb.fs.promises.writeFile("/system/etc/terbium/settings.json", JSON.stringify(settings, null, 2), "utf8");
 					return true;
 				},
 				removeHandler: async (ext: string) => {
-					let settings: SysSettings = JSON.parse(await window.tb.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"));
+					const settings: SysSettings = JSON.parse(await window.tb.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"));
 					delete (settings.fileAssociatedApps as Record<string, string>)[ext];
 					await window.tb.fs.promises.writeFile("/system/etc/terbium/settings.json", JSON.stringify(settings, null, 2), "utf8");
 					return true;
@@ -1019,7 +983,7 @@ export default async function Api() {
 		return;
 	(window as any).loadLock = true;
 
-	let anura = await Anura.new({
+	const anura = await Anura.new({
 		milestone: 5,
 		FileExts: {
 			txt: { handler_type: "module", id: "anura.fileviewer" },

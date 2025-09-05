@@ -18,9 +18,7 @@
 			"!**/.zed/**",
 			"!**/docs/**",
 			"!**/public/apps/*.app/**",
-			"!**/public/apps/files.tapp/webdav.js",
-			"!**/public/uv/**",
-			"!**/public/scramjet/**"
+			"!**/public/apps/files.tapp/webdav.js"
 		]
 	},
 	"formatter": {

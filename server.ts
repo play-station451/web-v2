@@ -1,23 +1,24 @@
-import express, { Response, Request } from "express";
 import { createServer } from "node:http";
-import { fileURLToPath } from "url";
-import path from "path";
-import fs from "fs";
-import cookieParser from "cookie-parser";
-import { server as wisp } from "@mercuryworkshop/wisp-js/server";
-import { libcurlPath } from "@mercuryworkshop/libcurl-transport";
 import { baremuxPath } from "@mercuryworkshop/bare-mux/node";
 // @ts-expect-error types
 import { epoxyPath } from "@mercuryworkshop/epoxy-transport";
-import Socket from "ws";
-import Head from "ws";
+import { libcurlPath } from "@mercuryworkshop/libcurl-transport";
+import { server as wisp } from "@mercuryworkshop/wisp-js/server";
+import cookieParser from "cookie-parser";
 import cors from "cors";
 import config from "dotenv";
+import e from "express";
+import express, { type Request, type Response } from "express";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import type Socket from "ws";
+import type Head from "ws";
 
+// TODO: Switch to Hono
 export function TServer() {
 	config.config();
 	const __filename = fileURLToPath(import.meta.url);
-	const __dirname = path.dirname(__filename);
 
 	console.log("Starting Terbium...");
 	const app = express();
@@ -25,9 +26,9 @@ export function TServer() {
 
 	const masqrCheck = process.env.MASQR && process.env.MASQR.toLowerCase() === "true";
 	if (masqrCheck) {
-		console.log(`Masqr is Enabled`);
+		console.log("Masqr is Enabled");
 	} else {
-		console.log(`Masqr is Disabled`);
+		console.log("Masqr is Disabled");
 	}
 
 	async function MasqFail(req, res) {
@@ -84,8 +85,10 @@ export function TServer() {
 			const licenseCheck = (await (await fetch(process.env.LICENSE_SERVER_URL + pass + "&host=" + req.headers.host)).json())["status"];
 			console.log(`\x1b[0m${process.env.LICENSE_SERVER_URL}${pass}&host=${req.headers.host} ` + `returned: ${licenseCheck}`);
 			if (licenseCheck == "License valid") {
-				res.cookie("authcheck", "true", { expires: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) });
-				res.send(`<script> window.location.href = window.location.href </script>`);
+				res.cookie("authcheck", "true", {
+					expires: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+				});
+				res.send("<script> window.location.href = window.location.href </script>");
 				return;
 			}
 			MasqFail(req, res);
@@ -120,7 +123,7 @@ export function TServer() {
 		}
 	});
 
-	const port = parseInt(process.env.PORT || "8080");
+	const port = Number.parseInt(process.env.PORT || "8080");
 	const corsOptions = {
 		origin: `http://localhost:${port}`,
 		methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
@@ -128,7 +131,7 @@ export function TServer() {
 	};
 
 	app.use(cors(corsOptions));
-	const manifest = fs.readFileSync(path.join(__dirname, "package.json"), "utf-8");
+	const manifest = fs.readFileSync(path.join(import.meta.dirname, "package.json"), "utf-8");
 	const { version } = JSON.parse(manifest);
 	server.listen(port, () => {
 		console.log(`

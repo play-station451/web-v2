@@ -2,16 +2,16 @@ import { StrictMode, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
-import Setup from "./Setup.tsx";
-import Login from "./Login.tsx";
+import { BareMuxConnection } from "@mercuryworkshop/bare-mux";
 import Boot from "./Boot.tsx";
 import CustomOS from "./CustomOS.tsx";
-import Updater from "./Updater.tsx";
 import { hash } from "./hash.json";
-import { fileExists } from "./sys/types.ts";
 import Loader from "./Loading.tsx";
+import Login from "./Login.tsx";
 import Recovery from "./Recovery.tsx";
-import { BareMuxConnection } from "@mercuryworkshop/bare-mux";
+import Setup from "./Setup.tsx";
+import { fileExists } from "./sys/types.ts";
+import Updater from "./Updater.tsx";
 
 const Root = () => {
 	const [currPag, setPag] = useState(<Loader />);
@@ -26,15 +26,14 @@ const Root = () => {
 	useEffect(() => {
 		const tempTransport = async () => {
 			const connection = new BareMuxConnection("/baremux/worker.js");
-			await connection.setTransport("/epoxy/index.mjs", [{ wisp: `wss://wisp.terbiumon.top/wisp/` }]);
-			const scramjet = new window.ScramjetController({
+			await connection.setTransport("/epoxy/index.mjs", [{ wisp: "wss://wisp.terbiumon.top/wisp/" }]);
+			const { ScramjetController } = $scramjetLoadController();
+			window.scramjetTb = {
 				prefix: "/service/",
 				files: {
-					wasm: "/scramjet/scramjet.wasm.wasm",
-					worker: "/scramjet/scramjet.worker.js",
-					client: "/scramjet/scramjet.client.js",
-					shared: "/scramjet/scramjet.shared.js",
-					sync: "/scramjet/scramjet.sync.js",
+					wasm: "/scram/scramjet.wasm.wasm",
+					all: "/scram/scramjet.all.js",
+					sync: "/scram/scramjet.sync.js",
 				},
 				defaultFlags: {
 					rewriterLogs: false,
@@ -61,7 +60,8 @@ const Root = () => {
 						return result;
 					`,
 				},
-			});
+			};
+			window.scramjet = new ScramjetController(scramjetTb);
 			scramjet.init();
 			navigator.serviceWorker.register("/anura-sw.js");
 		};
