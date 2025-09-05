@@ -26,10 +26,7 @@
 		"noUnusedParameters": true,
 		"noFallthroughCasesInSwitch": true,
 
-		"typeRoots": [
-			"./node_modules/@types",
-			"./node_modules/@mercuryworkshop/scramjet/lib"
-		]
+		"typeRoots": ["./node_modules/@types", "./node_modules/@mercuryworkshop/scramjet/lib"]
 	},
 	"include": ["src", "node_modules/@mercuryworkshop/scramjet/lib/types.d.ts"]
 }
