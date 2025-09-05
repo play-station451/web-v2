@@ -1,4 +1,7 @@
 # <span style="color: #32ae62;">Quick Guide To Filer</span>
+
+> <span style="color: #ffd900;"><span style="font-family: none;">⚠</span> NOTE:</span> Please note that this portion of the Terbium Documentation will be removed starting with version 2.2 of Terbium. We will be migrating to TFS (Our own custom Origin-Private-File-System replacement for Filer). When its completed and released its documentation will be put in place of this documentation. To ensure compatability when the change does happen use `window.tb.fs` instead of `Filer.fs` directly
+
 This simple guide will give you some basic Filer usages and how we at Terbium believe you should write your Filer code; asynchronously.<br>
 > For more a depth guide refer to the [<span style="color: #32ae62;">Filer GitHub</span>](https://github.com/filerjs/filer)
 
