@@ -354,7 +354,7 @@ export default function Setup() {
 			}, 150);
 		};
 
-		const [selectedProxy, setSelectedProxy] = useState(() => sessionStorage.getItem("selectedProxy") || "Ultraviolet");
+		const [selectedProxy, setSelectedProxy] = useState(() => sessionStorage.getItem("selectedProxy") || "Scramjet");
 		const [proxyDropdownOpen, setProxyDropdownOpen] = useState(false);
 		const toggleProxyDropDown = () => {
 			setProxyDropdownOpen(prev => {
@@ -384,11 +384,11 @@ export default function Setup() {
 					</div>
 					{proxyDropdownOpen && (
 						<div className="dropdown-options active">
-							<div className="dropdown-option" onMouseDown={() => proxyClick("Scramjet")}>
-								<span className="pointer-events-none">Scramjet</span>
-							</div>
 							<div className="dropdown-option" onMouseDown={() => proxyClick("Ultraviolet")}>
 								<span className="pointer-events-none">Ultraviolet</span>
+							</div>
+							<div className="dropdown-option" onMouseDown={() => proxyClick("Scramjet")}>
+								<span className="pointer-events-none">Scramjet</span>
 							</div>
 						</div>
 					)}
