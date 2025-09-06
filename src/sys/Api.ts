@@ -557,7 +557,7 @@ export default async function Api() {
 						wallpaper: "/assets/wallpapers/1.png",
 						wallpaperMode: "cover",
 						animations: true,
-						proxy: "Ultraviolet",
+						proxy: "Scramjet",
 						transport: "Default (Epoxy)",
 						wispServer: `${location.protocol.replace("http", "ws")}//${location.hostname}:${location.port}/wisp/`,
 						"battery-percent": false,

@@ -384,11 +384,11 @@ export default function Setup() {
 					</div>
 					{proxyDropdownOpen && (
 						<div className="dropdown-options active">
-							<div className="dropdown-option" onMouseDown={() => proxyClick("Ultraviolet")}>
-								<span className="pointer-events-none">Ultraviolet</span>
-							</div>
 							<div className="dropdown-option" onMouseDown={() => proxyClick("Scramjet")}>
 								<span className="pointer-events-none">Scramjet</span>
+							</div>
+							<div className="dropdown-option" onMouseDown={() => proxyClick("Ultraviolet")}>
+								<span className="pointer-events-none">Ultraviolet</span>
 							</div>
 						</div>
 					)}

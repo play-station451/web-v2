@@ -127,7 +127,7 @@ export async function init() {
 			wallpaper: "/assets/wallpapers/1.png",
 			wallpaperMode: "cover",
 			animations: true,
-			proxy: sessionStorage.getItem("selectedProxy") || "Ultraviolet",
+			proxy: sessionStorage.getItem("selectedProxy") || "Scramjet",
 			transport: "Default (Epoxy)",
 			wispServer: `${location.protocol.replace("http", "ws")}//${location.hostname}:${location.port}/wisp/`,
 			"battery-percent": false,
