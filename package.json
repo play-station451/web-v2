@@ -80,7 +80,8 @@
 			"@swc/core",
 			"@tailwindcss/oxide",
 			"bufferutil",
-			"esbuild"
+			"esbuild",
+			"@mecuryworkshop/scramjet"
 		]
 	},
 	"engines": {
