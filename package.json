@@ -72,16 +72,17 @@
 		"tailwindcss": "^4.1.13",
 		"typescript": "^5.9.2",
 		"typescript-eslint": "^8.42.0",
-		"vite": "^7.1.4",
-		"yargs-parser": "^22.0.0"
+		"vite": "^7.1.4"
 	},
 	"pnpm": {
 		"onlyBuiltDependencies": [
 			"@swc/core",
 			"@tailwindcss/oxide",
 			"bufferutil",
-			"esbuild",
-			"@mecuryworkshop/scramjet"
+			"esbuild"
+		],
+		"ignoredBuiltDependencies": [
+			"@mercuryworkshop/scramjet"
 		]
 	},
 	"engines": {

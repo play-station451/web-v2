@@ -784,13 +784,8 @@ methods.forEach(method => {
 	workbox.routing.registerRoute(
 		/\/service\//,
 		async ({ event }) => {
-			console.debug("Got SJ req");
-			try {
-				await scramjet.loadConfig();
-			} catch (error) {
-				console.error(error);
-				return new Response("Internal Server Error", { status: 500 });
-			}
+			console.log("Got SJ req");
+			await scramjet.loadConfig();
 			if (scramjet.route(event)) {
 				return scramjet.fetch(event);
 			}

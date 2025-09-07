@@ -15,7 +15,7 @@ import Updater from "./Updater.tsx";
 
 const Root = () => {
 	const [currPag, setPag] = useState(<Loader />);
-	// @ts-expect-error expected, api is limited to fs untill boot
+	// @ts-expect-error expected, api is limited to fs until boot
 	if (typeof window.tb === "undefined") window.tb = {};
 	if (typeof window.tb.fs === "undefined" && typeof Filer !== "undefined" && Filer.fs) {
 		console.log("[FS] File System Ready");

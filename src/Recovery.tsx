@@ -53,64 +53,9 @@ export default function Recovery() {
 		progresscheck.current!.classList.remove("hidden");
 		progresscheck.current!.classList.add("flex");
 		if (localStorage.getItem("setup")) {
-			const dbOpen = indexedDB.open("local");
-			dbOpen.onsuccess = () => {
-				const db = dbOpen.result;
-				const tx = db.transaction(db.objectStoreNames, "readwrite");
-				tx.oncomplete = async () => {
-					const boot = () => {
-						sessionStorage.setItem("boot", "true");
-						window.location.reload();
-					};
-
-					const cloak = () => {
-						const newWindow = window.open("about:blank", "_blank");
-						const newDocument = newWindow!.document.open();
-						sessionStorage.setItem("boot", "true");
-						newDocument.write(`
-							<!DOCTYPE html>
-							<html>
-							<head>
-    				            <style type="text/css">
-                    				body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
-                				</style>
-            				</head>
-            				<body>
-                				<iframe style="border: none; width: 100%; height: 100vh;" src="${window.location.href}?boot=true"></iframe>
-            				</body>
-            				</html>
-        				`);
-						newDocument.close();
-						window.location.href = "https://google.com";
-						console.log("Cloak Opened!");
-					};
-
-					const recovery = () => {
-						sessionStorage.setItem("recovery", "true");
-						window.location.reload();
-					};
-
-					window.Filer.fs = new Filer.FileSystem();
-					await window.tb.fs.promises.writeFile(
-						"/bootentries.json",
-						JSON.stringify([
-							{ name: "TB React", action: boot.toString() },
-							{ name: "TB React (Cloaked)", action: cloak.toString() },
-							{ name: "TB System Recovery", action: recovery.toString() },
-						]),
-					);
-				};
-				for (const storeName of db.objectStoreNames) {
-					const store = tx.objectStore(storeName);
-					const req = store.clear();
-					req.onerror = e => {
-						console.error(`Can't delete ${storeName}:`, e);
-					};
-				}
-			};
-			dbOpen.onerror = e => {
-				console.error(e);
-			};
+			await window.tb.sh.promises.rm("/system/", { recursive: true });
+			await window.tb.sh.promises.rm("/apps/", { recursive: true });
+			await window.tb.sh.promises.rm("/home/", { recursive: true });
 		}
 		await download("https://cdn.terbiumon.top/recovery/latest.zip", "/uploaded.zip");
 		setShowCursor(false);
@@ -189,64 +134,9 @@ export default function Recovery() {
 				const content = await file.arrayBuffer();
 				setProgress(10);
 				if (localStorage.getItem("setup")) {
-					const dbOpen = indexedDB.open("local");
-					dbOpen.onsuccess = () => {
-						const db = dbOpen.result;
-						const tx = db.transaction(db.objectStoreNames, "readwrite");
-						tx.oncomplete = async () => {
-							const boot = () => {
-								sessionStorage.setItem("boot", "true");
-								window.location.reload();
-							};
-
-							const cloak = () => {
-								const newWindow = window.open("about:blank", "_blank");
-								const newDocument = newWindow!.document.open();
-								sessionStorage.setItem("boot", "true");
-								newDocument.write(`
-									<!DOCTYPE html>
-									<html>
-									<head>
-    				    		        <style type="text/css">
-                    						body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
-                						</style>
-		            				</head>
-        		    				<body>
-                						<iframe style="border: none; width: 100%; height: 100vh;" src="${window.location.href}?boot=true"></iframe>
-            						</body>
-            						</html>
-        						`);
-								newDocument.close();
-								window.location.href = "https://google.com";
-								console.log("Cloak Opened!");
-							};
-
-							const recovery = () => {
-								sessionStorage.setItem("recovery", "true");
-								window.location.reload();
-							};
-
-							window.Filer.fs = new Filer.FileSystem();
-							await window.tb.fs.promises.writeFile(
-								"/bootentries.json",
-								JSON.stringify([
-									{ name: "TB React", action: boot.toString() },
-									{ name: "TB React (Cloaked)", action: cloak.toString() },
-									{ name: "TB System Recovery", action: recovery.toString() },
-								]),
-							);
-						};
-						for (const storeName of db.objectStoreNames) {
-							const store = tx.objectStore(storeName);
-							const req = store.clear();
-							req.onerror = e => {
-								console.error(`Can't delete ${storeName}:`, e);
-							};
-						}
-					};
-					dbOpen.onerror = e => {
-						console.error(e);
-					};
+					await window.tb.sh.promises.rm("/system/", { recursive: true });
+					await window.tb.sh.promises.rm("/apps/", { recursive: true });
+					await window.tb.sh.promises.rm("/home/", { recursive: true });
 				}
 				setProgress(25);
 				await window.tb.fs.promises.writeFile("//uploaded.zip", Filer.Buffer.from(content));
@@ -375,16 +265,12 @@ export default function Recovery() {
 					localStorage.clear();
 					sessionStorage.clear();
 					sessionStorage.setItem("boot", "true");
-					window.location.reload();
-					if (await dirExists("/system/")) {
+					if (localStorage.getItem("setup")) {
 						await window.tb.sh.promises.rm("/system/", { recursive: true });
-					}
-					if (await dirExists("/apps/")) {
 						await window.tb.sh.promises.rm("/apps/", { recursive: true });
-					}
-					if (await dirExists("/home/")) {
 						await window.tb.sh.promises.rm("/home/", { recursive: true });
 					}
+					window.location.reload();
 				} else if (selected === 1) {
 					msgbox.current!.classList.remove("hidden");
 					msgbox.current!.classList.add("flex");
@@ -495,24 +381,20 @@ export default function Recovery() {
 							"p-2 px-2.5 text-sm font-extrabold lg:text-lg md:text-base border-[1px] rounded-md" +
 							" " +
 							`
-                            ${selected === 0 && showCursor !== true ? "bg-[#ffffff18] border-[#ffffff20]" : "border-transparent"}
-                            ${showCursor ? "hover:bg-[#ffffff18] hover:border-[#ffffff20]" : null}
-                        `
+							${selected === 0 && showCursor !== true ? "bg-[#ffffff18] border-[#ffffff20]" : "border-transparent"}
+							${showCursor ? "hover:bg-[#ffffff18] hover:border-[#ffffff20]" : null}
+						`
 						}
 						onClick={async () => {
 							localStorage.clear();
 							sessionStorage.clear();
 							sessionStorage.setItem("boot", "true");
-							window.location.reload();
-							if (await dirExists("/system/")) {
+							if (localStorage.getItem("setup")) {
 								await window.tb.sh.promises.rm("/system/", { recursive: true });
-							}
-							if (await dirExists("/apps/")) {
 								await window.tb.sh.promises.rm("/apps/", { recursive: true });
-							}
-							if (await dirExists("/home/")) {
 								await window.tb.sh.promises.rm("/home/", { recursive: true });
 							}
+							window.location.reload();
 						}}
 					>
 						Reinstall Terbium
@@ -522,9 +404,9 @@ export default function Recovery() {
 							"p-2 px-2.5 text-sm font-extrabold lg:text-lg md:text-base border-[1px] rounded-md" +
 							" " +
 							`
-                            ${selected === 1 && showCursor !== true ? "bg-[#ffffff18] border-[#ffffff20]" : "border-transparent"}
-                            ${showCursor ? "hover:bg-[#ffffff18] hover:border-[#ffffff20]" : null}
-                        `
+							${selected === 1 && showCursor !== true ? "bg-[#ffffff18] border-[#ffffff20]" : "border-transparent"}
+							${showCursor ? "hover:bg-[#ffffff18] hover:border-[#ffffff20]" : null}
+						`
 						}
 						onClick={() => {
 							msgbox.current!.classList.remove("hidden");
@@ -543,9 +425,9 @@ export default function Recovery() {
 							"p-2 px-2.5 text-sm font-extrabold lg:text-lg md:text-base border-[1px] rounded-md" +
 							" " +
 							`
-                            ${selected === 2 && showCursor !== true ? "bg-[#ffffff18] border-[#ffffff20]" : "border-transparent"}
-                            ${showCursor ? "hover:bg-[#ffffff18] hover:border-[#ffffff20]" : null}
-                        `
+							${selected === 2 && showCursor !== true ? "bg-[#ffffff18] border-[#ffffff20]" : "border-transparent"}
+							${showCursor ? "hover:bg-[#ffffff18] hover:border-[#ffffff20]" : null}
+						`
 						}
 						onClick={() => {
 							zipins();
@@ -559,9 +441,9 @@ export default function Recovery() {
 								"p-2 px-2.5 text-sm font-extrabold lg:text-lg md:text-base border-[1px] rounded-md" +
 								" " +
 								`
-                                ${selected === 3 && showCursor !== true ? "bg-[#ffffff18] border-[#ffffff20]" : "border-transparent"}
-                                ${showCursor ? "hover:bg-[#ffffff18] hover:border-[#ffffff20]" : null}
-                            `
+								${selected === 3 && showCursor !== true ? "bg-[#ffffff18] border-[#ffffff20]" : "border-transparent"}
+								${showCursor ? "hover:bg-[#ffffff18] hover:border-[#ffffff20]" : null}
+							`
 							}
 							onClick={async () => {
 								setShowCursor(false);
@@ -583,9 +465,9 @@ export default function Recovery() {
 							"p-2 px-2.5 text-sm font-extrabold lg:text-lg md:text-base border-[1px] rounded-md" +
 							" " +
 							`
-                            ${selected === (updCache ? 4 : 3) && showCursor !== true ? "bg-[#ffffff18] border-[#ffffff20]" : "border-transparent"}
-                            ${showCursor ? "hover:bg-[#ffffff18] hover:border-[#ffffff20]" : null}
-                        `
+							${selected === (updCache ? 4 : 3) && showCursor !== true ? "bg-[#ffffff18] border-[#ffffff20]" : "border-transparent"}
+							${showCursor ? "hover:bg-[#ffffff18] hover:border-[#ffffff20]" : null}
+						`
 						}
 						onClick={() => {
 							sessionStorage.clear();
