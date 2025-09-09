@@ -3,6 +3,8 @@
  * @description This file contains all the types and interfaces used in the Terbium system.
  */
 
+import { System } from "./apis/System";
+
 declare global {
 	namespace React.JSX {
 		interface IntrinsicElements {
@@ -469,6 +471,7 @@ export interface COM {
 	};
 	system: {
 		version(): string | number | unknown;
+		instance: System["instance"];
 		openApp(pkg: string): Promise<void>;
 		download(url: string, location: string): Promise<void>;
 		exportfs(): void;

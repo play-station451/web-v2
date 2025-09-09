@@ -593,6 +593,25 @@ So you're looking to use Terbium APIs. Well, you're in the right place! Terbium 
       console.log("Terbium v:", terbiumVersion);
       ```
 
+  - **instance**
+    - **repo**
+      - Description: Lists the version of Terbium
+      - Returns: `string` - Terbium version.
+      - Example:
+        ```javascript
+        const repo = tb.system.instance.repo;
+        console.log("The repo is: " + repo);
+        ```
+
+    - **hash**
+      - Description: Lists the version of Terbium
+      - Returns: `string` - Terbium version.
+      - Example:
+        ```javascript
+        const hash = tb.system.instance.hash;
+        console.log("The git hash is: " + hash)
+        ```
+
   - **openApp**
     - Description: Opens a Installed Application
     - Parameters:

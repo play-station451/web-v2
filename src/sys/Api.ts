@@ -452,6 +452,7 @@ export default async function Api() {
 			version: () => {
 				return system.version("string");
 			},
+			instance: system.instance,
 			openApp: async (pkg: string) => {
 				const apps = JSON.parse(await window.tb.fs.promises.readFile("/apps/installed.json", "utf8"));
 				const app = apps.find((a: any) => a.name.toLowerCase() === pkg.toLowerCase());
@@ -512,21 +513,26 @@ export default async function Api() {
 			},
 			exportfs: async () => {
 				const zip: { [key: string]: Uint8Array } = {};
-				async function addzip(inp: string, aPath = "") {
-					const files = await window.tb.fs.promises.readdir(inp);
-					for (const file of files) {
-						const fullPath = `${inp}/${file}`;
-						const stats = await window.tb.fs.promises.stat(fullPath);
-						const zipPath = `${aPath}${file}`;
-						if (stats.isDirectory()) {
-							await addzip(fullPath, `${zipPath}/`);
-						} else {
-							const fileData = await window.tb.fs.promises.readFile(fullPath);
-							zip[zipPath] = new Uint8Array(fileData);
+				// @ts-expect-error No Types as TFS is not production ready yet
+				if (window.tb.fs.mode === "OPFS") {
+					throw new Error("OPFS export is not implemented yet, Check back later");
+				} else {
+					async function addzip(inp: string, aPath = "") {
+						const files = await window.tb.fs.promises.readdir(inp);
+						for (const file of files) {
+							const fullPath = `${inp}/${file}`;
+							const stats = await window.tb.fs.promises.stat(fullPath);
+							const zipPath = `${aPath}${file}`;
+							if (stats.isDirectory()) {
+								await addzip(fullPath, `${zipPath}/`);
+							} else {
+								const fileData = await window.tb.fs.promises.readFile(fullPath);
+								zip[zipPath] = new Uint8Array(fileData);
+							}
 						}
 					}
+					await addzip("//");
 				}
-				await addzip("//");
 				const link = document.createElement("a");
 				const zipBlob = new Blob([window.tb.fflate.zipSync(zip)], { type: "application/zip" });
 				link.href = URL.createObjectURL(zipBlob);
