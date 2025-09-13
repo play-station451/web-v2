@@ -164,7 +164,7 @@ export default async function Api() {
 				},
 			},
 			dock: {
-				async pin(app: any) {
+				async pin(app: TDockItem) {
 					const apps: Array<TDockItem> = JSON.parse(await window.tb.fs.promises.readFile("/system/var/terbium/dock.json"));
 					apps.push(app);
 					await window.tb.fs.promises.writeFile("/system/var/terbium/dock.json", JSON.stringify(apps));

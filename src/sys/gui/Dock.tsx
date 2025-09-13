@@ -657,14 +657,20 @@ const DockItem: FC<TDockItem> = ({ className, icon, title, src, onClick, onConte
 							},
 						},
 						{
-							text: "Pin",
+							text: "Pin to Dock",
 							click: () => {
 								window.tb.desktop.dock.pin({
-									src: src,
+									// @ts-expect-error ignore this
+									title: typeof title === "string" ? title : title?.text,
 									icon: typeof icon === "string" ? icon : undefined,
-									size: size,
-									title: title,
+									isPinnable: true,
+									src: src,
+									proxy: proxy,
 									snapable: snapable,
+									size: {
+										width: size?.width ?? 600,
+										height: size?.height ?? 400,
+									},
 								});
 							},
 						},
@@ -823,30 +829,19 @@ export const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, classN
 						{
 							text: "Pin to Dock",
 							click: async () => {
-								let configData: any = null;
-								try {
-									// @ts-expect-error
-									const data = JSON.parse(await window.tb.fs.promises.readFile(`/apps/system/${typeof title === "string" ? title : title?.text.toLowerCase()}.tapp/index.json`)).config;
-									configData = {
-										...data,
-									};
-								} catch (e) {
-									console.log(e);
-									configData = {
-										// @ts-expect-error
-										title: typeof title === "string" ? title : title?.text,
-										icon: typeof icon === "string" ? icon : undefined,
-										isPinnable: true,
-										src: src,
-										proxy: proxy,
-										snapable: snapable,
-										size: {
-											width: size?.width ?? 600,
-											height: size?.height ?? 400,
-										},
-									};
-								}
-								window.tb.desktop.dock.pin(configData);
+								window.tb.desktop.dock.pin({
+									// @ts-expect-error ignore this
+									title: typeof title === "string" ? title : title?.text,
+									icon: typeof icon === "string" ? icon : undefined,
+									isPinnable: true,
+									src: src,
+									proxy: proxy,
+									snapable: snapable,
+									size: {
+										width: size?.width ?? 600,
+										height: size?.height ?? 400,
+									},
+								});
 							},
 						},
 						{
@@ -942,30 +937,19 @@ export const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, classN
 							: {
 									text: "Pin to Dock",
 									click: async () => {
-										let configData: any = null;
-										try {
-											// @ts-expect-error
-											const data = JSON.parse(await window.tb.fs.promises.readFile(`/apps/system/${typeof title === "string" ? title : title?.text.toLowerCase()}.tapp/index.json`)).config;
-											configData = {
-												...data,
-											};
-										} catch (e) {
-											console.log(e);
-											configData = {
-												// @ts-expect-error
-												title: typeof title === "string" ? title : title?.text,
-												icon: typeof icon === "string" ? icon : undefined,
-												isPinnable: true,
-												src: src,
-												proxy: proxy,
-												snapable: snapable,
-												size: {
-													width: size?.width ?? 600,
-													height: size?.height ?? 400,
-												},
-											};
-										}
-										window.tb.desktop.dock.pin(configData);
+										window.tb.desktop.dock.pin({
+											// @ts-expect-error ignore this
+											title: typeof title === "string" ? title : title?.text,
+											icon: typeof icon === "string" ? icon : undefined,
+											isPinnable: true,
+											src: src,
+											proxy: proxy,
+											snapable: snapable,
+											size: {
+												width: size?.width ?? 600,
+												height: size?.height ?? 400,
+											},
+										});
 									},
 								},
 						isPinnedStart
