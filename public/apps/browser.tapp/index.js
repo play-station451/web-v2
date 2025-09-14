@@ -217,7 +217,9 @@ function newTab() {
 			}
 		} else {
 			if (updateTab === false) {
-				urlbar.value = window.parent.scramjetTb.codec.decode(tab_content.contentWindow.window.location.href.replace(/^.*\/service\//, ""));
+				window.parent.tb.proxy.decode(tab_content.contentWindow.window.location.href.replace(/^.*\/service\//, ""), "XOR").then(decodedUrl => {
+					urlbar.value = decodedUrl;
+				});
 			}
 		}
 		if (!tab_content.contentDocument.getElementById("tb-cursor-controller")) {

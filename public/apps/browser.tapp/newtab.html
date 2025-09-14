@@ -9,7 +9,7 @@
     <script>
         const main = async () => {
             const favs = JSON.parse(await window.parent.parent.tb.fs.promises.readFile(`/apps/user/${await window.parent.tb.user.username()}/browser/favorites.json`, "utf8"))
-            const settings = await window.parent.parent.tb.fs.promises.readFile(`/home/${await window.parent.tb.user.username()}/settings.json`, "XOR")
+            const settings = JSON.parse(await window.parent.parent.tb.fs.promises.readFile(`/home/${await window.parent.tb.user.username()}/settings.json`, "utf8"))
             const favsDiv = document.getElementById("favs");
             for (const item of favs) {
                 console.log(item);
@@ -24,7 +24,7 @@
                     }
                 }
                 const img = document.createElement("img");
-                img.src = item.icon.startsWith("/apps/") ? "/apps/browser.tapp/icon.svg" : `/uv/service/${await window.parent.tb.proxy.encode(item.icon, "XOR")}`;
+                img.src = item.icon.startsWith("/apps/") ? "/apps/browser.tapp/icon.svg" : `/service/${await window.parent.tb.proxy.encode(item.icon, "XOR")}`;
                 img.className = "w-full h-10 object-cover rounded-t-[6px]";
                 const h1 = document.createElement("h1");
                 h1.textContent = item.title;

@@ -1,4 +1,5 @@
 import { BareMuxConnection } from "@mercuryworkshop/bare-mux";
+import type { ScramjetController } from "@mercuryworkshop/scramjet";
 import * as fflate from "fflate";
 import { libcurl } from "libcurl.js/bundled";
 import apps from "../apps.json";
@@ -32,8 +33,10 @@ declare global {
 	interface Window {
 		tb: COM;
 		Filer: FilerType;
-		ScramjetController: any;
+		ScramjetController: ScramjetController;
 	}
+	var scramjetTb: any;
+	var scramjet: ScramjetController;
 }
 
 export default async function Api() {

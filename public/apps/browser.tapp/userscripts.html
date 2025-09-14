@@ -44,7 +44,7 @@
                 for (const ext of userScripts) {
                     const div = document.createElement("div");
                     div.className = "flex flex-col bg-[#ffffff0a] w-50 h-35 rounded-[6px]";
-                    div.innerHTML = `<img class="w-full h-10 object-cover rounded-t-[6px]" src="/uv/service/${await window.parent.tb.proxy.encode(ext.icon, "XOR")}" /><h1 class="text-lg font-bold text-center mt-2" title="${ext.name}">${ext.name.length > 16 ? ext.name.slice(0, 16) + "..." : ext.name}</h1><h5>Author: ${ext.author}</h5><h5>License: ${ext.license}</h5><h5>Version: ${ext.version}</h5>`;
+                    div.innerHTML = `<img class="w-full h-10 object-cover rounded-t-[6px]" src="/service/${await window.parent.tb.proxy.encode(ext.icon, "XOR")}" /><h1 class="text-lg font-bold text-center mt-2" title="${ext.name}">${ext.name.length > 16 ? ext.name.slice(0, 16) + "..." : ext.name}</h1><h5>Author: ${ext.author}</h5><h5>License: ${ext.license}</h5><h5>Version: ${ext.version}</h5>`;
                     ujsDiv.appendChild(div);
                 }
             }
