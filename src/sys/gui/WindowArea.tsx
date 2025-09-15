@@ -504,7 +504,17 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 					backgroundImage: "url(/assets/img/grain.png)",
 				}}
 			></div>
-			{isSnapped ? null : (
+			{isSnapped ? (
+				<div
+					ref={focuserRef}
+					className={`absolute rounded-lg ${config.focused ? "inset-x-2 top-[calc(40px+0.5rem)] bottom-2 pointer-events-none opacity-0" : "inset-x-[1px] top-[40px] bottom-[1px] opacity-100"} duration-150`}
+					onMouseDown={() => {
+						windowStore.arrange(config.wid);
+						// @ts-ignore
+						setZIndex(windowStore.getWindow(config.wid)?.zIndex);
+					}}
+				></div>
+			) : (
 				<div
 					ref={focuserRef}
 					className={`absolute rounded-lg ${config.focused ? "inset-x-2 top-[calc(40px+0.5rem)] bottom-2 pointer-events-none opacity-0" : "inset-x-[1px] top-[40px] bottom-[1px] backdrop-blur-[4px] opacity-100"} duration-150`}

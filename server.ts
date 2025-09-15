@@ -7,7 +7,6 @@ import { server as wisp } from "@mercuryworkshop/wisp-js/server";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import config from "dotenv";
-import e from "express";
 import express, { type Request, type Response } from "express";
 import fs from "fs";
 import path from "path";
