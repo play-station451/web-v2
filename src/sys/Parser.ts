@@ -22,7 +22,7 @@ const parse = {
 		const response = await window.tb.libcurl.fetch(baseURL);
 		if (!response) throw new Error(`Failed to fetch the source from ${src}`);
 		const data = await response.text();
-		if (data.startsWith(`@native`) || (src.endsWith(".tml") && !data.startsWith("<tb/>"))) {
+		if (data.startsWith(`@native`) || (src.endsWith(".tml") && !data.startsWith("<body/>"))) {
 			isNative = true;
 		}
 		if (!isNative) return;

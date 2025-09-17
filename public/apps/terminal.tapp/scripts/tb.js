@@ -50,6 +50,10 @@ var cmdData = {
 				desc: "Export the terbium filesystem.",
 				usage: "tb system exportfs",
 			},
+			restartNode: {
+				desc: "Restarts the NodeJS Container",
+				usage: "tb system restartNode",
+			},
 		},
 	},
 	application: {
@@ -101,6 +105,24 @@ var cmdData = {
 			},
 		},
 	},
+	node: {
+		desc: "Parent command for interacting with Terbium's NodeJS container",
+		usage: "tb node [subcmd] ... <args>",
+		subcmds: {
+			restart: {
+				desc: "Restarts the NodeJS container",
+				usage: "tb node restart",
+			},
+			start: {
+				desc: "Starts the NodeJS container",
+				usage: "tb node start",
+			},
+			stop: {
+				desc: "Stops the NodeJS container",
+				usage: "tb node stop",
+			},
+		},
+	},
 };
 
 async function tb(args) {
@@ -110,18 +132,21 @@ async function tb(args) {
 	}
 	function help(args) {
 		function resolveCommand(args) {
-			var resObj = cmdData;
-			if (args.length !== 1) {
-				if (args.length === 2) {
-					resObj = resObj[args[1]];
-				} else {
-					resObj = resObj[args[1]];
-					for (let i = 2; i < args.length; i++) {
-						resObj = resObj.subcmds[args[i]];
-					}
+			let current = cmdData;
+			for (let i = 1; i < args.length; i++) {
+				const input = args[i];
+				const scope = current.subcmds || current;
+				const match = Object.entries(scope).find(([key, val]) => key === input || val.alias === input);
+				if (!match) {
+					displayOutput(`Unknown command or alias: ${input}`);
+					return null;
 				}
-			} else resObj.v = true;
-			return resObj;
+				current = match[1];
+			}
+			if (args.length === 1) {
+				current.v = true;
+			}
+			return current;
 		}
 		function formatData(info) {
 			if (typeof info.v === "undefined") {
@@ -132,13 +157,13 @@ async function tb(args) {
 					displayOutput("SUBCOMMANDS:");
 					const subkeys = Object.keys(info.subcmds);
 					for (let i = 0; i < subkeys.length; i++) {
-						displayOutput(`${`\t${subkeys[i]}`.padEnd(30)}${info.subcmds[subkeys[i]].desc}\n`);
+						displayOutput(`${`${subkeys[i]} ${info.subcmds[subkeys[i]].alias ? `(alias: ${info.subcmds[subkeys[i]].alias})` : ""}`.padEnd(40)}${info.subcmds[subkeys[i]].desc}\n`);
 					}
 				} else if (info.args) {
 					displayOutput("ARGUMENTS:");
 					const subkeys = Object.keys(info.args);
 					for (let i = 0; i < subkeys.length; i++) {
-						displayOutput(`${`\t${subkeys[i]}`.padEnd(30)}${info.args[subkeys[i]]}\n`);
+						displayOutput(`${`${subkeys[i]}`.padEnd(40)}${info.args[subkeys[i]]}\n`);
 					}
 				}
 			} else {
@@ -147,12 +172,14 @@ async function tb(args) {
 				displayOutput("List of available commands:\n");
 				const cmdKeys = Object.keys(cmdData);
 				for (let i = 0; i < cmdKeys.length; i++) {
-					displayOutput(`${`\t${cmdKeys[i]}`.padEnd(30)}${cmdData[cmdKeys[i]].desc}\n`);
+					displayOutput(`${`${cmdKeys[i]} ${cmdData[cmdKeys[i]].alias ? `(alias: ${cmdData[cmdKeys[i]].alias})` : ""}`.padEnd(40)}${cmdData[cmdKeys[i]].desc}\n`);
 				}
 			}
 		}
 		const data = resolveCommand(args);
-		formatData(data);
+		if (data != null) {
+			formatData(data);
+		}
 		displayOutput(`Terbium System CLI v${ver}`);
 		createNewCommandInput();
 	}
@@ -280,14 +307,14 @@ async function tb(args) {
 								if (args.j || args.jsonFile) resolvedAppConfigFile = args._[2];
 								else {
 									const trueApp = args._[2].split("_").join(" ");
-									const apps = JSON.parse(await Filer.fs.promises.readFile("/apps/installed.json", "utf8"));
+									const apps = JSON.parse(await window.parent.tb.fs.promises.readFile("/apps/installed.json", "utf8"));
 									const app = apps.find(obj => obj.name.toLowerCase() === trueApp.toLowerCase());
 									if (app === undefined) resolvedAppConfigFile = undefined;
 									else resolvedAppConfigFile = app.config;
 								}
 								if (resolvedAppConfigFile === undefined) error("tb > application > run > could not find that app");
 								else {
-									const appConfig = JSON.parse(await Filer.fs.promises.readFile(resolvedAppConfigFile)).config;
+									const appConfig = JSON.parse(await window.parent.tb.fs.promises.readFile(resolvedAppConfigFile)).config;
 									window.parent.tb.window.create(appConfig);
 									createNewCommandInput();
 								}
@@ -299,7 +326,7 @@ async function tb(args) {
 					break;
 				}
 				case "list": {
-					const apps = JSON.parse(await Filer.fs.promises.readFile("/apps/installed.json", "utf8"));
+					const apps = JSON.parse(await window.parent.tb.fs.promises.readFile("/apps/installed.json", "utf8"));
 					for (const app of apps) {
 						displayOutput(`"${app.name}"${args.d || args.directory ? ` (Directory: ${app.config.replace("index.json", "")})` : ""}${args.c || args.config ? ` (Configuration: ${app.config})` : ""}`);
 					}
@@ -331,6 +358,61 @@ async function tb(args) {
 							error(`tb > network > proxy > unknown subcommand: ${args._[2]}`);
 							break;
 					}
+					break;
+				default:
+					error(`tb > network > unknown subcommand: ${args._[1]}`);
+					break;
+			}
+			break;
+		case "node":
+			switch (args._[1]) {
+				case "restart":
+					window.parent.tb.setCommandProcessing(true);
+					displayOutput("Restarting NodeJS container...");
+					try {
+						await window.parent.tb.node.stop();
+						displayOutput("container stopped successfullty. starting...");
+						await window.parent.tb.node.start();
+						displayOutput("Container restarted.");
+						window.parent.tb.setCommandProcessing(false);
+						createNewCommandInput();
+					} catch (e) {
+						error("tb > node > restart > Could not restart the NodeJS container.");
+					}
+					window.parent.tb.setCommandProcessing(false);
+					createNewCommandInput();
+					break;
+				case "start":
+					window.parent.tb.setCommandProcessing(true);
+					if (window.parent.tb.node.isReady) {
+						displayOutput("NodeJS container is already running.");
+					} else {
+						displayOutput("Starting NodeJS container...");
+						try {
+							window.parent.tb.node.start();
+							displayOutput("Successfully started the NodeJS container.");
+						} catch (_) {
+							error("tb > node > start > An error occured while starting the NodeJS container.");
+						}
+					}
+					window.parent.tb.setCommandProcessing(false);
+					createNewCommandInput();
+					break;
+				case "stop":
+					window.parent.tb.setCommandProcessing(true);
+					if (window.parent.tb.node.isReady) {
+						displayOutput("Stopping NodeJS container...");
+						try {
+							window.parent.tb.node.start();
+							displayOutput("Successfully stopped the NodeJS container.");
+						} catch (_) {
+							error("tb > node > stop > An error occured while stopping the NodeJS container.");
+						}
+					} else {
+						displayOutput("NodeJS container is already stopped.");
+					}
+					window.parent.tb.setCommandProcessing(false);
+					createNewCommandInput();
 					break;
 				default:
 					error(`tb > network > unknown subcommand: ${args._[1]}`);

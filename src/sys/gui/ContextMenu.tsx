@@ -7,6 +7,7 @@ const ContextMenuArea = () => {
 	const menuAreaRef = useRef<HTMLDivElement | null>(null);
 	const menuRef = useRef<HTMLDivElement | null>(null);
 	const [menuOpen, setMenuOpen] = useState(false);
+	const [menuPos, setmenuPos] = useState({ x: 0, y: 0 });
 
 	useEffect(() => {
 		const ctx = (e: CustomEvent) => {
@@ -38,6 +39,17 @@ const ContextMenuArea = () => {
 				contextMenuStore.clearContextMenu();
 			}, 1000);
 		};
+		if (contextMenuStore.menu.options.length > 0) {
+			let x = contextMenuStore.menu.x;
+			let y = contextMenuStore.menu.y;
+			if (x > window.innerWidth - 190) {
+				x = window.innerWidth - 190;
+			}
+			if (y > window.innerHeight - 160) {
+				y = window.innerHeight - 160;
+			}
+			setmenuPos({ x, y });
+		}
 		window.addEventListener("ctxm", ctx as unknown as EventListener);
 		window.addEventListener("close-ctxm", close);
 		document.addEventListener("click", onDown);
@@ -57,7 +69,7 @@ const ContextMenuArea = () => {
                         ${menuOpen ? "translate-y-0" : "opacity-0 -translate-y-6"} duration-200
                     `}
 					ref={menuRef}
-					style={{ backdropFilter: "brightness(0.8) blur(10px)", top: contextMenuStore.menu.y + "px", left: contextMenuStore.menu.x + "px" }}
+					style={{ backdropFilter: "brightness(0.8) blur(10px)", top: menuPos.y + "px", left: menuPos.x + "px" }}
 				>
 					{contextMenuStore.menu.titlebar ? typeof contextMenuStore.menu.titlebar === "string" ? <div className="flex items-center px-3 py-2.5 bg-[#ffffff3c] w-full text-left select-none">{contextMenuStore.menu.titlebar}</div> : contextMenuStore.menu.titlebar : null}
 					<div className={`${menuOpen ? "" : "-translate-y-2 opacity-0"} duration-700`}>

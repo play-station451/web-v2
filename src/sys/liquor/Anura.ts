@@ -158,7 +158,7 @@ export class Anura {
 		if (app.package in this.apps) {
 			throw "Application already installed";
 		}
-		const apps: any = JSON.parse(await Filer.fs.promises.readFile("/system/var/terbium/start.json", "utf8"));
+		const apps: any = JSON.parse(await window.tb.fs.promises.readFile("/system/var/terbium/start.json", "utf8"));
 		// @ts-expect-error
 		if (apps.system_apps.some(existingApp => existingApp.title === app.name)) {
 			console.log("Application already installed");
@@ -170,16 +170,16 @@ export class Anura {
 				// @ts-expect-error
 				src: `${app.source}/${app.manifest.index}`,
 			});
-			await Filer.fs.promises.writeFile("/system/var/terbium/start.json", JSON.stringify(apps, null, 2));
+			await window.tb.fs.promises.writeFile("/system/var/terbium/start.json", JSON.stringify(apps, null, 2));
 			window.dispatchEvent(new Event("updApps"));
-			await Filer.fs.promises.writeFile(`/system/etc/anura/configs/${app.name}.json`, JSON.stringify(app, null, 2));
-			const installedApps = JSON.parse(await Filer.fs.promises.readFile("/apps/installed.json", "utf8"));
+			await window.tb.fs.promises.writeFile(`/system/etc/anura/configs/${app.name}.json`, JSON.stringify(app, null, 2));
+			const installedApps = JSON.parse(await window.tb.fs.promises.readFile("/apps/installed.json", "utf8"));
 			installedApps.push({
 				name: app.name,
 				config: `/system/etc/anura/configs/${app.name}.json`,
 				user: "System",
 			});
-			await Filer.fs.promises.writeFile("/apps/installed.json", JSON.stringify(installedApps));
+			await window.tb.fs.promises.writeFile("/apps/installed.json", JSON.stringify(installedApps));
 		}
 		this.apps[app.package] = {
 			title: app.name,
@@ -287,6 +287,7 @@ export class Anura {
 			}
 
 			const file = await this.fs.promises.readFile(`${searchPath}/${scope}/${name}/${filename}`);
+			// @ts-ignore
 			const blob = new Blob([file], { type: "application/javascript" });
 			const url = URL.createObjectURL(blob);
 			// @vite-ignore

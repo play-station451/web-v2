@@ -10,7 +10,7 @@ interface SearchProps {
 	searchRef?: React.RefObject<HTMLInputElement | null>;
 }
 
-const SearchMenu: FC<SearchProps> = ({ className, searchRef }) => {
+const SearchMenu: FC<SearchProps> = ({ className }) => {
 	const searchMenuStore = useSearchMenuStore();
 
 	const [searchMatch, setSearchMatch] = useState<boolean>(false);
@@ -29,7 +29,7 @@ const SearchMenu: FC<SearchProps> = ({ className, searchRef }) => {
 
 	useEffect(() => {
 		const getRecentApps = async () => {
-			const recentApps = JSON.parse(await Filer.fs.promises.readFile("/system/var/terbium/recent.json"));
+			const recentApps = JSON.parse(await window.tb.fs.promises.readFile("/system/var/terbium/recent.json"));
 			const recentAppsList = recentApps.map((app: any) => {
 				return app;
 			});
@@ -155,7 +155,7 @@ const SearchMenu: FC<SearchProps> = ({ className, searchRef }) => {
 									setSearchActive(false);
 								} else if (filesres && Array.isArray(filesres) && filesres.length > 0) {
 									setSearchMatch(true);
-									Filer.fs.promises.readFile("/system/etc/terbium/file-icons.json", "utf8").then(async (data: string) => {
+									window.tb.fs.promises.readFile("/system/etc/terbium/file-icons.json", "utf8").then(async (data: string) => {
 										const fileIconsData = JSON.parse(data);
 										const getIcon = (ext: string) => {
 											let iconName = fileIconsData["ext-to-name"][ext];
@@ -168,9 +168,9 @@ const SearchMenu: FC<SearchProps> = ({ className, searchRef }) => {
 										};
 										const fileItems = await Promise.all(
 											filesres.map(async (f: any) => {
-												const iconSvg = await Filer.fs.promises.readFile(getIcon(f.ext), "utf8");
+												const iconSvg = await window.tb.fs.promises.readFile(getIcon(f.ext), "utf8");
 												function rewriteSvgSize(svg: string) {
-													return svg.replace(/<svg([^>]*)>/, (match, attrs) => {
+													return svg.replace(/<svg([^>]*)>/, (_, attrs) => {
 														let newAttrs = attrs.replace(/\swidth=['"][^'"]*['"]/, "").replace(/\sheight=['"][^'"]*['"]/, "");
 														return `<svg${newAttrs} width="48" height="48">`;
 													});
@@ -183,11 +183,11 @@ const SearchMenu: FC<SearchProps> = ({ className, searchRef }) => {
 													ext: f.ext,
 													dir: f.dir,
 													onClick: async () => {
-														let handlers = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"))["fileAssociatedApps"];
+														let handlers = JSON.parse(await window.tb.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"))["fileAssociatedApps"];
 														handlers = Object.entries(handlers).filter(([type, app]) => {
 															return !((type === "text" && app === "text-editor") || (type === "image" && app === "media-viewer") || (type === "video" && app === "media-viewer") || (type === "audio" && app === "media-viewer"));
 														});
-														const dat = JSON.parse(await Filer.fs.promises.readFile("/apps/system/files.tapp/extensions.json", "utf8"));
+														const dat = JSON.parse(await window.tb.fs.promises.readFile("/apps/system/files.tapp/extensions.json", "utf8"));
 														let hands: { text: string; value: string }[] = [];
 														for (const [type, app] of handlers) {
 															hands.push({ text: app, value: type });
@@ -218,7 +218,7 @@ const SearchMenu: FC<SearchProps> = ({ className, searchRef }) => {
 																			title: "Select a application",
 																			filter: ".tapp",
 																			onOk: async (val: string) => {
-																				const app = JSON.parse(await Filer.fs.promises.readFile(`${val}/.tbconfig`, "utf8"));
+																				const app = JSON.parse(await window.tb.fs.promises.readFile(`${val}/.tbconfig`, "utf8"));
 																				window.parent.tb.window.create({
 																					...app.wmArgs,
 																					message: { type: "process", path: f.dir },
@@ -269,6 +269,7 @@ const SearchMenu: FC<SearchProps> = ({ className, searchRef }) => {
 								setSearchHasText(false);
 								setResults([]);
 								setResultOpen(false);
+								setNoResults(false);
 								setTimeout(() => {
 									recentAppsRef.current!.classList.add("col-span-2");
 									containerRef.current!.classList.remove("grid-cols-2");
@@ -349,6 +350,9 @@ const SearchMenu: FC<SearchProps> = ({ className, searchRef }) => {
 													icon={app.icon}
 													pid={undefined}
 													src={app.src}
+													size={app.size}
+													proxy={app.proxy}
+													snapable={app.snapable}
 													onClick={() => {
 														createWindow({
 															src: app.src,

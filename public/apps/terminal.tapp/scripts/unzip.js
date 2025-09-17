@@ -2,7 +2,7 @@ async function uzip(path, target) {
 	const response = await fetch("/fs/" + path);
 	const zipFileContent = await response.arrayBuffer();
 	if (!(await dirExists(target))) {
-		await Filer.fs.promises.mkdir(target, { recursive: true });
+		await window.parent.tb.fs.promises.mkdir(target, { recursive: true });
 	}
 	const compressedFiles = window.parent.tb.fflate.unzipSync(new Uint8Array(zipFileContent));
 	for (const [relativePath, content] of Object.entries(compressedFiles)) {
@@ -15,7 +15,7 @@ async function uzip(path, target) {
 				try {
 					console.log(`touch ${currentPath.slice(0, -1)}`);
 					displayOutput(`touch ${currentPath.slice(0, -1)}`);
-					await Filer.fs.promises.writeFile(currentPath.slice(0, -1), Filer.Buffer.from(content));
+					await window.parent.tb.fs.promises.writeFile(currentPath.slice(0, -1), Filer.Buffer.from(content));
 				} catch {
 					displayOutput(`Cant make ${currentPath.slice(0, -1)}`);
 					console.log(`Cant make ${currentPath.slice(0, -1)}`);
@@ -24,7 +24,7 @@ async function uzip(path, target) {
 				try {
 					console.log(`mkdir ${currentPath}`);
 					displayOutput(`mkdir ${currentPath}`);
-					await Filer.fs.promises.mkdir(currentPath);
+					await window.parent.tb.fs.promises.mkdir(currentPath);
 				} catch {
 					console.log(`Cant make ${currentPath}`);
 					displayOutput(`Cant make ${currentPath}`);
@@ -34,7 +34,7 @@ async function uzip(path, target) {
 		if (relativePath.endsWith("/")) {
 			try {
 				console.log(`mkdir fp ${fullPath}`);
-				await Filer.fs.promises.mkdir(fullPath);
+				await window.parent.tb.fs.promises.mkdir(fullPath);
 			} catch {
 				console.log(`Cant make ${fullPath}`);
 			}
@@ -45,7 +45,7 @@ async function uzip(path, target) {
 
 const dirExists = async path => {
 	return new Promise(resolve => {
-		Filer.fs.stat(path, (err, stats) => {
+		window.parent.tb.fs.stat(path, (err, stats) => {
 			if (err) {
 				if (err.code === "ENOENT") {
 					resolve(false);
@@ -66,10 +66,14 @@ async function unzip(args) {
 		displayOutput("Usage: unzip <zipfile> <target>");
 		createNewCommandInput();
 		return;
+	} else if (path.includes("/mnt/")) {
+		displayError("TNSM unzip: Unzipping files from mounted drives is not supported yet.");
+		createNewCommandInput();
+		return;
 	}
 	try {
-		await uzip(`${path}/${args._raw[0]}`, `${path}/${args._raw[1]}`);
-		displayOutput(`Successfully unzipped ${args._raw[0]} to ${args._raw[1]}`);
+		await uzip(`${path}/${args._[0]}`, `${path}/${args._[1]}`);
+		displayOutput(`Successfully unzipped ${args._[0]} to ${args._[1]}`);
 	} catch (e) {
 		displayError(`Error unzipping file: ${e.message}`);
 	}

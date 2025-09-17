@@ -8,6 +8,14 @@
 	--cursor-text: url("/cursors/dark/text.svg") 10 0, text;
 	--cursor-crosshair: url("/cursors/dark/crosshair.svg") 0 0, crosshair;
 	--cursor-wait: url("/cursors/dark/wait.svg") 0 0, wait;
+	--cursor-nw-resize: url("/cursors/dark/resize-l.svg") 0 0, nw-resize;
+	--cursor-se-resize: url("/cursors/dark/resize-l.svg") 0 0, se-resize;
+	--cursor-sw-resize: url("/cursors/dark/resize-r.svg") 0 0, sw-resize;
+	--cursor-ne-resize: url("/cursors/dark/resize-r.svg") 0 0, ne-resize;
+	--cursor-n-resize: url("/cursors/dark/resize-v.svg") 0 0, n-resize;
+	--cursor-s-resize: url("/cursors/dark/resize-v.svg") 0 0, s-resize;
+	--cursor-e-resize: url("/cursors/dark/resize-h.svg") 0 0, e-resize;
+	--cursor-w-resize: url("/cursors/dark/resize-h.svg") 0 0, w-resize;
 }
 
 @keyframes anim0 {

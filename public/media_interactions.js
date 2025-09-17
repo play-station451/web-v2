@@ -180,9 +180,9 @@ setInterval(() => {
 			const background = backgroundMatch ? backgroundMatch[1] : null;
 			const parentDiv = snaeRoot.querySelector(".-J.-F.-S.da.zb");
 			const timeEl = parentDiv?.querySelector(".H.S.-c.fa.Ab:nth-of-type(1)");
-			const currTM = timeEl ? timeToSeconds(timeEl.textContent.trim()) : null;
+			const currTM = timeEl ? useSec(timeEl.textContent.trim()) : null;
 			const etEl = parentDiv?.querySelector(".H.S.-c.fa.Ab:nth-of-type(2)");
-			const endTime = etEl ? timeToSeconds(etEl.textContent.trim()) : null;
+			const endTime = etEl ? useSec(etEl.textContent.trim()) : null;
 			const fw = snaeRoot.querySelector('button[title="Play previous track (SHIFT+P)"]');
 			const bk = snaeRoot.querySelector('button[title="Play next track (SHIFT+N)"]');
 			runMp({

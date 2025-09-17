@@ -35,10 +35,19 @@ function cd(args) {
 	}
 
 	const checkPath = finalPath.length > 2 ? finalPath.slice(0, -1) : finalPath;
-	Filer.fs.stat(checkPath, (err, stats) => {
+	window.parent.tb.fs.stat(checkPath, (err, stats) => {
 		if (err) {
-			displayError(`cd: ${raw_destination}: No such file or directory`);
-			createNewCommandInput();
+			if (destination.includes("/mnt/") || checkPath.includes("/mnt/")) {
+				window.dispatchEvent(
+					new CustomEvent("updPath", {
+						detail: finalPath,
+					}),
+				);
+				createNewCommandInput();
+			} else {
+				displayError(`cd: ${raw_destination}: No such file or directory`);
+				createNewCommandInput();
+			}
 		} else if (!stats.isDirectory()) {
 			displayError(`cd: ${raw_destination}: Not a directory`);
 			createNewCommandInput();

@@ -3,6 +3,8 @@
  * @description This file contains all the types and interfaces used in the Terbium system.
  */
 
+import { System } from "./apis/System";
+
 declare global {
 	namespace React.JSX {
 		interface IntrinsicElements {
@@ -24,12 +26,9 @@ declare global {
 
 export const isURL = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/;
 
-const FilerFS: any = window.Filer;
-export const Filer: FilerFS = new FilerFS.FileSystem();
-
 export const dirExists = async (path: string): Promise<boolean> => {
 	return new Promise(resolve => {
-		Filer.stat(path, (err: any, stats: any) => {
+		window.tb.fs.stat(path, (err: any, stats: any) => {
 			if (err) {
 				if (err.code === "ENOENT") {
 					resolve(false);
@@ -47,7 +46,7 @@ export const dirExists = async (path: string): Promise<boolean> => {
 
 export const fileExists = async (path: string): Promise<boolean> => {
 	return new Promise(resolve => {
-		Filer.stat(path, (err: any, stats: any) => {
+		window.tb.fs.stat(path, (err: any, stats: any) => {
 			if (err) {
 				if (err.code === "ENOENT") {
 					resolve(false);
@@ -472,6 +471,7 @@ export interface COM {
 	};
 	system: {
 		version(): string | number | unknown;
+		instance: System["instance"];
 		openApp(pkg: string): Promise<void>;
 		download(url: string, location: string): Promise<void>;
 		exportfs(): void;
@@ -488,7 +488,7 @@ export interface COM {
 	};
 	libcurl: Libcurl;
 	fflate: any;
-	fs: FilerType;
+	fs: FilerFS;
 	crypto(pass: string, file: string): Promise<string>;
 	platform: {
 		getPlatform(): Promise<"desktop" | "mobile">;

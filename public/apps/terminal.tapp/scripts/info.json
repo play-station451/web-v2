@@ -232,5 +232,10 @@
 		"name": "unzip",
 		"description": "unzip a file to a directory",
 		"usage": "unzip [file] [directory]"
+	},
+	{
+		"name": "exit",
+		"description": "Exit the terminal",
+		"usage": "exit"
 	}
 ]

@@ -42,7 +42,7 @@ export default function Boot() {
 	useEffect(() => {
 		const getEntries = async () => {
 			if (!(await fileExists("/bootentries.json"))) {
-				await Filer.fs.promises.writeFile(
+				await window.tb.fs.promises.writeFile(
 					"/bootentries.json",
 					JSON.stringify([
 						{ name: "TB React", action: boot.toString() },
@@ -52,7 +52,7 @@ export default function Boot() {
 				);
 			}
 
-			const entries = JSON.parse(await Filer.fs.promises.readFile("/bootentries.json", "utf8"));
+			const entries = JSON.parse(await window.tb.fs.promises.readFile("/bootentries.json", "utf8"));
 			// @ts-expect-error
 			const recreatedEntries = entries.map(entry => ({
 				...entry,
@@ -60,7 +60,6 @@ export default function Boot() {
 			}));
 			if (localStorage.getItem("setup") === "true" && (!(await dirExists("/system/etc/terbium/")) || !(await dirExists("/apps/system/")))) {
 				const bootent = recreatedEntries.filter((entry: any) => entry.name !== "TB React" && entry.name !== "TB React (Cloaked)");
-				bootent.push({ name: "TB System Recovery", action: eval(`(${recovery.toString()})`) });
 				setentries(bootent);
 			} else {
 				setentries(recreatedEntries);

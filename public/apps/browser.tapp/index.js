@@ -1,4 +1,4 @@
-const Filer = window.Filer.fs;
+const Filer = window.parent.tb.fs;
 const IS_URL = /^(https?:\/\/)?(www\.)?([-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}|localhost)\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/;
 const create_new_id = () => {
 	const id = Math.random().toString(36).substr(2, 9);
@@ -141,8 +141,8 @@ function newTab() {
 				case "about:newtab":
 					activeTabContent.src = "/apps/browser.tapp/newtab.html";
 					break;
-				case "about:extensions":
-					activeTabContent.src = "/apps/browser.tapp/extensions.html";
+				case "about:userscripts":
+					activeTabContent.src = "/apps/browser.tapp/userscripts.html";
 					break;
 				default:
 					const input = url;
@@ -217,7 +217,9 @@ function newTab() {
 			}
 		} else {
 			if (updateTab === false) {
-				urlbar.value = window.parent.$scramjet.codec.decode(tab_content.contentWindow.window.location.href.replace(/^.*\/service\//, ""));
+				window.parent.tb.proxy.decode(tab_content.contentWindow.window.location.href.replace(/^.*\/service\//, ""), "XOR").then(decodedUrl => {
+					urlbar.value = decodedUrl;
+				});
 			}
 		}
 		if (!tab_content.contentDocument.getElementById("tb-cursor-controller")) {
@@ -238,14 +240,8 @@ function newTab() {
 			Filer.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/browser/userscripts.json`).then(async data => {
 				const dat = JSON.parse(data);
 				for (const script of dat) {
-					function getPat(url, pattern) {
-						let regexStr = pattern.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*");
-						regexStr = "^" + regexStr + "$";
-						return new RegExp(regexStr).test(url);
-					}
-					if (getPat(urlbar.value, script.match)) {
+					if (urlbar.value.includes(script.match)) {
 						const user_script = document.createElement("script");
-						console.log(script.file);
 						console.log("Script: %a\nScript path: %b", script.name, script.file);
 						user_script.type = "text/javascript";
 						user_script.text = await Filer.promises.readFile(script.file, "utf8");
@@ -253,6 +249,17 @@ function newTab() {
 						user_script.id = `userscript-${script.name}`;
 						user_script.setAttribute("data-script-path", script.file);
 						userscript_container.appendChild(user_script);
+					} else if (script.match === "*://*/*") {
+						const user_script = document.createElement("script");
+						console.log("Script: %a\nScript path: %b", script.name, script.file);
+						user_script.type = "text/javascript";
+						user_script.text = await Filer.promises.readFile(script.file, "utf8");
+						user_script.type = "text/javascript";
+						user_script.id = `userscript-${script.name}`;
+						user_script.setAttribute("data-script-path", script.file);
+						userscript_container.appendChild(user_script);
+					} else {
+						console.log(`Skipping script ${script.name}`);
 					}
 				}
 			});
@@ -395,9 +402,9 @@ document.querySelector(".navigate-back").addEventListener("click", () => {
 
 document.querySelector(".ext-btn").addEventListener("click", () => {
 	const activeTabContent = document.querySelector(".tab-content.active");
-	activeTabContent.contentWindow.location.href = "/apps/browser.tapp/extensions.html";
+	activeTabContent.contentWindow.location.href = "/apps/browser.tapp/userscripts.html";
 	const activeUrlbar = document.querySelector(".urlbar.active");
-	activeUrlbar.value = "about:extensions";
+	activeUrlbar.value = "about:userscripts";
 });
 
 document.querySelector(".navigate-forward").addEventListener("click", () => {

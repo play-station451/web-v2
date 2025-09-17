@@ -4,7 +4,7 @@ async function sysfetch(args, term) {
 		createNewCommandInput();
 	} else {
 		let accent = "#32ae62";
-		let settings = JSON.parse(await Filer.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, "utf8"));
+		let settings = JSON.parse(await window.parent.tb.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, "utf8"));
 		if (settings["accent"]) {
 			accent = settings["accent"];
 		}

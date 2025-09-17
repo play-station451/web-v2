@@ -1,4 +1,6 @@
-const Filer = window.Filer;
+import * as webdav from "/fs/apps/system/files.tapp/webdav.js";
+
+window.webdav = webdav;
 
 function openFile(data) {
 	const textarea = document.querySelector("textarea");
@@ -38,30 +40,44 @@ window.addEventListener("contextmenu", e => {
 //     updateLineNumbers();
 // })
 
-window.addEventListener("message", async e => {
+window.addEventListener("message", async function load(e) {
 	let data;
 	try {
 		data = JSON.parse(e.data);
 	} catch (err) {
 		data = e.data;
 	}
-	if (data.type === "process" && data.path) {
+	if (data && data.type === "process" && data.path) {
 		if (!data.path.includes("http")) {
-			let file = await Filer.fs.promises.readFile(data.path, "utf8");
+			let file = await window.parent.tb.fs.promises.readFile(data.path, "utf8");
 			if (typeof file === "object") file = JSON.stringify(file);
 			document.body.setAttribute("path", data.path);
 			openFile(file);
 			// updateLineNumbers();
 		} else {
 			try {
-				const response = await fetch(data.path, {
-					method: "GET",
-					credentials: "include",
+				const davInstances = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
+				const davUrl = data.path.split("/dav/")[0] + "/dav/";
+				const dav = davInstances.find(d => d.url.toLowerCase().includes(davUrl));
+				if (!dav) throw new Error("No matching dav instance found");
+				const client = window.webdav.createClient(dav.url, {
+					username: dav.username,
+					password: dav.password,
+					authType: window.webdav.AuthType.Password,
 				});
-				if (!response.ok) throw new Error("Failed to fetch file from WebDAV");
-				const file = await response.text();
+				let filePath;
+				if (data.path.startsWith("http")) {
+					const match = data.path.match(/^https?:\/\/[^\/]+\/dav\/([^\/]+\/)?(.+)$/);
+					filePath = match ? "/" + match[2] : data.path;
+				} else {
+					filePath = data.path.replace(davUrl, "/");
+				}
+				const response = await client.getFileContents(filePath);
 				document.body.setAttribute("path", data.path);
-				openFile(file);
+				document.body.setAttribute("isDav", "true");
+				const decoder = new TextDecoder("utf-8");
+				const text = decoder.decode(response);
+				openFile(text);
 			} catch (err) {
 				window.tb.dialog.Alert({
 					title: "Failed to read dav file",
@@ -70,6 +86,7 @@ window.addEventListener("message", async e => {
 			}
 		}
 	}
+	window.removeEventListener("message", load);
 });
 
 function updateScroll(type, e) {
@@ -100,32 +117,41 @@ textarea.addEventListener("keydown", async e => {
 		}
 		const path = document.body.getAttribute("path");
 		if (path && path !== "undefined") {
-			if (path.startsWith("http")) {
+			if (document.body.getAttribute("isDav") === "true") {
 				try {
-					const response = await fetch(path, {
-						method: "PUT",
-						credentials: "include",
-						headers: {
-							"Content-Type": "text/plain",
-						},
-						body: textarea.value,
+					const davInstances = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
+					const davUrl = path.split("/dav/")[0] + "/dav/";
+					const dav = davInstances.find(d => d.url.toLowerCase().includes(davUrl));
+					if (!dav) throw new Error("No matching dav instance found");
+					const client = window.webdav.createClient(dav.url, {
+						username: dav.username,
+						password: dav.password,
+						authType: window.webdav.AuthType.Password,
 					});
-					if (!response.ok) throw new Error("Failed to save file to WebDAV");
+					let filePath;
+					if (path.startsWith("http")) {
+						const match = path.match(/^https?:\/\/[^\/]+\/dav\/([^\/]+\/)?(.+)$/);
+						filePath = match ? "/" + match[2] : path;
+					} else {
+						filePath = path.replace(davUrl, "/");
+					}
+					console.log(filePath);
+					client.putFileContents(filePath, textarea.value);
 				} catch (err) {
 					window.tb.dialog.Alert({
 						title: "Failed to save dav file",
-						message: err,
+						message: err.message,
 					});
 				}
 			} else {
-				Filer.fs.promises.writeFile(path, textarea.value);
+				window.parent.tb.fs.promises.writeFile(path, textarea.value);
 			}
 		} else {
 			await tb.dialog.SaveFile({
 				title: "Save Text File",
 				filename: `untitled.${ext}`,
 				onOk: async txt => {
-					Filer.fs.writeFile(`${txt}`, textarea.value, err => {
+					window.parent.tb.fs.writeFile(`${txt}`, textarea.value, err => {
 						if (err) return alert(err);
 					});
 				},

@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Extensions</title>
+    <title>Userscripts</title>
     <link rel="stylesheet" href="./index.css">
     <script src="/assets/libs/tailwind.min.js"></script>
-    <script src="/assets/libs/filer.min.js"></script>
     <script>
         const getMeta = async (value) => {
             const metaMatch = /\/\/\s*==UserScript==([\s\S]*?)\/\/\s*==\/UserScript==/;
@@ -37,7 +36,7 @@
 
         const getAll = async () => {
             const ujsDiv = document.getElementById("ujs");
-            const userScripts = JSON.parse(await Filer.fs.promises.readFile(`/apps/user/${await window.parent.tb.user.username()}/browser/userscripts.json`, "utf8"))
+            const userScripts = JSON.parse(await window.parent.parent.tb.fs.promises.readFile(`/apps/user/${await window.parent.tb.user.username()}/browser/userscripts.json`, "utf8"))
             if (userScripts.length === 0) {
                 ujsDiv.innerHTML = "<span class='text-gray-500'>No UserScripts found</span>";
             } else {
@@ -45,7 +44,7 @@
                 for (const ext of userScripts) {
                     const div = document.createElement("div");
                     div.className = "flex flex-col bg-[#ffffff0a] w-50 h-35 rounded-[6px]";
-                    div.innerHTML = `<img class="w-full h-10 object-cover rounded-t-[6px]" src="/uv/service/${await window.parent.tb.proxy.encode(ext.icon, "XOR")}" /><h1 class="text-lg font-bold text-center mt-2" title="${ext.name}">${ext.name.length > 16 ? ext.name.slice(0, 16) + "..." : ext.name}</h1><h5>Author: ${ext.author}</h5><h5>License: ${ext.license}</h5><h5>Version: ${ext.version}</h5>`;
+                    div.innerHTML = `<img class="w-full h-10 object-cover rounded-t-[6px]" src="/service/${await window.parent.tb.proxy.encode(ext.icon, "XOR")}" /><h1 class="text-lg font-bold text-center mt-2" title="${ext.name}">${ext.name.length > 16 ? ext.name.slice(0, 16) + "..." : ext.name}</h1><h5>Author: ${ext.author}</h5><h5>License: ${ext.license}</h5><h5>Version: ${ext.version}</h5>`;
                     ujsDiv.appendChild(div);
                 }
             }
@@ -64,14 +63,14 @@
                       value: "f"
                     }],
                     onOk: async (val) => {
-                        const userScripts = JSON.parse(await Filer.fs.promises.readFile(`/apps/user/${await window.parent.tb.user.username()}/browser/userscripts.json`, "utf8"));
+                        const userScripts = JSON.parse(await window.parent.parent.tb.fs.promises.readFile(`/apps/user/${await window.parent.tb.user.username()}/browser/userscripts.json`, "utf8"));
                         switch(val) {
                             case 'f':
                                 window.parent.tb.dialog.FileBrowser({
                                     title: "Select a Userscript to load",
                                     defualtDir: "//",
                                     onOk: async (path) => {
-                                        const fileData = await Filer.fs.promises.readFile(path, "utf8");
+                                        const fileData = await window.parent.parent.tb.fs.promises.readFile(path, "utf8");
                                         const scrMeta = await getMeta(fileData);
                                         userScripts.push({
                                             name: scrMeta.name || "userscript",
@@ -82,7 +81,7 @@
                                             file: path,
                                             icon: scrMeta.icon || "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=",
                                         })
-                                        await Filer.fs.promises.writeFile(`/apps/user/${await window.parent.tb.user.username()}/browser/userscripts.json`, JSON.stringify(userScripts, null, 2));
+                                        await window.parent.parent.tb.fs.promises.writeFile(`/apps/user/${await window.parent.tb.user.username()}/browser/userscripts.json`, JSON.stringify(userScripts, null, 2));
                                         getAll();
                                     }
                                 });
@@ -92,10 +91,10 @@
                                     title: "Select a Userscript to load",
                                     defualtDir: "//",
                                     onOk: async (path) => {
-                                        const dir = await Filer.fs.promises.readdir(path);
+                                        const dir = await window.parent.parent.tb.fs.promises.readdir(path);
                                         for (const file of dir) {
                                             if (file.endsWith(".user.js")) {
-                                                const fileData = await Filer.fs.promises.readFile(`${path}/${file}`, "utf8");
+                                                const fileData = await window.parent.parent.tb.fs.promises.readFile(`${path}/${file}`, "utf8");
                                                 const scrMeta = await getMeta(fileData);
                                                 userScripts.push({
                                                     name: scrMeta.name || "userscript",
@@ -108,7 +107,7 @@
                                                 })
                                             };
                                         };
-                                        await Filer.fs.promises.writeFile(`/apps/user/${await window.parent.tb.user.username()}/browser/userscripts.json`, JSON.stringify(userScripts, null, 2))
+                                        await window.parent.parent.tb.fs.promises.writeFile(`/apps/user/${await window.parent.tb.user.username()}/browser/userscripts.json`, JSON.stringify(userScripts, null, 2))
                                         getAll()
                                     }
                                 });
@@ -121,7 +120,7 @@
             });
 
             document.getElementById("ujs-rm").addEventListener("click", async () => {
-                const userScripts = JSON.parse(await Filer.fs.promises.readFile(`/apps/user/${await window.parent.tb.user.username()}/browser/userscripts.json`, "utf8"))
+                const userScripts = JSON.parse(await window.parent.parent.tb.fs.promises.readFile(`/apps/user/${await window.parent.tb.user.username()}/browser/userscripts.json`, "utf8"))
                 let opts = []
                 for (const sr of userScripts) {
                     opts.push({
@@ -136,7 +135,7 @@
                         const idx = userScripts.indexOf(val);
                         if (idx !== -1) {
                             userScripts.splice(idx, 1);
-                            await Filer.fs.promises.writeFile(`/apps/user/${await window.parent.tb.user.username()}/browser/userscripts.json`, JSON.stringify(userScripts, null, 2));
+                            await window.parent.parent.tb.fs.promises.writeFile(`/apps/user/${await window.parent.tb.user.username()}/browser/userscripts.json`, JSON.stringify(userScripts, null, 2));
                             getAll();
                         }
                     }

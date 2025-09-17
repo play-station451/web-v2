@@ -2,11 +2,11 @@ const tb = parent.window.tb;
 const currentAccountsEl = document.querySelector(".current-accounts");
 
 const getAccounts = async () => {
-	const entries = await Filer.fs.promises.readdir("/home/");
+	const entries = await tb.fs.promises.readdir("/home/");
 	const accounts = await Promise.all(
 		entries.map(async entry => {
 			try {
-				const account = JSON.parse(await Filer.fs.promises.readFile(`/home/${entry}/user.json`, "utf8"));
+				const account = JSON.parse(await tb.fs.promises.readFile(`/home/${entry}/user.json`, "utf8"));
 				return {
 					name: entry,
 					id: account["id"],
@@ -24,10 +24,10 @@ const getAccounts = async () => {
 };
 
 const deleteAccount = async id => {
-	const sudoUsers = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/sudousers.json", "utf8"));
+	const sudoUsers = JSON.parse(await tb.fs.promises.readFile("/system/etc/terbium/sudousers.json", "utf8"));
 	let sudoWithPassword = null;
 	for (const sudoUser of sudoUsers) {
-		const sudoUserData = JSON.parse(await Filer.fs.promises.readFile(`/home/${sudoUser}/user.json`, "utf8"));
+		const sudoUserData = JSON.parse(await tb.fs.promises.readFile(`/home/${sudoUser}/user.json`, "utf8"));
 		if (sudoUserData.password !== false) {
 			sudoWithPassword = sudoUser;
 			break;
@@ -48,7 +48,7 @@ const deleteAccount = async id => {
 					defaultUsername: sudoUsers[0],
 					onOk: async (username, password) => {
 						const pass = await tb.crypto(password);
-						if (pass === JSON.parse(await Filer.fs.promises.readFile(`/home/${sudoUsers[0]}/user.json`, "utf8")).password) {
+						if (pass === JSON.parse(await tb.fs.promises.readFile(`/home/${sudoUsers[0]}/user.json`, "utf8")).password) {
 							tb.system.users.remove(id);
 							document.getElementById(id).remove();
 						} else {
@@ -62,7 +62,7 @@ const deleteAccount = async id => {
 			},
 		});
 	} else {
-		const pw = JSON.parse(await Filer.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, "utf8")).password;
+		const pw = JSON.parse(await tb.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, "utf8")).password;
 		if (pw === false) {
 			await tb.system.users.remove(id);
 			document.getElementById(id).remove();
@@ -88,7 +88,7 @@ const deleteAccount = async id => {
 };
 
 const changePerm = async () => {
-	const data = JSON.parse(await Filer.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, "utf8"));
+	const data = JSON.parse(await tb.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, "utf8"));
 	if (data["password"] === false) {
 		await tb.dialog.Select({
 			title: "Enter the permission level you wish to set (Ex: Admin, User, Group, Public)",
@@ -114,7 +114,7 @@ const changePerm = async () => {
 				if (perm === data["perm"]) return;
 				data["perm"] = perm;
 				permEl.innerHTML = perm.charAt(0).toUpperCase() + perm.slice(1);
-				await Filer.fs.promises.writeFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, JSON.stringify(data));
+				await tb.fs.promises.writeFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, JSON.stringify(data));
 			},
 		});
 	} else {
@@ -149,7 +149,7 @@ const changePerm = async () => {
 							if (perm === data["perm"]) return;
 							data["perm"] = perm;
 							permEl.innerHTML = perm.charAt(0).toUpperCase() + perm.slice(1);
-							await Filer.fs.promises.writeFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, JSON.stringify(data));
+							await tb.fs.promises.writeFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, JSON.stringify(data));
 						},
 					});
 				} else {
@@ -161,7 +161,7 @@ const changePerm = async () => {
 };
 
 const changePfp = async id => {
-	const data = JSON.parse(await Filer.fs.promises.readFile(`/home/${id.id}/user.json`, "utf8"));
+	const data = JSON.parse(await tb.fs.promises.readFile(`/home/${id.id}/user.json`, "utf8"));
 	const pfpInp = document.createElement("input");
 	pfpInp.type = "file";
 	pfpInp.accept = "image/*";
@@ -176,7 +176,7 @@ const changePfp = async id => {
 					img: e.target.result,
 					onOk: async img => {
 						data["pfp"] = img;
-						await Filer.fs.promises.writeFile(`/home/${id.id}/user.json`, JSON.stringify(data));
+						await tb.fs.promises.writeFile(`/home/${id.id}/user.json`, JSON.stringify(data));
 						parent.window.dispatchEvent(new Event("accUpd"));
 						renderAccounts();
 					},
@@ -329,10 +329,10 @@ const createAccount = async () => {
 		});
 	};
 
-	const sudoUsers = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/sudousers.json", "utf8"));
+	const sudoUsers = JSON.parse(await tb.fs.promises.readFile("/system/etc/terbium/sudousers.json", "utf8"));
 	let sudoWithPassword = null;
 	for (const sudoUser of sudoUsers) {
-		const sudoUserData = JSON.parse(await Filer.fs.promises.readFile(`/home/${sudoUser}/user.json`, "utf8"));
+		const sudoUserData = JSON.parse(await tb.fs.promises.readFile(`/home/${sudoUser}/user.json`, "utf8"));
 		if (sudoUserData.password !== false) {
 			sudoWithPassword = sudoUser;
 			break;
@@ -352,7 +352,7 @@ const createAccount = async () => {
 					defaultUsername: sudoWithPassword,
 					onOk: async (username, password) => {
 						const pass = await tb.crypto(password);
-						if (pass === JSON.parse(await Filer.fs.promises.readFile(`/home/${sudoWithPassword}/user.json`, "utf8")).password) {
+						if (pass === JSON.parse(await tb.fs.promises.readFile(`/home/${sudoWithPassword}/user.json`, "utf8")).password) {
 							askNewAccountDetails();
 						} else {
 							tb.dialog.Alert({
@@ -365,7 +365,7 @@ const createAccount = async () => {
 			},
 		});
 	} else {
-		const user = JSON.parse(await Filer.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, "utf8"));
+		const user = JSON.parse(await tb.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, "utf8"));
 		if (user["password"] === false) {
 			askNewAccountDetails();
 		} else {
@@ -374,7 +374,7 @@ const createAccount = async () => {
 				defaultUsername: sessionStorage.getItem("currAcc"),
 				onOk: async (username, password) => {
 					const pass = await tb.crypto(password);
-					if (pass === JSON.parse(await Filer.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, "utf8")).password) {
+					if (pass === JSON.parse(await tb.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, "utf8")).password) {
 						askNewAccountDetails();
 					} else {
 						tb.dialog.Alert({

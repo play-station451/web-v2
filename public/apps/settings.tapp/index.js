@@ -58,7 +58,7 @@ wallpaper_options.forEach(option => {
 		const parent_origin = parent.parent.window.location.origin;
 		const wallpaper = option.src.toString().split(parent_origin)[1];
 		const color = option.getAttribute("color-type");
-		let data = JSON.parse(await Filer.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, "utf8"));
+		let data = JSON.parse(await window.parent.tb.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, "utf8"));
 		data["wallpaper"] = wallpaper;
 		tb_wallpaper.set(wallpaper);
 		const fillMode = parent.window.tb.desktop.wallpaper.fillMode();
@@ -70,7 +70,7 @@ wallpaper_options.forEach(option => {
 	});
 });
 
-Filer.fs.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, "utf8", (err, data) => {
+window.parent.tb.fs.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, "utf8", (err, data) => {
 	if (err) return console.log(err);
 	data = JSON.parse(data);
 	const fillMode = data["wallpaperMode"];
@@ -84,7 +84,7 @@ Filer.fs.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, "u
 	document.querySelector(`[action-for="24h-12h"]`).querySelector(".select-title .text").innerText = twentyFourHour === "24h" ? "Yes" : "No";
 });
 
-Filer.fs.readFile("/system/etc/terbium/settings.json", "utf8", (err, data) => {
+window.parent.tb.fs.readFile("/system/etc/terbium/settings.json", "utf8", (err, data) => {
 	if (err) return console.log(err);
 	data = JSON.parse(data);
 	const cords = data["location"];
@@ -94,48 +94,144 @@ Filer.fs.readFile("/system/etc/terbium/settings.json", "utf8", (err, data) => {
 });
 
 const customWallpaper = () => {
-	const input = document.createElement("input");
-	input.type = "file";
-	input.setAttribute("accept", "image/*");
-	input.click();
-	input.addEventListener("change", async e => {
-		const file = input.files[0];
-		const buffer = await file.arrayBuffer();
-		const reader = new FileReader();
-		reader.readAsDataURL(file);
-		reader.onload = async () => {
-			const imgdata = reader.result;
-			const path = "/system/etc/terbium/wallpapers/" + file.name;
+	window.parent.tb.dialog.Select({
+		title: "Where do you want to load the wallpaper from?",
+		options: [
+			{
+				text: "System Storage",
+				value: "sys",
+			},
+			{
+				text: "Terbium File System",
+				value: "fs",
+			},
+			{
+				text: "Internet Url",
+				value: "url",
+			},
+		],
+		onOk: async perm => {
+			switch (perm) {
+				case "sys":
+					const input = document.createElement("input");
+					input.type = "file";
+					input.setAttribute("accept", "image/*");
+					input.click();
+					input.addEventListener("change", async e => {
+						const file = input.files[0];
+						const buffer = await file.arrayBuffer();
+						const reader = new FileReader();
+						reader.readAsDataURL(file);
+						reader.onload = async () => {
+							const imgdata = reader.result;
+							const path = "/system/etc/terbium/wallpapers/" + file.name;
 
-			tb_wallpaper.set(path);
-			const img_container = document.createElement("div");
-			img_container.classList.add("wallpaper-container");
-			const wimg = document.createElement("img");
-			wimg.src = imgdata;
-			wimg.classList.add("wallpaper-option");
+							tb_wallpaper.set(path);
+							const img_container = document.createElement("div");
+							img_container.classList.add("wallpaper-container");
+							const wimg = document.createElement("img");
+							wimg.src = imgdata;
+							wimg.classList.add("wallpaper-option");
 
-			const delete_button = document.createElement("img");
-			delete_button.src = "/fs/apps/system/settings.tapp/delete.svg";
-			delete_button.classList.add("delete-wallpaper");
-			delete_button.addEventListener("click", async e => {
-				let data = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
-				if (data["wallpaper"] === path) {
-					tb_wallpaper.set("/assets/wallpapers/1.png");
-				}
-				await Filer.fs.promises.unlink(path);
-				img_container.remove();
-			});
-			wimg.addEventListener("click", async e => {
-				tb_wallpaper.set(path);
-			});
-			await Filer.fs.promises.writeFile(path, Filer.Buffer.from(buffer));
-			tb_wallpaper.set(path);
-			img_container.append(wimg);
-			img_container.append(delete_button);
-			document.querySelector(".custom-wallpaper").remove();
-			document.querySelector(".wallpapers").append(img_container);
-			appendCustomWallpaper();
-		};
+							const delete_button = document.createElement("img");
+							delete_button.src = "/fs/apps/system/settings.tapp/delete.svg";
+							delete_button.classList.add("delete-wallpaper");
+							delete_button.addEventListener("click", async e => {
+								let data = JSON.parse(await window.parent.tb.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
+								if (data["wallpaper"] === path) {
+									tb_wallpaper.set("/assets/wallpapers/1.png");
+								}
+								await window.parent.tb.fs.promises.unlink(path);
+								img_container.remove();
+							});
+							wimg.addEventListener("click", async e => {
+								tb_wallpaper.set(path);
+							});
+							await window.parent.tb.fs.promises.writeFile(path, Filer.Buffer.from(buffer));
+							tb_wallpaper.set(path);
+							img_container.append(wimg);
+							img_container.append(delete_button);
+							document.querySelector(".custom-wallpaper").remove();
+							document.querySelector(".wallpapers").append(img_container);
+							appendCustomWallpaper();
+						};
+					});
+					break;
+				case "fs":
+					tb.dialog.FileBrowser({
+						title: "Select a wallpaper from the file system",
+						onOk: async filePath => {
+							const imgdata = await window.parent.tb.fs.promises.readFile(filePath, "base64");
+							tb.desktop.wallpaper.set("/system/etc/terbium/wallpapers/" + filePath.split("/").pop());
+							await window.parent.tb.fs.promises.writeFile("/system/etc/terbium/wallpapers/" + filePath.split("/").pop(), imgdata);
+							document.querySelector(".wallpapers").innerHTML = `
+								<img src="/assets/wallpapers/1.png" class="wallpaper-option"></img>
+								<img src="/assets/wallpapers/2.png" class="wallpaper-option"></img>
+								<img src="/assets/wallpapers/3.png" class="wallpaper-option"></img>
+								<img src="/assets/wallpapers/4.png" class="wallpaper-option"></img>
+								<img src="/assets/wallpapers/5.png" class="wallpaper-option"></img>
+								<img src="/assets/wallpapers/6.png" class="wallpaper-option"></img>
+								<img src="/assets/wallpapers/7.png" class="wallpaper-option"></img>
+							`;
+							const wallpaper_options = document.querySelectorAll(".wallpaper-option");
+							wallpaper_options.forEach(option => {
+								option.addEventListener("click", async e => {
+									const parent_origin = parent.parent.window.location.origin;
+									const wallpaper = option.src.toString().split(parent_origin)[1];
+									const color = option.getAttribute("color-type");
+									let data = JSON.parse(await window.parent.tb.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, "utf8"));
+									data["wallpaper"] = wallpaper;
+									tb_wallpaper.set(wallpaper);
+									const fillMode = parent.window.tb.desktop.wallpaper.fillMode();
+									if (fillMode === null) parent.window.tb.desktop.wallpaper.cover();
+									if (color !== parent.window.tb.desktop.preferences.theme()) {
+										// parent.window.tb.desktop.preferences.setTheme(`${color`)
+										document.body.setAttribute("theme", color);
+									}
+								});
+							});
+							getWallpapers();
+						},
+					});
+					break;
+				case "url":
+					tb.dialog.Message({
+						title: "Enter a URL of the wallpaper",
+						onOk: async value => {
+							await window.parent.tb.system.download(value, `/system/etc/terbium/wallpapers/${value.split("/").pop()}`);
+							tb.desktop.wallpaper.set("/system/etc/terbium/wallpapers/" + value.split("/").pop());
+							document.querySelector(".wallpapers").innerHTML = `
+								<img src="/assets/wallpapers/1.png" class="wallpaper-option"></img>
+								<img src="/assets/wallpapers/2.png" class="wallpaper-option"></img>
+								<img src="/assets/wallpapers/3.png" class="wallpaper-option"></img>
+								<img src="/assets/wallpapers/4.png" class="wallpaper-option"></img>
+								<img src="/assets/wallpapers/5.png" class="wallpaper-option"></img>
+								<img src="/assets/wallpapers/6.png" class="wallpaper-option"></img>
+								<img src="/assets/wallpapers/7.png" class="wallpaper-option"></img>
+							`;
+							const wallpaper_options = document.querySelectorAll(".wallpaper-option");
+							wallpaper_options.forEach(option => {
+								option.addEventListener("click", async e => {
+									const parent_origin = parent.parent.window.location.origin;
+									const wallpaper = option.src.toString().split(parent_origin)[1];
+									const color = option.getAttribute("color-type");
+									let data = JSON.parse(await window.parent.tb.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, "utf8"));
+									data["wallpaper"] = wallpaper;
+									tb_wallpaper.set(wallpaper);
+									const fillMode = parent.window.tb.desktop.wallpaper.fillMode();
+									if (fillMode === null) parent.window.tb.desktop.wallpaper.cover();
+									if (color !== parent.window.tb.desktop.preferences.theme()) {
+										// parent.window.tb.desktop.preferences.setTheme(`${color`)
+										document.body.setAttribute("theme", color);
+									}
+								});
+							});
+							getWallpapers();
+						},
+					});
+					break;
+			}
+		},
 	});
 };
 
@@ -161,26 +257,26 @@ const appendCustomWallpaper = () => {
 };
 
 async function getWispSrvs() {
-	const fileExists = await Filer.fs.promises
+	const fileExists = await window.parent.tb.fs.promises
 		.stat("//apps/system/settings.tapp/wisp-servers.json")
 		.then(() => true)
 		.catch(() => false);
 	if (!fileExists) {
-		await Filer.fs.promises.mkdir("//apps/settings.tapp/", { recursive: true });
+		await window.parent.tb.fs.promises.mkdir("//apps/settings.tapp/", { recursive: true });
 		const stockDat = [
 			{ id: `${location.protocol.replace("http", "ws")}//${location.hostname}:${location.port}/wisp/`, name: "Backend" },
 			{ id: "wss://wisp.terbiumon.top/wisp/", name: "TB Wisp Instance" },
 		];
-		await Filer.fs.promises.writeFile("//apps/system/settings.tapp/wisp-servers.json", JSON.stringify(stockDat));
+		await window.parent.tb.fs.promises.writeFile("//apps/system/settings.tapp/wisp-servers.json", JSON.stringify(stockDat));
 	}
 	const main = document.getElementById("wispSrvs");
 	window.parent.window.dispatchEvent(new Event("update-wispsrvs"));
 	const makeCard = async (name, id) => {
-		let settings = await Filer.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, "utf8");
+		let settings = await window.parent.tb.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, "utf8");
 		let settdata = JSON.parse(settings);
 
 		const card = document.createElement("div");
-		card.classList.add("flex", "justify-between", "w-full", "p-1.5", "rounded-lg", "duration-150");
+		card.classList.add("flex", "justify-between", "w-full", "p-1.5", "rounded-lg", "duration-150", `srv-${id.replace(/\s/g, "-")}`);
 		if (name === settdata.wispServer) {
 			card.classList.add("bg-[#4acd609c]");
 		} else {
@@ -198,27 +294,27 @@ async function getWispSrvs() {
                         <span class="text-xs leading-tight">${name}</span>
                     </div>
                 </div>
-                <p latency class="text-sm p-2 bg-[#ffffff38] rounded-lg leading-none text-[#ffffffce] font-extrabold">Pinging...</p>
+                <p latency-${id.replace(/\s/g, "-")} class="text-sm p-2 bg-[#ffffff38] rounded-lg leading-none text-[#ffffffce] font-extrabold ">Pinging...</p>
             </div>
         `;
 
 		card.innerHTML = html;
 		setTimeout(async () => {
 			const res = await ping(name);
-			document.querySelector(`[latency]`).innerHTML = res.latency + "ms";
+			document.querySelector(`[latency-${id.replace(/\s/g, "-")}]`).innerHTML = res.latency + "ms";
 		}, 1750);
 
 		card.addEventListener("click", async () => {
 			settdata.wispServer = name;
 			const updSet = JSON.stringify(settdata, null, 2);
-			await Filer.fs.promises.writeFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, updSet);
+			await window.parent.tb.fs.promises.writeFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, updSet);
 			window.parent.tb.proxy.updateSWs();
 			window.parent.window.dispatchEvent(new Event("update-wispsrvs"));
 		});
 
 		main.appendChild(card);
 	};
-	const data = JSON.parse(await Filer.fs.promises.readFile("//apps/system/settings.tapp/wisp-servers.json"));
+	const data = JSON.parse(await window.parent.tb.fs.promises.readFile("//apps/system/settings.tapp/wisp-servers.json"));
 	data.forEach(item => {
 		makeCard(item.id, item.name);
 	});
@@ -259,12 +355,30 @@ async function getWispSrvs() {
 					title: "Enter the socket URL for the Wisp server",
 					onOk: async val => {
 						const ent = { id: val, name: sessionStorage.getItem("wispSrv") };
-						let data = JSON.parse(await Filer.fs.promises.readFile("//apps/system/settings.tapp/wisp-servers.json"));
+						let data = JSON.parse(await window.parent.tb.fs.promises.readFile("//apps/system/settings.tapp/wisp-servers.json"));
 						data.push(ent);
-						Filer.fs.promises.writeFile("//apps/system/settings.tapp/wisp-servers.json", JSON.stringify(data));
+						window.parent.tb.fs.promises.writeFile("//apps/system/settings.tapp/wisp-servers.json", JSON.stringify(data));
 						makeCard(val, sessionStorage.getItem("wispSrv"));
 					},
 				});
+			},
+		});
+	});
+	const rmWispbtn = document.getElementById("rmWisp");
+	rmWispbtn.addEventListener("click", async () => {
+		let data = JSON.parse(await window.parent.tb.fs.promises.readFile("//apps/system/settings.tapp/wisp-servers.json"));
+		const servers = data.map(item => ({
+			text: item.name,
+			value: item.name,
+		}));
+		window.parent.tb.dialog.Select({
+			title: "Select the Wisp server to remove",
+			options: servers,
+			onOk: async selectedName => {
+				data = data.filter(item => item.name !== selectedName);
+				await window.parent.tb.fs.promises.writeFile("//apps/system/settings.tapp/wisp-servers.json", JSON.stringify(data));
+				document.querySelector(`.srv-${selectedName.replace(/\s/g, "-")}`).remove();
+				window.parent.window.dispatchEvent(new Event("update-wispsrvs"));
 			},
 		});
 	});
@@ -272,9 +386,9 @@ async function getWispSrvs() {
 getWispSrvs();
 
 async function updateTransport(transport) {
-	const st = JSON.parse(await window.Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
+	const st = JSON.parse(await window.parent.tb.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
 	st["transport"] = transport;
-	await window.Filer.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, JSON.stringify(st), "utf8");
+	await window.parent.tb.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, JSON.stringify(st), "utf8");
 }
 
 const accentPreview = document.querySelector(".accent-preview");
@@ -282,14 +396,14 @@ const accentMousedown = async () => {
 	const defaultAccent = "#32ae62";
 	accentPreview.classList.remove("group", "cursor-pointer");
 	accentPreview.style.setProperty("--accent", defaultAccent);
-	let settings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
+	let settings = JSON.parse(await window.parent.tb.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
 	settings["accent"] = defaultAccent;
-	Filer.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, JSON.stringify(settings));
+	window.parent.tb.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, JSON.stringify(settings));
 	accentPreview.removeEventListener("mousedown", accentMousedown);
 };
 
 const getAccent = async () => {
-	const settings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
+	const settings = JSON.parse(await window.parent.tb.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
 	var accentColor = settings["accent"];
 	const defaultAccent = "#32ae62";
 	if (accentColor !== defaultAccent) {
@@ -317,13 +431,13 @@ custom_accent.addEventListener("click", e => {
 			const g = rgb[1];
 			const b = rgb[2];
 			color = "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-			let settings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
+			let settings = JSON.parse(await window.parent.tb.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
 			settings["accent"] = color;
-			Filer.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, JSON.stringify(settings));
+			window.parent.tb.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, JSON.stringify(settings));
 		} else {
-			let settings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
+			let settings = JSON.parse(await window.parent.tb.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
 			settings["accent"] = color;
-			Filer.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, JSON.stringify(settings));
+			window.parent.tb.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, JSON.stringify(settings));
 		}
 		accentPreview.style.setProperty("--accent", color);
 		accentPreview.classList.add("group", "cursor-pointer");
@@ -332,10 +446,10 @@ custom_accent.addEventListener("click", e => {
 });
 
 const getWallpapers = async () => {
-	const files = await Filer.fs.promises.readdir("/system/etc/terbium/wallpapers");
+	const files = await window.parent.tb.fs.promises.readdir("/system/etc/terbium/wallpapers");
 	for (const file of files) {
 		const path = "/system/etc/terbium/wallpapers/" + file;
-		const data = URL.createObjectURL(new Blob([await Filer.fs.promises.readFile(path, "utf8")]));
+		const data = URL.createObjectURL(new Blob([await window.parent.tb.fs.promises.readFile(path, "utf8")]));
 		const img_container = document.createElement("div");
 		img_container.classList.add("wallpaper-container");
 		const img = document.createElement("img");
@@ -345,14 +459,14 @@ const getWallpapers = async () => {
 		delete_button.src = "/fs/apps/system/settings.tapp/delete.svg";
 		delete_button.classList.add("delete-wallpaper");
 		delete_button.addEventListener("click", e => {
-			Filer.fs.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, "utf8", (err, data) => {
+			window.parent.tb.fs.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, "utf8", (err, data) => {
 				if (err) return console.log(err);
 				data = JSON.parse(data);
 				if (data["wallpaper"] === path) {
 					tb_wallpaper.set("/assets/wallpapers/1.png");
 				}
 			});
-			Filer.fs.unlink(path, err => {
+			window.parent.tb.fs.unlink(path, err => {
 				if (err) return console.log(err);
 				img_container.remove();
 			});
@@ -369,7 +483,7 @@ const getWallpapers = async () => {
 getWallpapers();
 
 const pfpEl = document.querySelector(".pfp");
-Filer.fs.readFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, "utf8", (err, data) => {
+window.parent.tb.fs.readFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, "utf8", (err, data) => {
 	if (err) return console.log(err);
 	data = JSON.parse(data);
 	pfpEl.src = data["pfp"];
@@ -388,10 +502,10 @@ pfpEl.addEventListener("click", e => {
 				title: "Resize your Profile picture",
 				img: reader.result,
 				onOk: async img => {
-					const uSettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, "utf8"));
+					const uSettings = JSON.parse(await window.parent.tb.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, "utf8"));
 					uSettings["pfp"] = img;
 					pfpEl.src = img;
-					await Filer.fs.promises.writeFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, JSON.stringify(uSettings));
+					await window.parent.tb.fs.promises.writeFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, JSON.stringify(uSettings));
 					window.parent.dispatchEvent(new Event("accUpd"));
 				},
 			});
@@ -404,36 +518,36 @@ pfpEl.addEventListener("click", e => {
 const usernameEl = document.querySelector(".username");
 usernameEl.addEventListener("input", async e => {
 	usernameEl.addEventListener("blur", async () => {
-		if (usernameEl.value !== JSON.parse(await Filer.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, "utf8"))["username"]) {
-			Filer.fs.readFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, "utf8", async (err, data) => {
+		if (usernameEl.value !== JSON.parse(await window.parent.tb.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, "utf8"))["username"]) {
+			window.parent.tb.fs.readFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, "utf8", async (err, data) => {
 				if (err) return console.log(err);
 				data = JSON.parse(data);
 				data["username"] = usernameEl.value;
-				await Filer.fs.promises.writeFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, JSON.stringify(data));
-				let desktopDat = JSON.parse(await Filer.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/desktop/.desktop.json`, "utf8"));
+				await window.parent.tb.fs.promises.writeFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, JSON.stringify(data));
+				let desktopDat = JSON.parse(await window.parent.tb.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/desktop/.desktop.json`, "utf8"));
 				desktopDat = desktopDat.map(entry => {
 					entry.item = entry.item.replace(`/home/${sessionStorage.getItem("currAcc")}/`, `/home/${usernameEl.value}/`);
 					return entry;
 				});
-				await Filer.fs.promises.rename(`/home/${sessionStorage.getItem("currAcc")}`, `/home/${usernameEl.value}`);
-				await Filer.fs.promises.writeFile(`/home/${usernameEl.value}/desktop/.desktop.json`, JSON.stringify(desktopDat));
-				await Filer.fs.promises.rename(`/apps/user/${sessionStorage.getItem("currAcc")}`, `/apps/user/${usernameEl.value}`);
-				Filer.fs.readFile("/system/etc/terbium/settings.json", "utf8", async (err, data) => {
+				await window.parent.tb.fs.promises.rename(`/home/${sessionStorage.getItem("currAcc")}`, `/home/${usernameEl.value}`);
+				await window.parent.tb.fs.promises.writeFile(`/home/${usernameEl.value}/desktop/.desktop.json`, JSON.stringify(desktopDat));
+				await window.parent.tb.fs.promises.rename(`/apps/user/${sessionStorage.getItem("currAcc")}`, `/apps/user/${usernameEl.value}`);
+				window.parent.tb.fs.readFile("/system/etc/terbium/settings.json", "utf8", async (err, data) => {
 					if (err) return console.log(err);
 					data = JSON.parse(data);
 					data["defaultUser"] = usernameEl.value;
-					await Filer.fs.promises.writeFile("/system/etc/terbium/settings.json", JSON.stringify(data));
+					await window.parent.tb.fs.promises.writeFile("/system/etc/terbium/settings.json", JSON.stringify(data));
 				});
-				const fcfg = JSON.parse(await Filer.fs.promises.readFile(`/apps/user/${usernameEl.value}/files/config.json`, "utf8"));
+				const fcfg = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${usernameEl.value}/files/config.json`, "utf8"));
 				fcfg.drives["File System"] = `/home/${usernameEl.value}/`;
-				await Filer.fs.promises.writeFile(`/apps/user/${usernameEl.value}/files/config.json`, JSON.stringify(fcfg));
-				const qcfg = JSON.parse(await Filer.fs.promises.readFile(`/apps/user/${usernameEl.value}/files/quick-center.json`, "utf8"));
+				await window.parent.tb.fs.promises.writeFile(`/apps/user/${usernameEl.value}/files/config.json`, JSON.stringify(fcfg));
+				const qcfg = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${usernameEl.value}/files/quick-center.json`, "utf8"));
 				for (const key in qcfg.paths) {
 					if (Object.prototype.hasOwnProperty.call(qcfg.paths, key)) {
 						qcfg.paths[key] = qcfg.paths[key].replace(sessionStorage.getItem("currAcc"), usernameEl.value);
 					}
 				}
-				await Filer.fs.promises.writeFile(`/apps/user/${usernameEl.value}/files/quick-center.json`, JSON.stringify(qcfg));
+				await window.parent.tb.fs.promises.writeFile(`/apps/user/${usernameEl.value}/files/quick-center.json`, JSON.stringify(qcfg));
 				sessionStorage.setItem("currAcc", usernameEl.value);
 			});
 		}
@@ -442,7 +556,7 @@ usernameEl.addEventListener("input", async e => {
 
 const permEl = document.querySelector(".perm");
 permEl.addEventListener("click", async () => {
-	const data = JSON.parse(await Filer.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, "utf8"));
+	const data = JSON.parse(await window.parent.tb.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, "utf8"));
 	if (data["password"] === false) {
 		await tb.dialog.Select({
 			title: "Enter the permission level you wish to set (Ex: Admin, User, Group, Public)",
@@ -468,7 +582,7 @@ permEl.addEventListener("click", async () => {
 				if (perm === data["perm"]) return;
 				data["perm"] = perm;
 				permEl.innerHTML = perm.charAt(0).toUpperCase() + perm.slice(1);
-				await Filer.fs.promises.writeFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, JSON.stringify(data));
+				await window.parent.tb.fs.promises.writeFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, JSON.stringify(data));
 			},
 		});
 	} else {
@@ -503,7 +617,7 @@ permEl.addEventListener("click", async () => {
 							if (perm === data["perm"]) return;
 							data["perm"] = perm;
 							permEl.innerHTML = perm.charAt(0).toUpperCase() + perm.slice(1);
-							await Filer.fs.promises.writeFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, JSON.stringify(data));
+							await window.parent.tb.fs.promises.writeFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, JSON.stringify(data));
 						},
 					});
 				} else {
@@ -514,7 +628,7 @@ permEl.addEventListener("click", async () => {
 	}
 });
 
-Filer.fs.readFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, "utf8", (err, data) => {
+window.parent.tb.fs.readFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, "utf8", (err, data) => {
 	if (err) return console.log(err);
 	data = JSON.parse(data);
 	usernameEl.value = data["username"];
@@ -524,18 +638,18 @@ Filer.fs.readFile(`/home/${sessionStorage.getItem("currAcc")}/user.json`, "utf8"
 const hostnameEl = document.querySelector(".hostname");
 hostnameEl.addEventListener("input", async e => {
 	hostnameEl.addEventListener("blur", async () => {
-		if (hostnameEl.value !== JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"))["host-name"]) {
-			Filer.fs.readFile("/system/etc/terbium/settings.json", "utf8", async (err, data) => {
+		if (hostnameEl.value !== JSON.parse(await window.parent.tb.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"))["host-name"]) {
+			window.parent.tb.fs.readFile("/system/etc/terbium/settings.json", "utf8", async (err, data) => {
 				if (err) return console.log(err);
 				data = JSON.parse(data);
 				data["host-name"] = hostnameEl.value;
-				await Filer.fs.promises.writeFile("/system/etc/terbium/settings.json", JSON.stringify(data));
+				await window.parent.tb.fs.promises.writeFile("/system/etc/terbium/settings.json", JSON.stringify(data));
 			});
 		}
 	});
 });
 
-Filer.fs.readFile("/system/etc/terbium/settings.json", "utf8", (err, data) => {
+window.parent.tb.fs.readFile("/system/etc/terbium/settings.json", "utf8", (err, data) => {
 	if (err) return console.log(err);
 	data = JSON.parse(data);
 	hostnameEl.value = data["host-name"];
@@ -544,7 +658,7 @@ Filer.fs.readFile("/system/etc/terbium/settings.json", "utf8", (err, data) => {
 const cords = document.querySelector(".cords");
 const saveCity = document.querySelector(".save-city");
 saveCity.addEventListener("click", e => {
-	Filer.fs.readFile("/system/etc/terbium/settings.json", "utf8", (err, data) => {
+	window.parent.tb.fs.readFile("/system/etc/terbium/settings.json", "utf8", (err, data) => {
 		if (err) return console.log(err);
 		data = JSON.parse(data);
 		if (navigator.geolocation) {
@@ -555,7 +669,7 @@ saveCity.addEventListener("click", e => {
 					console.log(`${latitude},${longitude}`);
 					data["location"] = `${latitude},${longitude}`;
 					window.parent.dispatchEvent(new Event("updWeather"));
-					Filer.fs.writeFile("/system/etc/terbium/settings.json", JSON.stringify(data), err => {
+					window.parent.tb.fs.writeFile("/system/etc/terbium/settings.json", JSON.stringify(data), err => {
 						if (err) return console.log(err);
 					});
 				},
@@ -587,7 +701,7 @@ accountsButton.addEventListener("mousedown", e => {
 
 const batteryPercentage = document.querySelector(".battery-percentage");
 (async () => {
-	let showBatteryPercentage = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"))["battery-percent"];
+	let showBatteryPercentage = JSON.parse(await window.parent.tb.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"))["battery-percent"];
 	const realCheckbox = batteryPercentage.querySelector("input[type='checkbox']");
 	if (showBatteryPercentage) {
 		realCheckbox.checked = true;
@@ -601,7 +715,7 @@ const batteryPercentage = document.querySelector(".battery-percentage");
 })();
 
 batteryPercentage.addEventListener("mousedown", async e => {
-	let data = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
+	let data = JSON.parse(await window.parent.tb.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
 	const realCheckbox = batteryPercentage.querySelector("input[type='checkbox']");
 	realCheckbox.checked = !realCheckbox.checked;
 	const checkIcon = batteryPercentage.querySelector(".checkIcon");
@@ -613,7 +727,7 @@ batteryPercentage.addEventListener("mousedown", async e => {
 		tb.battery.hidePercentage();
 	}
 	data["battery-percent"] = realCheckbox.checked;
-	Filer.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, JSON.stringify(data));
+	window.parent.tb.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, JSON.stringify(data));
 });
 
 const getBat = async () => {
@@ -637,7 +751,7 @@ showCords.addEventListener("mousedown", async e => {
 });
 
 async function exportSettings() {
-	let settings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
+	let settings = JSON.parse(await window.parent.tb.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
 	let data = JSON.stringify(settings);
 	let blob = new Blob([data], { type: "application/json" });
 	let url = URL.createObjectURL(blob);
@@ -656,8 +770,8 @@ async function convertTBSIF() {
 		let reader = new FileReader();
 		reader.onload = async () => {
 			let tbs_config = reader.result;
-			let settings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
-			let syssettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
+			let settings = JSON.parse(await window.parent.tb.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
+			let syssettings = JSON.parse(await window.parent.tb.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
 			if (tbs_config.theme && tbs_config.theme !== "default") {
 				syssettings.theme = tbs_config.theme;
 			}
@@ -670,8 +784,8 @@ async function convertTBSIF() {
 			if (tbs_config.shadow === "yes") {
 				settings["system-blur"] = true;
 			}
-			await Filer.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, JSON.stringify(settings, null, 2), "utf8");
-			await Filer.fs.promises.writeFile("/system/etc/terbium/settings.json", JSON.stringify(syssettings, null, 2), "utf8");
+			await window.parent.tb.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, JSON.stringify(settings, null, 2), "utf8");
+			await window.parent.tb.fs.promises.writeFile("/system/etc/terbium/settings.json", JSON.stringify(syssettings, null, 2), "utf8");
 			parent.window.location.reload();
 		};
 		reader.readAsText(file);

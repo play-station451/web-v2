@@ -331,6 +331,7 @@ export class LocalFS extends AFSProvider<LocalFSStats> {
 				fileStats.ctimeMs = Date.now();
 				this.stats.set(realPath, fileStats);
 			}
+			// @ts-expect-error
 			writer.write(data);
 			writer.close();
 		},

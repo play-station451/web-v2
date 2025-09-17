@@ -23,31 +23,28 @@ channel.addEventListener("message", msg => {
 	}
 });
 
-let anura: Anura;
 // global
-
 window.addEventListener("load", async () => {
 	await navigator.serviceWorker.register("/anura-sw.js");
 	let conf, milestone, instancemilestone;
-	const Filer = (window as any).Filer;
 	try {
 		conf = await (await fetch("/config.json")).json();
 		milestone = await (await fetch("/MILESTONE")).text();
 		instancemilestone = conf.milestone;
 
 		console.log("writing config??");
-		Filer.fs.writeFile("/config_cached.json", JSON.stringify(conf));
+		window.tb.fs.writeFile("/config_cached.json", JSON.stringify(conf));
 	} catch (e) {
-		conf = JSON.parse(await new Promise(r => Filer.fs.readFile("/config_cached.json", (_: any, b: Uint8Array) => r(new TextDecoder().decode(b)))));
+		conf = JSON.parse(await new Promise(r => window.tb.fs.readFile("/config_cached.json", (_: any, b: Uint8Array) => r(new TextDecoder().decode(b)))));
 	}
 
-	anura = await Anura.new(conf);
+	window.anura = await Anura.new(conf);
 	if (milestone) {
-		const stored = anura.settings.get("milestone");
-		if (!stored) await anura.settings.set("milestone", milestone);
-		else if (stored != milestone || anura.settings.get("instancemilestone") != instancemilestone) {
-			await anura.settings.set("milestone", milestone);
-			await anura.settings.set("instancemilestone", instancemilestone);
+		const stored = window.anura.settings.get("milestone");
+		if (!stored) await window.anura.settings.set("milestone", milestone);
+		else if (stored != milestone || window.anura.settings.get("instancemilestone") != instancemilestone) {
+			await window.anura.settings.set("milestone", milestone);
+			await window.anura.settings.set("instancemilestone", instancemilestone);
 			navigator.serviceWorker.controller!.postMessage({
 				anura_target: "anura.cache.invalidate",
 			});
@@ -55,23 +52,20 @@ window.addEventListener("load", async () => {
 			window.location.reload();
 		}
 	}
-
-	(window as any).anura = anura;
-
-	if (!anura.settings.get("directories")) {
+	if (!window.anura.settings.get("directories")) {
 		const defaultDirectories = {
 			apps: "/apps/anura/",
 			libs: "/system/lib/anura/",
 			init: "/system/etc/anura/init/",
 			bin: "/system/bin/anura/",
 		};
-		await anura.settings.set("directories", defaultDirectories);
+		await window.anura.settings.set("directories", defaultDirectories);
 	}
 
-	if (!anura.settings.get("handler-migration-complete")) {
+	if (!window.anura.settings.get("handler-migration-complete")) {
 		// Convert legacy file handlers
 		// This is a one-time migration
-		const extHandlers = anura.settings.get("FileExts") || {};
+		const extHandlers = window.anura.settings.get("FileExts") || {};
 
 		console.log("migrating file handlers");
 		console.log(extHandlers);
@@ -94,59 +88,59 @@ window.addEventListener("load", async () => {
 				};
 			}
 		}
-		anura.settings.set("FileExts", extHandlers);
-		anura.settings.set("handler-migration-complete", true);
+		window.anura.settings.set("FileExts", extHandlers);
+		window.anura.settings.set("handler-migration-complete", true);
 	}
 
 	setTimeout(
 		() => {
-			anura.logger.debug("boot completed");
+			window.anura.logger.debug("boot completed");
 			document.dispatchEvent(new Event("anura-boot-completed"));
 		},
-		anura.settings.get("oobe-complete") ? 1000 : 2000,
+		window.anura.settings.get("oobe-complete") ? 1000 : 2000,
 	);
 });
 
 document.addEventListener("anura-boot-completed", async () => {
 	// Anura OOBE code used to be here
-	anura.settings.set("handler-migration-complete", true);
+	window.anura.settings.set("handler-migration-complete", true);
 });
 
 document.addEventListener("anura-login-completed", async () => {
-	for (const app of anura.config.apps) {
-		anura.registerExternalApp(app);
+	for (const app of window.anura.config.apps) {
+		window.anura.registerExternalApp(app);
 	}
 
-	for (const lib of anura.config.libs) {
-		anura.registerExternalLib(lib);
+	for (const lib of window.anura.config.libs) {
+		window.anura.registerExternalLib(lib);
 	}
 
 	// Load all persistent sideloaded apps
 	try {
 		// @ts-expect-error
-		anura.fs.readdir("/apps/anura", (err: Error, files: string[]) => {
+		window.anura.fs.readdir("/apps/anura", (err: Error, files: string[]) => {
 			// Fixes a weird edgecase that I was facing where no user apps are installed, nothing breaks it just throws an error which I would like to mitigate.
 			if (files == undefined) return;
 			files.forEach(file => {
 				try {
-					anura.registerExternalApp("/fs/apps/anura/" + file);
+					window.anura.registerExternalApp("/fs/apps/anura/" + file);
 				} catch (e) {
-					anura.logger.error("Anura failed to load an app " + e);
+					window.anura.logger.error("Anura failed to load an app " + e);
 				}
 			});
 		});
 	} catch (e) {
-		anura.logger.error(e);
+		window.anura.logger.error(e);
 	}
 	// Load all user provided init scripts
 	try {
 		// @ts-expect-error
-		anura.fs.readdir("/userInit", (err: Error, files: string[]) => {
+		window.anura.fs.readdir("/userInit", (err: Error, files: string[]) => {
 			// Fixes a weird edgecase that I was facing where no user apps are installed, nothing breaks it just throws an error which I would like to mitigate.
 			if (files == undefined) return;
 			files.forEach(file => {
 				try {
-					anura.fs.readFile(
+					window.anura.fs.readFile(
 						"/userInit/" + file,
 						// @ts-expect-error
 						function (err: Error, data: Uint8Array) {
@@ -159,15 +153,15 @@ document.addEventListener("anura-login-completed", async () => {
 						},
 					);
 				} catch (e) {
-					anura.logger.error("Anura failed to load an app " + e);
+					window.anura.logger.error("Anura failed to load an app " + e);
 				}
 			});
 		});
 	} catch (e) {
-		anura.logger.error(e);
+		window.anura.logger.error(e);
 	}
 	if ((await await fetch("/fs/")).status === 404) {
-		anura.notifications.add({
+		window.anura.notifications.add({
 			title: "Anura Error",
 			description: "Anura has encountered an error with the Filesystem HTTP bridge, click this notification to restart",
 			timeout: 50000,
@@ -191,5 +185,5 @@ document.addEventListener("anura-login-completed", async () => {
 	//     ).style.setProperty("display", "none");
 	// });
 
-	anura.initComplete = true;
+	window.anura.initComplete = true;
 });

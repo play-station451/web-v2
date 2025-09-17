@@ -39,8 +39,6 @@ export async function BuildApps() {
 							if (data.name !== "Browser") {
 								data.config.src = data.config.src.replace(`/apps/${data.name.toLowerCase()}.tapp/`, `/fs/apps/system/${data.name.toLowerCase()}.tapp/`);
 								data.config.icon = data.config.icon.replace(`/apps/${data.name.toLowerCase()}.tapp/`, `/fs/apps/system/${data.name.toLowerCase()}.tapp/`);
-							} else {
-								return;
 							}
 							result.push({ name: data.name, config: data.config });
 						}
@@ -75,6 +73,7 @@ export async function BuildApps() {
 			});
 		}
 	});
+	return true;
 }
 
 export async function CreateAppsPaths() {
@@ -105,7 +104,7 @@ export async function CreateAppsPaths() {
 
 	const accmp: string[] = [];
 	fs.readdirSync(baseDir, { withFileTypes: true }).forEach(app => {
-		if (app.isDirectory() && app.name.toLocaleLowerCase().endsWith(".tapp") && !app.name.toLowerCase().includes("browser.tapp")) {
+		if (app.isDirectory() && app.name.toLocaleLowerCase().endsWith(".tapp")) {
 			const appPath = path.join(baseDir, app.name);
 			if (app.name.toLowerCase() === "settings.tapp") {
 				collectPaths(appPath);
@@ -122,6 +121,7 @@ export async function CreateAppsPaths() {
 	output.push(...accmp);
 	fs.writeFileSync(outputJsonPath, JSON.stringify(output, null, 2), "utf-8");
 	consola.success(`Installer JSON saved to ${outputJsonPath}`);
+	return true;
 }
 
 export async function CreateEnv() {
@@ -146,6 +146,7 @@ export async function CreateEnv() {
 		fs.writeFileSync(".env", `MASQR=${true}\nPORT=${port}\nLICENSE_SERVER_URL=${licenseServer}\nWHITELISTED_DOMAINS=${whitelist}\n`);
 	}
 	consola.success("Environment file created");
+	return true;
 }
 
 export async function Updater() {
@@ -184,6 +185,7 @@ export async function Updater() {
 			consola.error(`Failed to check for updates, ${e}`);
 		}
 	});
+	return true;
 }
 
 Bootstrap();

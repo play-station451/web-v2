@@ -1,6 +1,7 @@
 import parser from "yargs-parser";
 import http from "iso-http";
 import git from "git";
+import * as webdav from "/fs/apps/system/files.tapp/webdav.js";
 
 /**
  * @typedef {import("yargs-parser").Arguments} argv
@@ -20,6 +21,7 @@ const tb = window.tb || window.parent.tb || {};
 
 window.http = http;
 window.gitfetch = git;
+window.webdav = webdav;
 
 /**
  * Converts a hex color to an RGB string
@@ -176,8 +178,7 @@ async function handleCommand(name, args) {
 	 * The URLs to try to fetch the scripts from
 	 * @type {string[]}
 	 */
-	const debug = location.host.includes("localhost");
-	const scriptPath = debug ? `/apps/terminal.tapp/scripts/${name.toLowerCase()}.js` : `/fs/apps/system/terminal.tapp/scripts/${name.toLowerCase()}.js`;
+	const scriptPaths = [`/fs/apps/system/terminal.tapp/scripts/${name.toLowerCase()}.js`, `/apps/terminal.tapp/scripts/${name.toLowerCase()}.js`];
 	/**
 	 * @type {appInfo}
 	 */
@@ -198,11 +199,15 @@ async function handleCommand(name, args) {
 	 */
 	let scriptRes;
 	try {
-		scriptRes = await fetch(scriptPath);
-	} catch (error) {
-		displayError(`Failed to fetch script: ${error.message}`);
-		createNewCommandInput();
-		return;
+		scriptRes = await fetch(scriptPaths[0]);
+	} catch {
+		try {
+			scriptRes = await fetch(scriptPathss[1]);
+		} catch (error) {
+			displayError(`Failed to fetch script: ${error.message}`);
+			createNewCommandInput();
+			return;
+		}
 	}
 	try {
 		const script = await scriptRes.text();
@@ -228,24 +233,24 @@ async function getAppInfo(justNames = true) {
 	/**
 	 * @type {Response}
 	 */
-	let appInfoRes;
-	try {
-		// Temp for testing
-		appInfoRes = await fetch(`/fs/apps/user/${await tb.user.username()}/terminal/info.json`);
-	} catch (error) {
-		displayError(`Failed to fetch info.json, required for getting app info: ${error.message}`);
-		createNewCommandInput();
-		return null;
-	}
+	const appInfoResUsr = await fetch(`/fs/apps/user/${await tb.user.username()}/terminal/info.json`);
+	/**
+	 * @type {Response}
+	 */
+	const appInfoResSys = await fetch(`/fs/apps/system/terminal.tapp/scripts/info.json`);
 
 	/**
 	 * @type {Response}
 	 */
 	let appInfo;
 	try {
-		appInfo = await appInfoRes.json();
+		let appInfoUsr = await appInfoResUsr.json();
+		let appInfoSys = await appInfoResSys.json();
+		if (!Array.isArray(appInfoUsr)) appInfoUsr = appInfoUsr ? [appInfoUsr] : [];
+		if (!Array.isArray(appInfoSys)) appInfoSys = appInfoSys ? [appInfoSys] : [];
+		appInfo = [...appInfoUsr, ...appInfoSys];
 	} catch (error) {
-		displayError(`Failed to parse info.json: ${error.message}`);
+		displayError(`Failed to parse one or more info.json files: ${error.message}`);
 		createNewCommandInput();
 		return null;
 	}
@@ -295,9 +300,9 @@ async function displayOutput(message, ...styles) {
  */
 async function writePowerline() {
 	const username = await tb.user.username();
-	const userSettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${username}/settings.json`, "utf8"));
+	const userSettings = JSON.parse(await window.parent.tb.fs.promises.readFile(`/home/${username}/settings.json`, "utf8"));
 	const accent = await htorgb(userSettings.accent);
-	const hostname = JSON.parse(await Filer.fs.promises.readFile("//system/etc/terbium/settings.json"))["host-name"];
+	const hostname = JSON.parse(await window.parent.tb.fs.promises.readFile("//system/etc/terbium/settings.json"))["host-name"];
 
 	term.write(`\x1b[38;2;${accent.r};${accent.g};${accent.b}m${username}@${hostname}\x1b[39m ~ ${path}\x1b[0m: `);
 }
@@ -328,7 +333,7 @@ async function loadHistory() {
 	try {
 		const username = await tb.user.username();
 		const historyPath = `/home/${username}/${HISTORY_FILE}`;
-		const data = await Filer.fs.promises.readFile(historyPath, "utf8");
+		const data = await window.parent.tb.fs.promises.readFile(historyPath, "utf8");
 		commandHistory = data.split("\n").filter(cmd => cmd.trim() !== "");
 	} catch {}
 	historyIndex = commandHistory.length;
@@ -350,7 +355,7 @@ async function saveToHistory(command) {
 	try {
 		const username = await tb.user.username();
 		const historyPath = `/home/${username}/${HISTORY_FILE}`;
-		await Filer.fs.promises.writeFile(historyPath, commandHistory.join("\n"));
+		await window.parent.tb.fs.promises.writeFile(historyPath, commandHistory.join("\n"));
 	} catch (error) {
 		console.error("Failed to save history", error);
 	}

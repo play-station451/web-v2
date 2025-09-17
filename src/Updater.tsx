@@ -10,18 +10,18 @@ export default function Updater() {
 	async function copyDir(inp: string, dest: string, rn?: boolean) {
 		if (rn === true) {
 			if (!(await dirExists(dest))) {
-				await Filer.fs.promises.mkdir(dest);
+				await window.tb.fs.promises.mkdir(dest);
 			}
 		}
-		const files = await Filer.fs.promises.readdir(inp);
+		const files = await window.tb.fs.promises.readdir(inp);
 		const totalFiles = files.length;
 		for (const [index, file] of files.entries()) {
-			const stats = await Filer.fs.promises.stat(`${inp}/${file}`);
+			const stats = await window.tb.fs.promises.stat(`${inp}/${file}`);
 			if (stats.isDirectory()) {
-				await Filer.fs.promises.mkdir(`${dest}/${file}`);
+				await window.tb.fs.promises.mkdir(`${dest}/${file}`);
 				await copyDir(`${inp}/${file}`, `${dest}/${file}`, true);
 			} else {
-				await Filer.fs.promises.writeFile(`${dest}/${file}`, await Filer.fs.promises.readFile(`${inp}/${file}`, "utf8"));
+				await window.tb.fs.promises.writeFile(`${dest}/${file}`, await window.tb.fs.promises.readFile(`${inp}/${file}`, "utf8"));
 			}
 			statusref.current!.innerText = `Creating a copy of: ${file}...`;
 			setProgress(Math.floor(((index + 1) / totalFiles) * 100));
@@ -30,31 +30,71 @@ export default function Updater() {
 
 	useEffect(() => {
 		const main = async () => {
+			window.onbeforeunload = e => {
+				e.preventDefault();
+				e.returnValue = "Terbium is still updating";
+			};
 			let sysapps = ["about.tapp", "app store.tapp", "browser.tapp", "calculator.tapp", "feedback.tapp", "files.tapp", "media viewer.tapp", "settings.tapp", "task manager.tapp", "terminal.tapp", "text editor.tapp"];
+			let sysscripts = [
+				"cat.js",
+				"cd.js",
+				"clear.js",
+				"curl.js",
+				"echo.js",
+				"exit.js",
+				"git.js",
+				"help.js",
+				"info.json",
+				"info.schema.json",
+				"ls.js",
+				"mkdir.js",
+				"node.js",
+				"ping.js",
+				"pkg.js",
+				"pkill.js",
+				"pwd.js",
+				"qwick.js",
+				"qwick_install.js",
+				"rm.js",
+				"rmdir.js",
+				"sysfetch.js",
+				"taskkill.js",
+				"tb.js",
+				"touch.js",
+				"unzip.js",
+			];
 			if (await dirExists("/system/tmp/terb-upd/")) {
-				// @ts-expect-error
-				await new Filer.fs.Shell().promises.rm(`/system/tmp/terb-upd/`, { recursive: true });
+				await window.tb.sh.promises.rm(`/system/tmp/terb-upd/`, { recursive: true });
 			}
 			statusref.current!.innerText = "Installing latest version of TB...";
-			await Filer.fs.promises.mkdir("/system/tmp/terb-upd/");
-			const apps = await Filer.fs.promises.readdir("/apps/system/");
+			await window.tb.fs.promises.mkdir("/system/tmp/terb-upd/");
+			const apps = await window.tb.fs.promises.readdir("/apps/system/");
+			const scripts = await window.tb.fs.promises.readdir("/apps/system/terminal.tapp/scripts/");
 			setProgress(20);
 			statusref.current!.innerText = "Creating a backup";
 			if (await fileExists("/apps/system/settings.tapp/wisp-servers.json")) {
-				await Filer.fs.promises.writeFile("/system/tmp/terb-upd/wisp-servers.json", await Filer.fs.promises.readFile("/apps/system/settings.tapp/wisp-servers.json"));
+				await window.tb.fs.promises.writeFile("/system/tmp/terb-upd/wisp-servers.json", await window.tb.fs.promises.readFile("/apps/system/settings.tapp/wisp-servers.json"));
 			} else {
 				const stockDat = [
 					{ id: `${location.protocol.replace("http", "ws")}//${location.hostname}:${location.port}/wisp/`, name: "Backend" },
 					{ id: "wss://wisp.terbiumon.top/wisp/", name: "TB Wisp Instance" },
 				];
-				await Filer.fs.promises.writeFile("/system/tmp/terb-upd/wisp-servers.json", JSON.stringify(stockDat));
+				await window.tb.fs.promises.writeFile("/system/tmp/terb-upd/wisp-servers.json", JSON.stringify(stockDat));
 			}
 			for (const item of apps) {
 				setProgress(prevProgress => prevProgress + 1);
 				if (sysapps.includes(item)) {
-					await copyDir(`/apps/system/${item}/`, `/system/tmp/terb-upd/${item}.old`, true);
-					// @ts-expect-error
-					await new Filer.fs.Shell().promises.rm(`/apps/system/${item}/`, { recursive: true });
+					if (item === "terminal.tapp") {
+						for (const item of scripts) {
+							setProgress(prevProgress => prevProgress + 1);
+							if (!sysscripts.includes(item)) {
+								console.log(`Skipping ${item}...`);
+							}
+						}
+					} else {
+						await copyDir(`/apps/system/${item}/`, `/system/tmp/terb-upd/${item}.old`, true);
+						await window.tb.sh.promises.rm(`/apps/system/${item}/`, { recursive: true });
+					}
 				} else {
 					console.log(`Skipping ${item}...`);
 				}
@@ -69,7 +109,7 @@ export default function Updater() {
 				if (isDir) {
 					try {
 						// @ts-expect-error
-						await Filer.fs.promises.mkdir(`/apps/system/${item.toString()}`, { recursive: true });
+						await window.tb.fs.promises.mkdir(`/apps/system/${item.toString()}`, { recursive: true });
 					} catch (err) {
 						console.error(err);
 					}
@@ -79,19 +119,19 @@ export default function Updater() {
 					try {
 						if (!(await dirExists(dir))) {
 							// @ts-expect-error
-							await Filer.fs.promises.mkdir(dir, { recursive: true });
+							await window.tb.fs.promises.mkdir(dir, { recursive: true });
 						}
 						const res = await fetch(`/apps/${item.toString()}`);
 						const data = await res.text();
-						await Filer.fs.promises.writeFile(path, data);
+						await window.tb.fs.promises.writeFile(path, data);
 					} catch (err) {
 						console.error(err);
 					}
 				}
 			}
-			await Filer.fs.promises.writeFile("/apps/system/settings.tapp/wisp-servers.json", await Filer.fs.promises.readFile("/system/tmp/terb-upd/wisp-servers.json"));
-			await Filer.fs.promises.writeFile("/system/etc/terbium/hash.cache", hash);
-			const user = sessionStorage.getItem("currAcc") || JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8")).defaultUser;
+			await window.tb.fs.promises.writeFile("/apps/system/settings.tapp/wisp-servers.json", await window.tb.fs.promises.readFile("/system/tmp/terb-upd/wisp-servers.json"));
+			await window.tb.fs.promises.writeFile("/system/etc/terbium/hash.cache", hash);
+			const user = sessionStorage.getItem("currAcc") || JSON.parse(await window.tb.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8")).defaultUser;
 			// v2.0-Beta2 update
 			if (!(await fileExists("/apps/installed.json"))) {
 				statusref.current!.innerText = "Installing Terbium v2.0-Beta2 prerequisites...";
@@ -152,7 +192,7 @@ export default function Updater() {
 						user: "System",
 					},
 				];
-				const startApps = JSON.parse(await Filer.fs.promises.readFile("/system/var/terbium/start.json", "utf8")).system_apps;
+				const startApps = JSON.parse(await window.tb.fs.promises.readFile("/system/var/terbium/start.json", "utf8")).system_apps;
 				for (const app of startApps) {
 					let appName = "";
 					let appTitle = "";
@@ -177,7 +217,7 @@ export default function Updater() {
 								if (user) {
 									appDir = `/apps/user/${user}/${app.name}/`;
 								} else {
-									appDir = `/apps/user/${JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8")).defaultUser}/${app.name}/`;
+									appDir = `/apps/user/${JSON.parse(await window.tb.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8")).defaultUser}/${app.name}/`;
 								}
 								if (await fileExists(`${appDir}.tbconfig`)) {
 									configFile = `${appDir}.tbconfig`;
@@ -196,20 +236,42 @@ export default function Updater() {
 						});
 					}
 				}
-				await Filer.fs.promises.mkdir("/system/etc/anura/configs/");
-				await Filer.fs.promises.writeFile("/apps/installed.json", JSON.stringify(insapps));
-				await Filer.fs.promises.writeFile("/system/var/terbium/recent.json", JSON.stringify([]));
+				await window.tb.fs.promises.mkdir("/system/etc/anura/configs/");
+				await window.tb.fs.promises.writeFile("/apps/installed.json", JSON.stringify(insapps));
+				await window.tb.fs.promises.writeFile("/system/var/terbium/recent.json", JSON.stringify([]));
+			}
+			// v2.1 update
+			if (!(await fileExists(`/apps/user/${user}/app store/repos.json`))) {
+				await window.tb.fs.promises.mkdir(`/apps/user/${user}/app store/`);
+				await window.tb.fs.promises.writeFile(
+					`/apps/user/${user}/app store/repos.json`,
+					JSON.stringify([
+						{
+							name: "TB App Repo",
+							url: "https://raw.githubusercontent.com/TerbiumOS/tb-repo/refs/heads/main/manifest.json",
+						},
+						{
+							name: "XSTARS XTRAS",
+							url: "https://raw.githubusercontent.com/Notplayingallday383/app-repo/refs/heads/main/manifest.json",
+						},
+						{
+							name: "Anura App Repo",
+							url: "https://raw.githubusercontent.com/MercuryWorkshop/anura-repo/refs/heads/master/manifest.json",
+							icon: "https://anura.pro/icon.png",
+						},
+					]),
+				);
 			}
 			if (!(await fileExists(`/apps/user/${user}/browser/favorites.json`))) {
-				await Filer.fs.promises.mkdir(`/apps/user/${user}/browser/`);
-				await Filer.fs.promises.writeFile(`/apps/user/${user}/browser/favorites.json`, JSON.stringify([]));
-				await Filer.fs.promises.writeFile(`/apps/user/${user}/browser/userscripts.json`, JSON.stringify([]));
+				await window.tb.fs.promises.mkdir(`/apps/user/${user}/browser/`);
+				await window.tb.fs.promises.writeFile(`/apps/user/${user}/browser/favorites.json`, JSON.stringify([]));
+				await window.tb.fs.promises.writeFile(`/apps/user/${user}/browser/userscripts.json`, JSON.stringify([]));
 			}
 			setProgress(80);
 			statusref.current!.innerText = "Cleaning up...";
 			setProgress(95);
-			// @ts-expect-error
-			await new Filer.fs.Shell().promises.rm(`/system/tmp/terb-upd/`, { recursive: true });
+			await window.tb.sh.promises.rm(`/system/tmp/terb-upd/`, { recursive: true });
+			window.onbeforeunload = null;
 			setProgress(100);
 			statusref.current!.innerText = "Restarting...";
 			window.location.reload();

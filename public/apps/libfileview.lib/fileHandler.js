@@ -1,7 +1,7 @@
 const icons = await (await fetch(localPathToURL("icons.json"))).json();
 
 export function openFile(path) {
-    const fs = anura.fs || Filer.fs;
+    const fs = anura.fs || tb.fs;
     function openImage(path, mimetype) {
         fs.readFile(path, function (err, data) {
             tb.file.handler.openFile(path, 'image')

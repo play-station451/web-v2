@@ -1,7 +1,7 @@
 import { FC, ReactNode, useEffect, useRef, useState } from "react";
 import { MagnifyingGlassIcon, ChevronRightIcon, PuzzlePieceIcon } from "@heroicons/react/24/solid";
 import "./styles/dock.css";
-import { dirExists, Filer, isURL, WindowConfig } from "../types";
+import { dirExists, isURL, WindowConfig } from "../types";
 import { useWindowStore, useSearchMenuStore } from "../Store";
 import SearchMenu from "./Search";
 
@@ -31,6 +31,8 @@ export type TStartItem = {
 	className?: string;
 	src?: string;
 	proxy?: boolean;
+	size?: { width: number; height: number };
+	snapable?: boolean;
 };
 
 interface IDockProps {
@@ -74,8 +76,8 @@ const Dock: FC<IDockProps> = ({ pinned }) => {
 	useEffect(() => {
 		const fetchData = async () => {
 			if (await dirExists("/system")) {
-				setSysApps(JSON.parse(await Filer.promises.readFile("/system/var/terbium/start.json", "utf8")).system_apps);
-				setPins(JSON.parse(await Filer.promises.readFile("/system/var/terbium/start.json", "utf8")).pinned_apps);
+				setSysApps(JSON.parse(await window.tb.fs.promises.readFile("/system/var/terbium/start.json", "utf8")).system_apps);
+				setPins(JSON.parse(await window.tb.fs.promises.readFile("/system/var/terbium/start.json", "utf8")).pinned_apps);
 			}
 		};
 		fetchData();
@@ -252,20 +254,19 @@ const Dock: FC<IDockProps> = ({ pinned }) => {
 							onBlur={() => {
 								setSearchActive(false);
 							}}
-							onInput={(e: any) => {
-								if (e.target.value.length > 0) {
+							onInput={(e: React.FormEvent<HTMLInputElement>) => {
+								if (e.currentTarget.value.length > 0) {
 									setSearchHasText(true);
 								} else {
 									setSearchHasText(false);
 								}
-								const query = e.target.value.toLowerCase();
+								const query = e.currentTarget.value.toLowerCase();
 								const systemApps = systemAppsRef.current;
 								const pinnedApps = pinnedAppsRef.current;
-								if (systemApps !== null && pinnedApps !== null) {
+								console.log(systemApps, pinnedApps);
+								if (systemApps !== null) {
 									const systemAppsChildren = systemApps.children;
-									const pinnedAppsChildren = pinnedApps.children;
 									let systemAppsMatch = 0;
-									let pinnedAppsMatch = 0;
 									for (let i = 0; i < systemAppsChildren.length; i++) {
 										const child: Element = systemAppsChildren[i];
 										if (child.textContent && child.textContent.toLowerCase().includes(query)) {
@@ -283,27 +284,37 @@ const Dock: FC<IDockProps> = ({ pinned }) => {
 											}, 150);
 										}
 									}
-									for (let i = 0; i < pinnedAppsChildren.length; i++) {
-										const child: Element = pinnedAppsChildren[i];
-										if (child.textContent && child.textContent.toLowerCase().includes(query)) {
-											child.classList.remove("hidden");
-											setTimeout(() => {
-												child.classList.remove("opacity-0");
-												child.classList.remove("-translate-x-2");
-											}, 150);
-											pinnedAppsMatch++;
-										} else {
-											child.classList.add("-translate-x-2");
-											child.classList.add("opacity-0");
-											setTimeout(() => {
-												child.classList.add("hidden");
-											}, 150);
+									if (pinnedApps !== null) {
+										const pinnedAppsChildren = pinnedApps.children;
+										let pinnedAppsMatch = 0;
+										for (let i = 0; i < pinnedAppsChildren.length; i++) {
+											const child: Element = pinnedAppsChildren[i];
+											if (child.textContent && child.textContent.toLowerCase().includes(query)) {
+												child.classList.remove("hidden");
+												setTimeout(() => {
+													child.classList.remove("opacity-0");
+													child.classList.remove("-translate-x-2");
+												}, 150);
+												pinnedAppsMatch++;
+											} else {
+												child.classList.add("-translate-x-2");
+												child.classList.add("opacity-0");
+												setTimeout(() => {
+													child.classList.add("hidden");
+												}, 150);
+											}
 										}
-									}
-									if (systemAppsMatch === 0 && pinnedAppsMatch === 0) {
-										setSearchMatch(true);
+										if (systemAppsMatch === 0 && pinnedAppsMatch === 0) {
+											setSearchMatch(true);
+										} else {
+											setSearchMatch(false);
+										}
 									} else {
-										setSearchMatch(false);
+										if (systemAppsMatch === 0) {
+											setSearchMatch(true);
+										} else {
+											setSearchMatch(false);
+										}
 									}
 								}
 							}}
@@ -329,6 +340,9 @@ const Dock: FC<IDockProps> = ({ pinned }) => {
 								icon={item.icon}
 								pid={undefined}
 								src={item.src}
+								size={item.size}
+								proxy={item.proxy}
+								snapable={item.snapable}
 								onClick={() => {
 									item.onClick?.(new MouseEvent("click"));
 									windowStore.addWindow({
@@ -362,6 +376,10 @@ const Dock: FC<IDockProps> = ({ pinned }) => {
 												key={index}
 												title={item.title}
 												icon={item.icon}
+												src={item.src}
+												size={item.size}
+												proxy={item.proxy}
+												snapable={item.snapable}
 												onClick={(e: MouseEvent) => {
 													if (e.button === 0) item.onClick?.(new MouseEvent("click"));
 													windowStore.addWindow({
@@ -574,9 +592,9 @@ const DockItem: FC<TDockItem> = ({ className, icon, title, src, onClick, onConte
 		};
 	}, [currWID, winfocused]);
 	return (
-		// @ts-expect-error
 		<dock-item
 			ref={dockItemRef}
+			// @ts-expect-error
 			wid={wid}
 			class={
 				className
@@ -639,14 +657,20 @@ const DockItem: FC<TDockItem> = ({ className, icon, title, src, onClick, onConte
 							},
 						},
 						{
-							text: "Pin",
+							text: "Pin to Dock",
 							click: () => {
 								window.tb.desktop.dock.pin({
-									src: src,
+									// @ts-expect-error ignore this
+									title: typeof title === "string" ? title : title?.text,
 									icon: typeof icon === "string" ? icon : undefined,
-									size: size,
-									title: title,
+									isPinnable: true,
+									src: src,
+									proxy: proxy,
 									snapable: snapable,
+									size: {
+										width: size?.width ?? 600,
+										height: size?.height ?? 400,
+									},
 								});
 							},
 						},
@@ -674,8 +698,8 @@ const DockItem: FC<TDockItem> = ({ className, icon, title, src, onClick, onConte
 const PinnedDockItem: FC<TDockItem> = ({ className, icon, title, src, onClick, onContextMenu, size, snapable, proxy }) => {
 	const windowStore = useWindowStore();
 	return (
-		// @ts-expect-error
 		<dock-item
+			// @ts-expect-error
 			class={className ? className + " cursor-pointer p-1 hover:bg-[#ffffff28] rounded-md duration-100 ease-in select-none" : "cursor-pointer p-1 hover:bg-[#ffffff28] rounded-md duration-100 ease-in select-none"}
 			onContextMenu={() => {
 				return;
@@ -734,7 +758,7 @@ const PinnedDockItem: FC<TDockItem> = ({ className, icon, title, src, onClick, o
 	);
 };
 
-export const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, className, src }) => {
+export const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, className, src, proxy, size, snapable }) => {
 	// @ts-expect-error
 	const chars = typeof title === "string" ? title.split("") : title?.text.split("");
 	const [resolvedIcon, setResolvedIcon] = useState<string | boolean | undefined>(false);
@@ -805,32 +829,27 @@ export const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, classN
 						{
 							text: "Pin to Dock",
 							click: async () => {
-								let configData: any = null;
-								try {
-									// @ts-expect-error
-									const data = JSON.parse(await Filer.promises.readFile(`/apps/system/${typeof title === "string" ? title : title?.text.toLowerCase()}.tapp/index.json`)).config;
-									configData = {
-										...data,
-									};
-								} catch (e) {
-									console.log(e);
-									configData = {
-										// @ts-expect-error
-										title: typeof title === "string" ? title : title?.text,
-										icon: typeof icon === "string" ? icon : undefined,
-										isPinnable: true,
-										src: src,
-									};
-								}
-								window.tb.desktop.dock.pin(configData);
+								window.tb.desktop.dock.pin({
+									// @ts-expect-error ignore this
+									title: typeof title === "string" ? title : title?.text,
+									icon: typeof icon === "string" ? icon : undefined,
+									isPinnable: true,
+									src: src,
+									proxy: proxy,
+									snapable: snapable,
+									size: {
+										width: size?.width ?? 600,
+										height: size?.height ?? 400,
+									},
+								});
 							},
 						},
 						{
 							text: "Unpin from Start",
 							click: async () => {
-								const apps: any = JSON.parse(await Filer.promises.readFile("/system/var/terbium/start.json", "utf8"));
+								const apps: any = JSON.parse(await window.tb.fs.promises.readFile("/system/var/terbium/start.json", "utf8"));
 								apps.pinned_apps = apps.pinned_apps.filter((app: any) => !(app.title === title && app.icon === icon) && !(app.name === title && app.icon === icon));
-								await Filer.promises.writeFile("/system/var/terbium/start.json", JSON.stringify(apps, null, 2));
+								await window.tb.fs.promises.writeFile("/system/var/terbium/start.json", JSON.stringify(apps, null, 2));
 								window.dispatchEvent(new Event("updApps"));
 							},
 						},
@@ -850,14 +869,15 @@ export const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, classN
 												}
 											} else if (src?.startsWith("/fs/apps/system/")) {
 												appPath = `/apps/system/${appName.toLowerCase()}.tapp`;
+											} else if (src?.includes("/apps/anura/")) {
+												appPath = `/apps/anura/${appName.toLowerCase()}`;
 											} else {
 												appPath = `/apps/user/${await window.tb.user.username()}/${appName}`;
 											}
-											let installedApps = JSON.parse(await Filer.promises.readFile(`/apps/installed.json`, "utf8"));
+											let installedApps = JSON.parse(await window.tb.fs.promises.readFile(`/apps/installed.json`, "utf8"));
 											installedApps = installedApps.filter((app: any) => app.title === title);
-											await Filer.promises.writeFile(`/apps/installed.json`, JSON.stringify(installedApps));
-											// @ts-expect-error
-											await new Filer.Shell().promises.rm(appPath, { recursive: true });
+											await window.tb.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(installedApps));
+											await window.tb.sh.promises.rm(appPath, { recursive: true });
 											await window.tb.launcher.removeApp(chars);
 											window.dispatchEvent(new Event("updApps"));
 										},
@@ -876,9 +896,9 @@ export const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, classN
 			</div>
 			<ChevronRightIcon
 				onClick={async () => {
-					const apps: any = JSON.parse(await Filer.promises.readFile("/system/var/terbium/start.json", "utf8"));
+					const apps: any = JSON.parse(await window.tb.fs.promises.readFile("/system/var/terbium/start.json", "utf8"));
 					apps.pinned_apps = apps.pinned_apps.filter((app: any) => !(app.title === title && app.icon === icon));
-					await Filer.promises.writeFile("/system/var/terbium/start.json", JSON.stringify(apps, null, 2));
+					await window.tb.fs.promises.writeFile("/system/var/terbium/start.json", JSON.stringify(apps, null, 2));
 					window.dispatchEvent(new Event("updApps"));
 				}}
 				className="size-7 bg-[#ffffff18] backdrop-blur-[20px] shadow-tb-border-shadow p-1.5 rounded-full text-white stroke-current stroke-[3px] opacity-0 group-hover:opacity-100 duration-150 ease-in"
@@ -893,8 +913,8 @@ export const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, classN
 			onContextMenu={async (e: React.MouseEvent) => {
 				e.preventDefault();
 				const { clientX, clientY } = e;
-				const appsStart: any = JSON.parse(await Filer.promises.readFile("/system/var/terbium/start.json", "utf8"));
-				const appsDock: any = JSON.parse(await Filer.promises.readFile("/system/var/terbium/dock.json", "utf8"));
+				const appsStart: any = JSON.parse(await window.tb.fs.promises.readFile("/system/var/terbium/start.json", "utf8"));
+				const appsDock: any = JSON.parse(await window.tb.fs.promises.readFile("/system/var/terbium/dock.json", "utf8"));
 				const isPinnedStart = appsStart.pinned_apps.some((app: any) => app.title === title && app.icon === icon);
 				const isPinnedDock = appsDock.some((app: any) => app.src === src && app.icon === icon);
 				window.tb.contextmenu.create({
@@ -917,33 +937,28 @@ export const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, classN
 							: {
 									text: "Pin to Dock",
 									click: async () => {
-										let configData: any = null;
-										try {
-											// @ts-expect-error
-											const data = JSON.parse(await Filer.promises.readFile(`/apps/system/${typeof title === "string" ? title : title?.text.toLowerCase()}.tapp/index.json`)).config;
-											configData = {
-												...data,
-											};
-										} catch (e) {
-											console.log(e);
-											configData = {
-												// @ts-expect-error
-												title: typeof title === "string" ? title : title?.text,
-												icon: typeof icon === "string" ? icon : undefined,
-												isPinnable: true,
-												src: src,
-											};
-										}
-										window.tb.desktop.dock.pin(configData);
+										window.tb.desktop.dock.pin({
+											// @ts-expect-error ignore this
+											title: typeof title === "string" ? title : title?.text,
+											icon: typeof icon === "string" ? icon : undefined,
+											isPinnable: true,
+											src: src,
+											proxy: proxy,
+											snapable: snapable,
+											size: {
+												width: size?.width ?? 600,
+												height: size?.height ?? 400,
+											},
+										});
 									},
 								},
 						isPinnedStart
 							? {
 									text: "Unpin from Start",
 									click: async () => {
-										const apps: any = JSON.parse(await Filer.promises.readFile("/system/var/terbium/start.json", "utf8"));
+										const apps: any = JSON.parse(await window.tb.fs.promises.readFile("/system/var/terbium/start.json", "utf8"));
 										apps.pinned_apps = apps.pinned_apps.filter((app: any) => !(app.title === title && app.icon === icon));
-										await Filer.promises.writeFile("/system/var/terbium/start.json", JSON.stringify(apps, null, 2));
+										await window.tb.fs.promises.writeFile("/system/var/terbium/start.json", JSON.stringify(apps, null, 2));
 										window.dispatchEvent(new Event("updApps"));
 									},
 								}
@@ -954,7 +969,7 @@ export const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, classN
 											?.replace("/fs", "")
 											.replace(/\/[^/]+\.html$/, "/")
 											.replace(/\/\.\//, "/");
-										const appConfig = JSON.parse(await Filer.promises.readFile(path + "index.json", "utf8"));
+										const appConfig = JSON.parse(await window.tb.fs.promises.readFile(path + "index.json", "utf8"));
 										if (appsStart.pinned_apps.some((app: any) => app.title === appConfig.config.title && app.icon === appConfig.config.icon)) {
 											return;
 										}
@@ -963,7 +978,7 @@ export const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, classN
 											name: typeof appConfig.config.title === "string" ? appConfig.config.title : appConfig.config.title.text,
 											...appConfig.config,
 										});
-										await Filer.promises.writeFile("/system/var/terbium/start.json", JSON.stringify(appsStart, null, 2));
+										await window.tb.fs.promises.writeFile("/system/var/terbium/start.json", JSON.stringify(appsStart, null, 2));
 										window.dispatchEvent(new Event("updApps"));
 									},
 								},
@@ -983,14 +998,15 @@ export const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, classN
 												}
 											} else if (src?.startsWith("/fs/apps/system/")) {
 												appPath = `/apps/system/${appName.toLowerCase()}.tapp`;
+											} else if (src?.includes("/apps/anura/")) {
+												appPath = `/apps/anura/${appName.toLowerCase()}`;
 											} else {
 												appPath = `/apps/user/${await window.tb.user.username()}/${appName}`;
 											}
-											let installedApps = JSON.parse(await Filer.promises.readFile(`/apps/installed.json`, "utf8"));
+											let installedApps = JSON.parse(await window.tb.fs.promises.readFile(`/apps/installed.json`, "utf8"));
 											installedApps = installedApps.filter((app: any) => app.title === title);
-											await Filer.promises.writeFile(`/apps/installed.json`, JSON.stringify(installedApps));
-											// @ts-expect-error
-											await new Filer.Shell().promises.rm(appPath, { recursive: true });
+											await window.tb.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(installedApps));
+											await window.tb.sh.promises.rm(appPath, { recursive: true });
 											await window.tb.launcher.removeApp(chars);
 											window.dispatchEvent(new Event("updApps"));
 										},
@@ -1009,13 +1025,13 @@ export const StartItem: FC<TStartItem> = ({ icon, title, onClick, inPins, classN
 			</div>
 			<ChevronRightIcon
 				onClick={async () => {
-					const apps: any = JSON.parse(await Filer.promises.readFile("/system/var/terbium/start.json", "utf8"));
+					const apps: any = JSON.parse(await window.tb.fs.promises.readFile("/system/var/terbium/start.json", "utf8"));
 					apps.pinned_apps.push({
 						title: title,
 						icon: icon,
 						src: src,
 					});
-					await Filer.promises.writeFile("/system/var/terbium/start.json", JSON.stringify(apps, null, 2));
+					await window.tb.fs.promises.writeFile("/system/var/terbium/start.json", JSON.stringify(apps, null, 2));
 					window.dispatchEvent(new Event("updApps"));
 				}}
 				className="size-7 bg-[#ffffff18] backdrop-blur-[20px] shadow-tb-border-shadow p-1.5 rounded-full text-white stroke-current stroke-[3px] opacity-0 group-hover:opacity-100 duration-150 ease-in"

@@ -35,17 +35,10 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 	const minMaxRef = useRef<SVGSVGElement>(null);
 	const closeRef = useRef<SVGSVGElement>(null);
 
-	const topResizer = useRef<HTMLDivElement>(null);
-	const leftResizer = useRef<HTMLDivElement>(null);
-	const rightResizer = useRef<HTMLDivElement>(null);
-	const bottomResizer = useRef<HTMLDivElement>(null);
-
 	const contentRef = useRef<HTMLDivElement>(null);
 	const titleRef = useRef<HTMLSpanElement>(null);
 	const thtmlref = useRef<HTMLDivElement>(null);
 
-	const [wid] = useState(config.wid);
-	const [pid] = useState(config.pid);
 	const [zIndex, setZIndex] = useState(config.zIndex);
 	const [isMouseDown, setIsMouseDown] = useState(false);
 	const [isDragging, setIsDragging] = useState(false);
@@ -57,15 +50,15 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 	const [maximized, setMaximized] = useState(false);
 	const [minimized, setMinimized] = useState(false);
 	const [title] = useState(typeof config.title === "string" ? config.title : config.title?.text);
-	const [message, setMessage] = useState(config.message);
 	const [snapRegion, setSnapRegion] = useState<string | null>(null);
 	const [isResizing, setIsResizing] = useState<boolean>(false);
 	const [controls, setControls] = useState(config.controls);
 	const [src, setSrc] = useState(config.src);
+	const originalSize = useRef<{ width: number; height: number } | null>(null);
+	const [isSnapped, setIsSnapped] = useState(false);
 	const mobileCheck = async () => {
 		if ((await window.tb.platform.getPlatform()) === "mobile") {
 			setMaximized(true);
-			setControls(["minimize", "close"]);
 		}
 	};
 	mobileCheck();
@@ -90,25 +83,36 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 		}
 		const prox = async () => {
 			if (config.proxy === true) {
-				const settings: UserSettings = JSON.parse(await Filer.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, "utf8"));
+				const settings: UserSettings = JSON.parse(await window.tb.fs.promises.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, "utf8"));
+				setSrc("about:blank");
 				console.log(settings.proxy);
 				if (settings.proxy === "Ultraviolet") {
 					setSrc(`${window.location.origin}/uv/service/${await window.tb.proxy.encode(config.src, "XOR")}`);
 				} else {
 					setSrc(`${window.location.origin}/service/${await window.tb.proxy.encode(config.src, "XOR")}`);
 				}
+				Object.assign(srcRef.current?.contentWindow as typeof window, {
+					tb: window.parent.tb,
+					anura: window.parent.anura,
+					AliceWM: window.parent.AliceWM,
+					LocalFS: window.parent.LocalFS,
+					ExternalApp: window.parent.ExternalApp,
+					ExternalLib: window.parent.ExternalLib,
+					Filer: window.parent.Filer,
+				});
+			} else {
+				Object.assign(srcRef.current?.contentWindow as typeof window, {
+					tb: window.parent.tb,
+					anura: window.parent.anura,
+					AliceWM: window.parent.AliceWM,
+					LocalFS: window.parent.LocalFS,
+					ExternalApp: window.parent.ExternalApp,
+					ExternalLib: window.parent.ExternalLib,
+					Filer: window.parent.Filer,
+				});
 			}
 		};
 		prox();
-		Object.assign(srcRef.current?.contentWindow as typeof window, {
-			tb: window.parent.tb,
-			anura: window.parent.anura,
-			AliceWM: window.parent.AliceWM,
-			LocalFS: window.parent.LocalFS,
-			ExternalApp: window.parent.ExternalApp,
-			ExternalLib: window.parent.ExternalLib,
-			Filer: window.parent.Filer,
-		});
 	}, [srcRef, src]);
 	useEffect(() => {
 		const reload = (e: CustomEvent) => {
@@ -130,7 +134,7 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 		const max = (e: CustomEvent) => {
 			if (e.detail === config.pid) {
 				setMaximized(true);
-				windowStore.arrange(wid);
+				windowStore.arrange(config.wid);
 			}
 		};
 		const min = (e: CustomEvent) => {
@@ -177,9 +181,9 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 		};
 		const selWin = (e: CustomEvent) => {
 			if (e.detail === config.wid) {
-				windowStore.arrange(wid);
+				windowStore.arrange(config.wid);
 				// @ts-ignore
-				setZIndex(windowStore.getWindow(wid)?.zIndex);
+				setZIndex(windowStore.getWindow(config.wid)?.zIndex);
 				setMinimized(false);
 				setTimeout(() => {
 					windowRef.current?.classList.remove("duration-150");
@@ -226,7 +230,7 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 					{
 						text: "Close",
 						click: () => {
-							windowStore.removeWindow(wid);
+							windowStore.removeWindow(config.wid);
 							clearInfo();
 						},
 					},
@@ -285,53 +289,114 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 	const handleSnap = (newX: number, newY: number) => {
 		if (config.snapable !== false) {
 			if (!windowRef.current) return;
+			originalSize.current = { width, height };
 			const windowWidth = windowRef.current.offsetWidth;
+			const windowHeight = windowRef.current.offsetHeight;
 			const SNAP_THRESHOLD = 7;
-			if (newX <= SNAP_THRESHOLD) {
+			const CORNER_THRESHOLD = 40;
+			const atLeft = newX <= SNAP_THRESHOLD;
+			const atRight = newX + windowWidth >= window.innerWidth - SNAP_THRESHOLD;
+			const atTop = newY <= SNAP_THRESHOLD;
+			const atBottom = newY + windowHeight >= window.innerHeight - SNAP_THRESHOLD;
+			if (atLeft && atTop && newX <= CORNER_THRESHOLD && newY <= CORNER_THRESHOLD) {
+				setX(0);
+				setY(0);
+				setSnapRegion("top-left");
+				onSnapPreview?.("top-left");
+			} else if (atRight && atTop && newX + windowWidth >= window.innerWidth - CORNER_THRESHOLD && newY <= CORNER_THRESHOLD) {
+				setX(window.innerWidth - windowWidth);
+				setY(0);
+				setSnapRegion("top-right");
+				onSnapPreview?.("top-right");
+			} else if (atLeft && atBottom && newX <= CORNER_THRESHOLD && newY + windowHeight >= window.innerHeight - CORNER_THRESHOLD) {
+				setX(0);
+				setY(window.innerHeight - windowHeight);
+				setSnapRegion("bottom-left");
+				onSnapPreview?.("bottom-left");
+			} else if (atRight && atBottom && newX + windowWidth >= window.innerWidth - CORNER_THRESHOLD && newY + windowHeight >= window.innerHeight - CORNER_THRESHOLD) {
+				setX(window.innerWidth - windowWidth);
+				setY(window.innerHeight - windowHeight);
+				setSnapRegion("bottom-right");
+				onSnapPreview?.("bottom-right");
+			} else if (atLeft) {
 				setX(0);
 				setSnapRegion("left");
 				onSnapPreview?.("left");
-			} else if (newX + windowWidth >= window.innerWidth - SNAP_THRESHOLD) {
+			} else if (atRight) {
 				setX(window.innerWidth - windowWidth);
 				setSnapRegion("right");
 				onSnapPreview?.("right");
-			} else if (newY <= SNAP_THRESHOLD) {
+			} else if (atTop) {
 				setY(0);
 				setSnapRegion("top");
 				onSnapPreview?.("top");
 			} else {
+				if (snapRegion && originalSize.current) {
+					setWidth(originalSize.current.width);
+					setHeight(originalSize.current.height);
+				}
 				setSnapRegion(null);
 				onSnapDone?.();
 			}
 		}
 	};
 	useEffect(() => {
+		if (isDragging && isSnapped && originalSize.current && windowRef.current) {
+			windowRef.current.style.width = `${originalSize.current.width}px`;
+			windowRef.current.style.height = `${originalSize.current.height}px`;
+			setIsSnapped(false);
+			setSnapRegion(null);
+			onSnapDone?.();
+		}
+	}, [isDragging, isSnapped]);
+
+	useEffect(() => {
 		const snap = () => {
 			setIsMouseDown(false);
 			setIsDragging(false);
-			if (windowRef.current)
+			if (windowRef.current) {
 				if (snapRegion === "left") {
 					windowRef.current.style.left = "0";
 					windowRef.current.style.width = "50%";
 					windowRef.current.style.height = "100%";
 					windowRef.current.style.top = "0";
+					setIsSnapped(true);
 				} else if (snapRegion === "right") {
 					windowRef.current.style.left = "50%";
 					windowRef.current.style.width = "50%";
 					windowRef.current.style.height = "100%";
 					windowRef.current.style.top = "0";
+					setIsSnapped(true);
 				} else if (snapRegion === "top") {
-					if (maximized === false && isDragging === true) {
-						setMaximized(true);
-					}
-				} else {
-					if (isResizing === false && isDragging) {
-						windowRef.current.style.left = `${x}`;
-						windowRef.current.style.width = `${width}`;
-						windowRef.current.style.height = `${height}`;
-						windowRef.current.style.top = `${y}`;
-					}
+					setMaximized(true);
+					setIsSnapped(true);
+				} else if (snapRegion === "top-left") {
+					windowRef.current.style.left = "0";
+					windowRef.current.style.top = "0";
+					windowRef.current.style.width = "50%";
+					windowRef.current.style.height = "50%";
+					setIsSnapped(true);
+				} else if (snapRegion === "top-right") {
+					windowRef.current.style.left = "50%";
+					windowRef.current.style.top = "0";
+					windowRef.current.style.width = "50%";
+					windowRef.current.style.height = "50%";
+					setIsSnapped(true);
+				} else if (snapRegion === "bottom-left") {
+					windowRef.current.style.left = "0";
+					windowRef.current.style.top = "50%";
+					windowRef.current.style.width = "50%";
+					windowRef.current.style.height = "50%";
+					setIsSnapped(true);
+				} else if (snapRegion === "bottom-right") {
+					windowRef.current.style.left = "50%";
+					windowRef.current.style.top = "50%";
+					windowRef.current.style.width = "50%";
+					windowRef.current.style.height = "50%";
+					setIsSnapped(true);
 				}
+			}
+			setSnapRegion(null);
 			onSnapDone?.();
 			if (srcRef.current) {
 				srcRef.current.style.pointerEvents = "auto";
@@ -383,39 +448,37 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 					setY(newY);
 				}
 			}
+			originalSize.current = { width, height };
 		};
 
 		const onUp = () => {
 			window.removeEventListener("mousemove", onMove);
 			window.removeEventListener("mouseup", onUp);
+			window.removeEventListener("blur", onUp);
 			setIsMouseDown(false);
 			setIsResizing(false);
 		};
 
+		window.onmouseleave = () => {
+			setIsDragging(false);
+			setIsMouseDown(false);
+			window.removeEventListener("mousemove", onMove);
+			window.removeEventListener("mouseup", onUp);
+			window.removeEventListener("blur", onUp);
+		};
+
 		window.addEventListener("mousemove", onMove);
 		window.addEventListener("mouseup", onUp);
+		window.addEventListener("blur", onUp);
 		setIsMouseDown(true);
 	};
 
-	useEffect(() => {
-		const listenForMessage = (e: any) => {
-			setMessage(e.data);
-			srcRef.current?.contentWindow!.postMessage(config.message, "*");
-		};
-		window.addEventListener("message", listenForMessage as EventListener);
-
-		return () => {
-			window.removeEventListener("message", listenForMessage as EventListener);
-		};
-	}, []);
-
 	return (
-		// @ts-ignore
 		<div
 			ref={windowRef}
-			message={message}
-			id={wid}
-			pid={pid}
+			id={config.wid}
+			// @ts-ignore
+			pid={config.pid}
 			className={`
             ${className ? className : ""}
             absolute
@@ -441,19 +504,31 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 					backgroundImage: "url(/assets/img/grain.png)",
 				}}
 			></div>
-			<div
-				ref={focuserRef}
-				className={`absolute rounded-lg ${config.focused ? "inset-x-2 top-[calc(40px+0.5rem)] bottom-2 pointer-events-none opacity-0" : "inset-x-[1px] top-[40px] bottom-[1px] backdrop-blur-[4px] opacity-100"} duration-150`}
-				onMouseDown={() => {
-					windowStore.arrange(wid);
-					// @ts-ignore
-					setZIndex(windowStore.getWindow(wid)?.zIndex);
-				}}
-			></div>
-			<div ref={topResizer} className="absolute left-0 right-0 h-[6px] cursor-n-resize" data-resizer="top" onMouseDown={() => handleMouseDown("top")} />
-			<div ref={leftResizer} className="absolute left-0 top-[6px] bottom-[6px] w-[6px] cursor-w-resize" data-resizer="left" onMouseDown={() => handleMouseDown("left")} />
-			<div ref={rightResizer} className="absolute right-0 top-[6px] bottom-[6px] w-[6px] cursor-e-resize" data-resizer="right" onMouseDown={() => handleMouseDown("right")} />
-			<div ref={bottomResizer} className="absolute bottom-0 left-0 right-0 h-[6px] cursor-s-resize" data-resizer="bottom" onMouseDown={() => handleMouseDown("bottom")} />
+			{isSnapped ? (
+				<div
+					ref={focuserRef}
+					className={`absolute rounded-lg ${config.focused ? "inset-x-2 top-[calc(40px+0.5rem)] bottom-2 pointer-events-none opacity-0" : "inset-x-[1px] top-[40px] bottom-[1px] opacity-100"} duration-150`}
+					onMouseDown={() => {
+						windowStore.arrange(config.wid);
+						// @ts-ignore
+						setZIndex(windowStore.getWindow(config.wid)?.zIndex);
+					}}
+				></div>
+			) : (
+				<div
+					ref={focuserRef}
+					className={`absolute rounded-lg ${config.focused ? "inset-x-2 top-[calc(40px+0.5rem)] bottom-2 pointer-events-none opacity-0" : "inset-x-[1px] top-[40px] bottom-[1px] backdrop-blur-[4px] opacity-100"} duration-150`}
+					onMouseDown={() => {
+						windowStore.arrange(config.wid);
+						// @ts-ignore
+						setZIndex(windowStore.getWindow(config.wid)?.zIndex);
+					}}
+				></div>
+			)}
+			<div className="absolute left-0 right-0 h-[6px] cursor-n-resize" data-resizer="top" onMouseDown={() => handleMouseDown("top")} />
+			<div className="absolute left-0 top-[6px] bottom-[6px] w-[6px] cursor-w-resize" data-resizer="left" onMouseDown={() => handleMouseDown("left")} />
+			<div className="absolute right-0 top-[6px] bottom-[6px] w-[6px] cursor-e-resize" data-resizer="right" onMouseDown={() => handleMouseDown("right")} />
+			<div className="absolute bottom-0 left-0 right-0 h-[6px] cursor-s-resize" data-resizer="bottom" onMouseDown={() => handleMouseDown("bottom")} />
 			<div className="absolute top-0 left-0 size-2.5 cursor-nw-resize" onMouseDown={() => handleMouseDown("top-left")} />
 			<div className="absolute top-0 right-0 size-2.5 cursor-ne-resize" onMouseDown={() => handleMouseDown("top-right")} />
 			<div className="absolute bottom-0 left-0 size-2.5 cursor-sw-resize" onMouseDown={() => handleMouseDown("bottom-left")} />
@@ -462,9 +537,9 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 				ref={regionRef}
 				className="region flex justify-between items-center bg-[#ffffff10] p-2 min-w-[224px] select-none"
 				onMouseDown={(e: React.MouseEvent) => {
-					windowStore.arrange(wid);
+					windowStore.arrange(config.wid);
 					// @ts-ignore
-					setZIndex(windowStore.getWindow(wid)?.zIndex);
+					setZIndex(windowStore.getWindow(config.wid)?.zIndex);
 					if ((e.target as HTMLElement).classList.contains("no-drag")) return;
 					const offsetX = e.clientX - windowRef.current!.offsetLeft;
 					const offsetY = e.clientY - windowRef.current!.offsetTop;
@@ -481,14 +556,24 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 						if (srcRef.current) srcRef.current.style.pointerEvents = "none";
 					};
 
-					window.addEventListener("mousemove", onMove);
-
-					window.onmouseup = () => {
+					const onUp = () => {
 						window.removeEventListener("mousemove", onMove);
+						window.removeEventListener("mouseup", onUp);
+						window.removeEventListener("blur", onUp);
+						setIsMouseDown(false);
+						setIsDragging(false);
 					};
+
+					window.addEventListener("mousemove", onMove);
+					window.addEventListener("mouseup", onUp);
+					window.addEventListener("blur", onUp);
 
 					window.onmouseleave = () => {
 						setIsDragging(false);
+						setIsMouseDown(false);
+						window.removeEventListener("mousemove", onMove);
+						window.removeEventListener("mouseup", onUp);
+						window.removeEventListener("blur", onUp);
 					};
 
 					setIsMouseDown(true);
@@ -523,8 +608,8 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 				}}
 			>
 				<div className="flex gap-2 items-center">
-					<img src={config.icon} alt="icon" className="w-5 h-5 pointer-events-none" draggable={false} />
-					<span ref={titleRef} className="font-[680] pointer-events-none">
+					<img src={config.icon} alt="icon" className="w-5 h-5 pointer-events-none select-none" draggable={false} />
+					<span ref={titleRef} className="font-[680] pointer-events-none select-none">
 						{title}
 					</span>
 					{titlebarhtml && <div ref={thtmlref} />}
@@ -636,7 +721,7 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 											}
 											setTimeout(() => {
 												clearInfo();
-												windowStore.removeWindow(wid);
+												windowStore.removeWindow(config.wid);
 											}, 150);
 										}}
 									>
@@ -674,8 +759,8 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 										windowRef.current.style.transitionDuration = "";
 									}
 								}, 150);
-								windowStore.minimize(wid);
-								window.dispatchEvent(new CustomEvent("min-win", { detail: pid }));
+								windowStore.minimize(config.wid);
+								window.dispatchEvent(new CustomEvent("min-win", { detail: config.pid }));
 								setMinimized(true);
 							}}
 						>
@@ -750,7 +835,7 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 								}
 								setTimeout(() => {
 									clearInfo();
-									windowStore.removeWindow(wid);
+									windowStore.removeWindow(config.wid);
 								}, 150);
 							}}
 						>
@@ -768,7 +853,7 @@ const WindowElement: React.FC<WindowProps> = ({ className, config, onSnapDone, o
 					</div>
 				)}
 			</div>
-			<div ref={contentRef}>
+			<div ref={contentRef} className="w-full h-full">
 				<iframe
 					key={config.src}
 					ref={srcRef}
@@ -807,14 +892,14 @@ const DesktopItems = () => {
 
 	useEffect(() => {
 		const addDesktopListener = async () => {
-			let desktopItems: string[] = await Filer.fs.promises.readdir(`/home/${user}/desktop`);
+			let desktopItems: string[] = await window.tb.fs.promises.readdir(`/home/${user}/desktop`);
 
 			const handleDesktopChange = async () => {
 				try {
-					const updatedItems = await Filer.fs.promises.readdir(`/home/${user}/desktop`);
+					const updatedItems = await window.tb.fs.promises.readdir(`/home/${user}/desktop`);
 					const addedItems = updatedItems.filter(item => !desktopItems.includes(item));
 					const removedItems = desktopItems.filter(item => !updatedItems.includes(item));
-					var desktopConfig = JSON.parse(await Filer.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
+					var desktopConfig = JSON.parse(await window.tb.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
 					if (addedItems.length > 0) {
 						const findLastItem = () => {
 							for (let i = desktopConfig.length - 1; i >= 0; i--) {
@@ -840,11 +925,11 @@ const DesktopItems = () => {
 						for (const item of addedItems) {
 							const itemExists = desktopConfig.some((config: any) => config.item === `/home/${user}/desktop/${item}`);
 							if (!itemExists) {
-								const type = (await Filer.fs.promises.lstat(`/home/${user}/desktop/${item}`)).type.toLowerCase();
+								const type = (await window.tb.fs.promises.lstat(`/home/${user}/desktop/${item}`)).type.toLowerCase();
 								if (type === "symlink") {
-									const isAppJson = (await Filer.fs.promises.readFile(await Filer.fs.promises.readlink(`/home/${user}/desktop/${item}`))).includes("config");
+									const isAppJson = (await window.tb.fs.promises.readFile(await window.tb.fs.promises.readlink(`/home/${user}/desktop/${item}`))).includes("config");
 									desktopConfig.push({
-										name: isAppJson ? JSON.parse(await Filer.fs.promises.readFile(await Filer.fs.promises.readlink(`/home/${user}/desktop/${item}`)))["config"].title : item,
+										name: isAppJson ? JSON.parse(await window.tb.fs.promises.readFile(await window.tb.fs.promises.readlink(`/home/${user}/desktop/${item}`)))["config"].title : item,
 										item: `/home/${user}/desktop/${item}`,
 										position: {
 											custom: false,
@@ -854,10 +939,10 @@ const DesktopItems = () => {
 									});
 								} else if (type === "file") {
 									const ext = item.split(".").pop();
-									const icons = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/file-icons.json"));
+									const icons = JSON.parse(await window.tb.fs.promises.readFile("/system/etc/terbium/file-icons.json"));
 									const iconName = ext ? icons["ext-to-name"][ext] : "Unknown";
 									const iconPath = iconName ? icons["name-to-path"][iconName] : "/system/etc/terbium/file-icons/Unknown.svg";
-									const iconData = await Filer.fs.promises.readFile(iconPath, "utf8");
+									const iconData = await window.tb.fs.promises.readFile(iconPath, "utf8");
 
 									desktopConfig.push({
 										name: item,
@@ -882,7 +967,7 @@ const DesktopItems = () => {
 					}
 
 					desktopItems = updatedItems;
-					await Filer.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(desktopConfig, null, 4));
+					await window.tb.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(desktopConfig, null, 4));
 				} catch (error) {
 					console.error("Error while reading directory:", error);
 				}
@@ -898,9 +983,9 @@ const DesktopItems = () => {
 	useEffect(() => {
 		const getItems = async () => {
 			var allItems: any[] = [];
-			const items = JSON.parse(await Filer.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
+			const items = JSON.parse(await window.tb.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
 			for (const item of items) {
-				const type = (await Filer.fs.promises.lstat(item.item)).type.toLowerCase();
+				const type = (await window.tb.fs.promises.lstat(item.item)).type.toLowerCase();
 				const position = item.position;
 				if (type === "symlink") {
 					allItems.push({
@@ -912,14 +997,14 @@ const DesktopItems = () => {
 							top: position.top,
 							left: position.left,
 						},
-						config: JSON.parse(await Filer.fs.promises.readFile(await Filer.fs.promises.readlink(item.item)))["config"],
+						config: JSON.parse(await window.tb.fs.promises.readFile(await window.tb.fs.promises.readlink(item.item)))["config"],
 					});
 				} else if (type === "file") {
 					const ext = item.name.split(".").pop();
-					const icons = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/file-icons.json"));
+					const icons = JSON.parse(await window.tb.fs.promises.readFile("/system/etc/terbium/file-icons.json"));
 					const iconName = ext ? icons["ext-to-name"][ext] : "Unknown";
 					const iconPath = iconName ? icons["name-to-path"][iconName] : "/system/etc/terbium/file-icons/Unknown.svg";
-					const iconData = await Filer.fs.promises.readFile(iconPath, "utf8");
+					const iconData = await window.tb.fs.promises.readFile(iconPath, "utf8");
 					allItems.push({
 						name: item.name,
 						type: "file",
@@ -955,43 +1040,45 @@ const DesktopItems = () => {
 
 	const onMouseDown = (e: React.MouseEvent<HTMLDivElement>, index: number) => {
 		let holdTimeout: NodeJS.Timeout | null = null;
+		let renamingIndex: number | null = null;
 		const startDragging = () => {
 			setDragradius(true);
 			setDragging(true);
 			draggedItemIndex.current = index;
 		};
 
-		const saveName = async (name: string) => {
-			if (selectedRef.current) {
+		const saveName = async () => {
+			if (selectedRef.current && renamingIndex !== null) {
 				const spanElement = selectedRef.current.querySelector("span");
 				if (spanElement) {
 					const newName = spanElement.innerText;
-					const oldName = items[index].name;
-					const itemPath = items[index].item;
+					const oldName = items[renamingIndex].name;
+					const itemPath = items[renamingIndex].item;
 					const newPath = itemPath.replace(oldName, newName);
 					if (selectedRef.current?.dataset.type === "shortcut") {
-						const desktopItems = JSON.parse(await Filer.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
+						const desktopItems = JSON.parse(await window.tb.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
 						const itemIndex = desktopItems.findIndex((item: any) => item.item === itemPath);
 						if (itemIndex !== -1) {
 							desktopItems[itemIndex].name = newName;
 							desktopItems[itemIndex].item = newPath;
-							await Filer.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(desktopItems, null, 4));
+							await window.tb.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(desktopItems, null, 4));
 							window.dispatchEvent(new Event("upd-desktop"));
 						}
 					} else {
-						await Filer.fs.promises.rename(itemPath, newPath);
-						const desktopItems = JSON.parse(await Filer.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
+						await window.tb.fs.promises.rename(itemPath, newPath);
+						const desktopItems = JSON.parse(await window.tb.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
 						const itemIndex = desktopItems.findIndex((item: any) => item.item === itemPath);
 						if (itemIndex !== -1) {
 							desktopItems[itemIndex].name = newName;
 							desktopItems[itemIndex].item = newPath;
-							await Filer.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(desktopItems, null, 4));
+							await window.tb.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(desktopItems, null, 4));
 							window.dispatchEvent(new Event("upd-desktop"));
 							selectedRef.current = null;
 						}
 					}
 				}
 			}
+			renamingIndex = null;
 		};
 
 		if (selectedRef.current && selectedRef.current === e.currentTarget) {
@@ -1008,26 +1095,29 @@ const DesktopItems = () => {
 					spanElement.addEventListener("keydown", async e => {
 						if (e.key === "Enter") {
 							e.preventDefault();
-							saveName(spanElement.innerText);
+							await saveName();
 						}
 					});
 					spanElement.focus();
+					renamingIndex = index;
 				}
-				document.addEventListener("mousedown", e => {
+				const mouseDownHandler = async (e: MouseEvent) => {
 					if (selectedRef.current && !selectedRef.current.contains(e.target as Node)) {
 						setSelected(null);
 						const spanElement = selectedRef.current.querySelector("span");
 						if (spanElement) {
-							saveName(spanElement.innerText);
+							await saveName();
 							spanElement.contentEditable = "false";
 							spanElement.blur();
 							selectedRef.current = null;
 						}
 					}
-				});
+				};
+				document.addEventListener("mousedown", mouseDownHandler, { once: true });
 			}
 		} else {
 			selectedRef.current = e.currentTarget;
+			renamingIndex = index;
 		}
 
 		holdTimeout = setTimeout(startDragging, 300);
@@ -1085,17 +1175,16 @@ const DesktopItems = () => {
 
 	const savePos = async (item: string, left: number, top: number) => {
 		try {
-			const desktopConfig = JSON.parse(await Filer.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
+			const desktopConfig = JSON.parse(await window.tb.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
 			const itemIndex = desktopConfig.findIndex((config: any) => config.item === item);
 			if (itemIndex !== -1) {
 				const currentLeft = desktopConfig[itemIndex].position.left;
 				const currentTop = desktopConfig[itemIndex].position.top;
-				// console.log(currentLeft, currentTop, left, top) debuging moment
 				if ((Math.abs(Math.round(currentLeft) - Math.round(left)) > 67 || Math.abs(Math.round(currentTop) - Math.round(top)) > 67) && (Math.round(currentLeft) !== Math.round(left) || Math.round(currentTop) !== Math.round(top))) {
 					desktopConfig[itemIndex].position.left = Math.round(left);
 					desktopConfig[itemIndex].position.top = Math.round(top);
 					desktopConfig[itemIndex].position.custom = true;
-					await Filer.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(desktopConfig, null, 4));
+					await window.tb.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(desktopConfig, null, 4));
 					console.log("Saved app position");
 				}
 			}
@@ -1121,7 +1210,7 @@ const DesktopItems = () => {
 						id="desktop-item"
 						className="group relative size-max min-w-16 min-h-16 flex flex-col items-center justify-center p-2 text-sm font-medium text-wrap select-none"
 						onDoubleClick={async () => {
-							let handlers = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"))["fileAssociatedApps"];
+							let handlers = JSON.parse(await window.tb.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"))["fileAssociatedApps"];
 							handlers = Object.entries(handlers).filter(([type, app]) => {
 								return !(type === "text" && app === "text-editor") && !(type === "image" && app === "media-viewer") && !(type === "video" && app === "media-viewer") && !(type === "audio" && app === "media-viewer");
 							});
@@ -1174,7 +1263,7 @@ const DesktopItems = () => {
 												title: "Select a application",
 												filter: ".tapp",
 												onOk: async (val: any) => {
-													const app = JSON.parse(await Filer.fs.promises.readFile(`${val}/.tbconfig`, "utf8"));
+													const app = JSON.parse(await window.tb.fs.promises.readFile(`${val}/.tbconfig`, "utf8"));
 													createWindow({ ...app, message: { type: "process", path: item.item } });
 												},
 											});
@@ -1219,9 +1308,9 @@ const DesktopItems = () => {
 									{
 										text: "Delete Shortcut",
 										click: async () => {
-											let idx = JSON.parse(await Filer.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
+											let idx = JSON.parse(await window.tb.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
 											idx = idx.filter((entry: any) => entry.name !== item.name);
-											await Filer.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(idx, null, 4));
+											await window.tb.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(idx, null, 4));
 											window.dispatchEvent(new Event("upd-desktop"));
 										},
 									},
@@ -1289,9 +1378,9 @@ const DesktopItems = () => {
 									{
 										text: "Delete Shortcut",
 										click: async () => {
-											let idx = JSON.parse(await Filer.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
+											let idx = JSON.parse(await window.tb.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
 											idx = idx.filter((entry: any) => entry.name !== item.name);
-											await Filer.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(idx, null, 4));
+											await window.tb.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(idx, null, 4));
 											window.dispatchEvent(new Event("upd-desktop"));
 										},
 									},
@@ -1354,12 +1443,12 @@ const DesktopItems = () => {
 									{
 										text: "Delete Shortcut",
 										click: async () => {
-											const stat = await Filer.fs.promises.stat(`/home/${user}/desktop/${item.item}`);
+											const stat = await window.tb.fs.promises.stat(`/home/${user}/desktop/${item.item}`);
 											if (stat.isDirectory()) {
 												// @ts-expect-error
-												await new Filer.fs.Shell().promises.rm(`/home/${user}/desktop/${item.item}`, { recursive: true });
+												await new window.tb.fs.Shell().promises.rm(`/home/${user}/desktop/${item.item}`, { recursive: true });
 											} else {
-												await Filer.fs.promises.unlink(`/home/${user}/desktop/${item.item}`);
+												await window.tb.fs.promises.unlink(`/home/${user}/desktop/${item.item}`);
 											}
 											window.dispatchEvent(new Event("upd-desktop"));
 										},
@@ -1401,19 +1490,39 @@ const WindowArea: React.FC<WindowAreaProps> = ({ className }) => {
 		switch (direction) {
 			case "left":
 				return `
-                    left-0 w-6/12 h-full
-                    ${prevShowing ? "translate-x-0" : "-translate-x-4"}
-                `;
+					left-0 w-6/12 h-full
+					${prevShowing ? "translate-x-0" : "-translate-x-4"}
+				`;
 			case "right":
 				return `
-                    right-0 w-6/12 h-full
-                    ${prevShowing ? "translate-x-0" : "translate-x-4"}
-                `;
+					right-0 w-6/12 h-full
+					${prevShowing ? "translate-x-0" : "translate-x-4"}
+				`;
 			case "top":
 				return `
-                    left-0 right-0 w-full h-full
-                    ${prevShowing ? "translate-y-0" : "-translate-y-4"}
-                `;
+					left-0 right-0 w-full h-full
+					${prevShowing ? "translate-y-0" : "-translate-y-4"}
+				`;
+			case "top-left":
+				return `
+					left-0 top-0 w-6/12 h-6/12
+					${prevShowing ? "translate-x-0 translate-y-0" : "-translate-x-4 -translate-y-4"}
+				`;
+			case "top-right":
+				return `
+					right-0 top-0 w-6/12 h-6/12
+					${prevShowing ? "translate-x-0 translate-y-0" : "translate-x-4 -translate-y-4"}
+				`;
+			case "bottom-left":
+				return `
+					left-0 top-[50%] w-6/12 h-6/12
+					${prevShowing ? "translate-x-0 translate-y-0" : "-translate-x-4 translate-y-4"}
+				`;
+			case "bottom-right":
+				return `
+					right-0 top-[50%] w-6/12 h-6/12
+					${prevShowing ? "translate-x-0 translate-y-0" : "translate-x-4 translate-y-4"}
+				`;
 		}
 	};
 
@@ -1421,6 +1530,7 @@ const WindowArea: React.FC<WindowAreaProps> = ({ className }) => {
 		// @ts-ignore
 		<window-area
 			class={`${className ?? className} relative`}
+			// @ts-ignore
 			onContextMenuCapture={(e: MouseEvent) => {
 				const pos = { x: e.clientX, y: e.clientY };
 				window.tb.contextmenu.create({
@@ -1442,8 +1552,8 @@ const WindowArea: React.FC<WindowAreaProps> = ({ className }) => {
 									title: "Enter the new name of the folder",
 									onOk: async (val: any) => {
 										const user = sessionStorage.getItem("currAcc");
-										await Filer.fs.promises.mkdir(`/home/${user}/desktop/${val}`);
-										const desktopConfig = JSON.parse(await Filer.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
+										await window.tb.fs.promises.mkdir(`/home/${user}/desktop/${val}`);
+										const desktopConfig = JSON.parse(await window.tb.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
 										const getLastItem = () => {
 											for (let i = desktopConfig.length - 1; i >= 0; i--) {
 												if (!desktopConfig[i].position.custom) {
@@ -1473,7 +1583,7 @@ const WindowArea: React.FC<WindowAreaProps> = ({ className }) => {
 												left: leftPos,
 											},
 										});
-										await Filer.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(desktopConfig, null, 4));
+										await window.tb.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(desktopConfig, null, 4));
 										window.dispatchEvent(new Event("upd-desktop"));
 									},
 								});
@@ -1486,8 +1596,8 @@ const WindowArea: React.FC<WindowAreaProps> = ({ className }) => {
 									title: "Enter the new name of the file",
 									onOk: async (val: any) => {
 										const user = sessionStorage.getItem("currAcc");
-										await Filer.fs.promises.writeFile(`/home/${user}/desktop/${val}`, "", "utf8");
-										const desktopConfig = JSON.parse(await Filer.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
+										await window.tb.fs.promises.writeFile(`/home/${user}/desktop/${val}`, "", "utf8");
+										const desktopConfig = JSON.parse(await window.tb.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
 										const getLastItem = () => {
 											for (let i = desktopConfig.length - 1; i >= 0; i--) {
 												if (!desktopConfig[i].position.custom) {
@@ -1517,7 +1627,7 @@ const WindowArea: React.FC<WindowAreaProps> = ({ className }) => {
 												left: leftPos,
 											},
 										});
-										await Filer.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(desktopConfig, null, 4));
+										await window.tb.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(desktopConfig, null, 4));
 										window.dispatchEvent(new Event("upd-desktop"));
 									},
 								});
@@ -1528,7 +1638,7 @@ const WindowArea: React.FC<WindowAreaProps> = ({ className }) => {
 							click: async () => {
 								const make = async (item: any) => {
 									const user = sessionStorage.getItem("currAcc");
-									const desktopConfig = JSON.parse(await Filer.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
+									const desktopConfig = JSON.parse(await window.tb.fs.promises.readFile(`/home/${user}/desktop/.desktop.json`, "utf8"));
 									const getLastItem = () => {
 										for (let i = desktopConfig.length - 1; i >= 0; i--) {
 											if (!desktopConfig[i].position.custom) {
@@ -1558,11 +1668,11 @@ const WindowArea: React.FC<WindowAreaProps> = ({ className }) => {
 									if (aname.includes(".tapp")) {
 										let tconf: any;
 										if (await fileExists(`${item}/.tbconfig`)) {
-											tconf = JSON.parse(await Filer.fs.promises.readFile(`${item}/.tbconfig`, "utf8"));
+											tconf = JSON.parse(await window.tb.fs.promises.readFile(`${item}/.tbconfig`, "utf8"));
 										} else {
-											tconf = JSON.parse(await Filer.fs.promises.readFile(`${item}/index.json`, "utf8"));
+											tconf = JSON.parse(await window.tb.fs.promises.readFile(`${item}/index.json`, "utf8"));
 										}
-										await Filer.fs.promises.writeFile(
+										await window.tb.fs.promises.writeFile(
 											`${item}/desktopcfg.json`,
 											JSON.stringify({
 												name: aname.replace(".tapp", ""),
@@ -1574,7 +1684,7 @@ const WindowArea: React.FC<WindowAreaProps> = ({ className }) => {
 												icon: `/fs/${item}/${tconf.icon}`,
 											}),
 										);
-										await Filer.fs.promises.symlink(`${item}/desktopcfg.json`, `/home/${user}/desktop/${aname.replace(".tapp", "")}.lnk`, "file");
+										await window.tb.fs.promises.symlink(`${item}/desktopcfg.json`, `/home/${user}/desktop/${aname.replace(".tapp", "")}.lnk`, "file");
 										desktopConfig.push({
 											name: aname.replace(".tapp", ""),
 											item: `/home/${user}/desktop/${aname.replace(".tapp", "")}.lnk`,
@@ -1595,7 +1705,7 @@ const WindowArea: React.FC<WindowAreaProps> = ({ className }) => {
 											},
 										});
 									}
-									await Filer.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(desktopConfig, null, 4));
+									await window.tb.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(desktopConfig, null, 4));
 									window.dispatchEvent(new Event("upd-desktop"));
 								};
 								await window.tb.dialog.Select({

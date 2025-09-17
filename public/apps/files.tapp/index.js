@@ -48,21 +48,24 @@ const forward = async () => {
 
 document.getElementById("back").addEventListener("click", back);
 document.getElementById("forward").addEventListener("click", forward);
+document.getElementById("reload").addEventListener("click", () => {
+	openPath(document.querySelector(".nav-input.dir").value);
+});
 
 const emptyTrash = async () => {
-	await Filer.fs.promises.readdir("/system/trash").then(async files => {
+	await window.parent.tb.fs.promises.readdir("/system/trash").then(async files => {
 		if (files.length > 0) {
 			for (let file of files) {
 				const filePath = `/system/trash/${file}`;
-				Filer.fs.promises.stat(filePath, async (err, stats) => {
+				window.parent.tb.fs.promises.stat(filePath, async (err, stats) => {
 					if (err) {
 						console.error(err);
 						return;
 					}
 					if (stats.isFile()) {
-						Filer.fs.promises.unlink(filePath);
+						window.parent.tb.fs.promises.unlink(filePath);
 					} else if (stats.isDirectory()) {
-						await new Filer.fs.Shell().promises.rm(filePath, { recursive: true });
+						await window.parent.tb.sh.promises.rm(filePath, { recursive: true });
 					}
 					if (document.querySelector(".exp").getAttribute("path") === "/system/trash") {
 						document.querySelectorAll(".exp .path-item").forEach(item => {
@@ -108,7 +111,7 @@ const createCollapsible = async (title, id, opened, children) => {
 		path.classList.add("path-item");
 		if (title.toLocaleLowerCase().endsWith(".tapp")) {
 			try {
-				const data = await Filer.fs.promises.readFile(`${path}/icon.svg`, "utf8");
+				const data = await window.parent.tb.fs.promises.readFile(`${path}/icon.svg`, "utf8");
 				path.innerHTML = data;
 			} catch {
 				icon.innerHTML = `
@@ -210,7 +213,7 @@ const createCollapsible = async (title, id, opened, children) => {
 	collapsibleTitleContainer.addEventListener("click", async e => {
 		const icon = collapsible.querySelector(".collapsible-icon svg");
 		const paths = collapsible.querySelector(".paths");
-		let qcdata = JSON.parse(await Filer.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/config.json`, "utf8"));
+		let qcdata = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/config.json`, "utf8"));
 		if (qcdata["open-collapsibles"]) {
 			if (qcdata["open-collapsibles"][id]) {
 				if (qcdata["open-collapsibles"][id] === true) {
@@ -225,7 +228,7 @@ const createCollapsible = async (title, id, opened, children) => {
 					qcdata["open-collapsibles"][id] = true;
 				}
 			}
-			await Filer.fs.promises.writeFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/config.json`, JSON.stringify(qcdata));
+			await window.parent.tb.fs.promises.writeFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/config.json`, JSON.stringify(qcdata));
 		}
 		if (icon.classList.contains("collapsed")) {
 			icon.classList.remove("collapsed");
@@ -277,7 +280,7 @@ const createStorageDeviceCard = (type, davInfo) => {
 				openPath("//");
 				break;
 			case "dav":
-				openPath(davInfo.url);
+				openPath(`/mnt/${davInfo.name}/`);
 				break;
 		}
 	});
@@ -356,7 +359,7 @@ const createStorageDeviceCard = (type, davInfo) => {
 					const client = webdav.createClient(davInfo.url, {
 						username: davInfo.user,
 						password: davInfo.pass,
-						authType: webdav.AuthType.Digest,
+						authType: webdav.AuthType.Password,
 					});
 					await client.getDirectoryContents("/");
 					const icn = `
@@ -407,14 +410,15 @@ const showStorageDevices = () => {
 	sd_items.appendChild(fscard);
 	sd_items.appendChild(lscard);
 	const getdav = async () => {
-		const davInstances = JSON.parse(await Filer.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
+		const davInstances = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
 		for (const dav of davInstances) {
-			let si = createStorageDeviceCard("dav", { name: dav.name, url: dav.url, user: dav.user, pass: dav.pass });
+			let si = createStorageDeviceCard("dav", { name: dav.name, url: dav.url, user: dav.username, pass: dav.password });
 			sd_items.appendChild(si);
 		}
 	};
 	getdav();
 	exp.appendChild(sd_items);
+	document.querySelector(".drive-modal").style.display = "none";
 	const dirInput = document.querySelector(".nav-input.dir");
 	dirInput.value = "storage devices";
 };
@@ -458,32 +462,43 @@ const showLS = async () => {
 	});
 };
 
-const getItemDetails = async path => {
-	Filer.fs.stat(path, (err, stats) => {
-		if (err) return console.error(err);
-		let name = stats.name;
-		let type = stats.isFile() ? "File" : stats.isDirectory() ? "Folder" : "Symbolic Link";
-		let size = stats.size;
-		let created = stats.ctime;
-		let modified = stats.mtime;
-		let accessed = stats.atime;
-		let owner = stats.uid;
-		let mode = stats.mode;
-		let version = stats.version;
+const useDavClient = async path => {
+	const davInstances = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
+	const davUrl = path.split("/dav/")[0] + "/dav/";
+	const dav = davInstances.find(d => d.url.toLowerCase().includes(davUrl));
+	if (!dav) throw new Error("No matching dav instance found");
+	const client = webdav.createClient(dav.url, {
+		username: dav.username,
+		password: dav.password,
+		authType: webdav.AuthType.Password,
+	});
+	let filePath;
+	if (path.startsWith("http")) {
+		const match = path.match(/^https?:\/\/[^\/]+\/dav\/([^\/]+\/)?(.+)$/);
+		filePath = match ? "/" + match[2] : path;
+	} else {
+		filePath = path.replace(davUrl, "/");
+	}
+	return { client, filePath };
+};
 
+const getItemDetails = async path => {
+	if (path.includes("http")) {
+		const { client, filePath } = await useDavClient(path);
+		const stats = await client.stat(filePath, { depth: 1 });
 		let message = JSON.stringify({
 			type: "item-details",
 			path: path,
 			details: {
-				name: name,
-				type: type,
-				size: size,
-				created: created,
-				modified: modified,
-				accessed: accessed,
-				owner: owner,
-				mode: mode,
-				version: version,
+				name: stats.basename,
+				type: stats.mime,
+				size: stats.size,
+				created: null,
+				modified: stats.lastmod,
+				accessed: null,
+				owner: "WebDav",
+				mode: null,
+				version: stats.etag,
 			},
 		});
 
@@ -498,8 +513,52 @@ const getItemDetails = async path => {
 			controls: ["minimize", "close"],
 			message: message,
 		});
-	});
+	} else {
+		window.parent.tb.fs.stat(path, (err, stats) => {
+			if (err) return console.error(err);
+			let name = stats.name;
+			let type = stats.isFile() ? "File" : stats.isDirectory() ? "Folder" : "Symbolic Link";
+			let size = stats.size;
+			let created = stats.ctime;
+			let modified = stats.mtime;
+			let accessed = stats.atime;
+			let owner = stats.uid;
+			let mode = stats.mode;
+			let version = stats.version;
+
+			let message = JSON.stringify({
+				type: "item-details",
+				path: path,
+				details: {
+					name: name,
+					type: type,
+					size: size,
+					created: created,
+					modified: modified,
+					accessed: accessed,
+					owner: owner,
+					mode: mode,
+					version: version,
+				},
+			});
+
+			parent.window.tb.window.create({
+				title: `Properties`,
+				icon: "/fs/apps/system/files.tapp/icon.svg",
+				src: "/fs/apps/system/files.tapp/properties/index.html",
+				size: {
+					width: 280,
+					height: 252,
+				},
+				controls: ["minimize", "close"],
+				message: message,
+			});
+		});
+	}
 };
+
+let copied = null;
+let cut = null;
 
 const cm = async e => {
 	e.preventDefault();
@@ -524,7 +583,7 @@ const cm = async e => {
 					} else {
 						ext = ext.slice(-1).join(".");
 					}
-					const data = JSON.parse(await Filer.fs.promises.readFile("/apps/system/files.tapp/extensions.json", "utf8"));
+					const data = JSON.parse(await window.parent.tb.fs.promises.readFile("/apps/system/files.tapp/extensions.json", "utf8"));
 					if (data["image"].includes(ext)) {
 						parent.window.tb.file.handler.openFile(e.target.getAttribute("path"), "image");
 					} else if (data["video"].includes(ext)) {
@@ -555,7 +614,7 @@ const cm = async e => {
 										const targetDirectory = `/apps/user/${window.parent.sessionStorage.getItem("currAcc")}/${appName}`;
 										await unzip(zipFilePath, targetDirectory, true);
 										console.log("Done!");
-										const appConf = await Filer.fs.promises.readFile(`/apps/user/${window.parent.sessionStorage.getItem("currAcc")}/${appName}/.tbconfig`, "utf8");
+										const appConf = await window.parent.tb.fs.promises.readFile(`/apps/user/${window.parent.sessionStorage.getItem("currAcc")}/${appName}/.tbconfig`, "utf8");
 										const appData = JSON.parse(appConf);
 										console.log(appData);
 										await window.parent.tb.launcher.addApp({
@@ -582,15 +641,15 @@ const cm = async e => {
 											user: window.parent.sessionStorage.getItem("currAcc"),
 										});
 										try {
-											let apps = JSON.parse(await Filer.fs.promises.readFile(`/apps/installed.json`, "utf8"));
+											let apps = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/installed.json`, "utf8"));
 											apps.push({
 												name: appName,
 												user: await window.parent.tb.user.username(),
 												config: `/apps/system/${appName}.tapp/.tbconfig`,
 											});
-											await Filer.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(apps));
+											await window.parent.tb.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(apps));
 										} catch {
-											await Filer.fs.promises.writeFile(
+											await window.parent.tb.fs.promises.writeFile(
 												`/apps/installed.json`,
 												JSON.stringify([
 													{
@@ -633,7 +692,7 @@ const cm = async e => {
 					} else if (data["text"].includes(ext)) {
 						parent.window.tb.file.handler.openFile(e.target.getAttribute("path"), "text");
 					} else {
-						let handlers = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"))["fileAssociatedApps"];
+						let handlers = JSON.parse(await window.parent.tb.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"))["fileAssociatedApps"];
 						handlers = Object.entries(handlers).filter(([type, app]) => {
 							return !(type === "text" && app === "text-editor") && !(type === "image" && app === "media-viewer") && !(type === "video" && app === "media-viewer") && !(type === "audio" && app === "media-viewer");
 						});
@@ -685,7 +744,7 @@ const cm = async e => {
 											title: "Select a application",
 											filter: ".tapp",
 											onOk: async val => {
-												const app = JSON.parse(await Filer.fs.promises.readFile(`${val}/.tbconfig`, "utf8"));
+												const app = JSON.parse(await window.parent.tb.fs.promises.readFile(`${val}/.tbconfig`, "utf8"));
 												window.parent.tb.window.create({ ...app.wmArgs, message: { type: "process", path: item.item } });
 											},
 										});
@@ -706,7 +765,7 @@ const cm = async e => {
 			{
 				text: "Open With",
 				click: async () => {
-					let handlers = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"))["fileAssociatedApps"];
+					let handlers = JSON.parse(await window.parent.tb.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"))["fileAssociatedApps"];
 					handlers = Object.entries(handlers).filter(([type, app]) => {
 						return !(type === "text" && app === "text-editor") && !(type === "image" && app === "media-viewer") && !(type === "video" && app === "media-viewer") && !(type === "audio" && app === "media-viewer");
 					});
@@ -714,6 +773,7 @@ const cm = async e => {
 					for (const [type, app] of handlers) {
 						hands.push({ text: app, value: type });
 					}
+					const data = JSON.parse(await window.parent.window.parent.tb.fs.promises.readFile("/apps/system/files.tapp/extensions.json", "utf8"));
 					await tb.dialog.Select({
 						title: `Select a application to open: ${e.target.getAttribute("path").split("/").pop()}`,
 						options: [
@@ -758,7 +818,7 @@ const cm = async e => {
 										title: "Select a application",
 										filter: ".tapp",
 										onOk: async val => {
-											const app = JSON.parse(await Filer.fs.promises.readFile(`${val}/.tbconfig`, "utf8"));
+											const app = JSON.parse(await window.parent.tb.fs.promises.readFile(`${val}/.tbconfig`, "utf8"));
 											window.parent.tb.window.create({ ...app.wmArgs, message: { type: "process", path: item.item } });
 										},
 									});
@@ -781,51 +841,57 @@ const cm = async e => {
 					try {
 						const path = e.target.getAttribute("path");
 						const currentFileName = e.target.querySelector(".title").textContent;
-						const response = await tb.dialog.Message({
+						await tb.dialog.Message({
 							title: `Enter a new name for ${currentFileName}`,
 							defaultValue: currentFileName,
 							onOk: async newFileName => {
 								if (newFileName === currentFileName) {
 									return;
 								}
-								try {
-									await Filer.fs.promises.rename(path, `${e.target.getAttribute("parent-path")}/${newFileName}`);
-									const type = e.target.classList.contains("file-item") ? "file" : "folder";
-									document.querySelector(`[path="${path}"]`).remove();
-									const item = document.createElement("div");
-									item.classList.add(`${type}-item`, "path-item");
-									const icon = document.createElement("div");
-									icon.classList.add("icon");
-									let ext = newFileName.split(".").pop();
-									const data = await fetch(`/fs//system/etc/terbium/file-icons.json`).then(res => res.json());
-									let iconName = data["ext-to-name"][ext];
-									let iconPath = data["name-to-path"][iconName];
-									let unknown = data["name-to-path"]["Unknown"];
-									if (iconPath) {
-										icon.innerHTML = iconPath;
-									} else {
-										icon.innerHTML = unknown;
-									}
-									item.appendChild(icon);
-									const itemTitle = document.createElement("span");
-									itemTitle.classList.add("title");
-									itemTitle.textContent = newFileName;
-									item.appendChild(itemTitle);
-									item.setAttribute("path", `${e.target.getAttribute("parent-path")}/${newFileName}`);
-									item.setAttribute("name", newFileName);
-									let pbs = path.split("/");
-									pbs.pop();
-									pbs = pbs.join("/");
-									item.setAttribute("parent-path", pbs);
-									document.querySelector(".exp").appendChild(item);
-								} catch (error) {
-									console.log(error);
-									const ask = await tb.dialog.Message({
-										title: `This file already exists. Enter a new name for ${newFileName}`,
-										defaultValue: newFileName,
-									});
-									if (ask !== undefined && ask !== "") {
-										await rename(path, ask);
+								if (path.includes("http")) {
+									const { client, filePath } = await useDavClient(path);
+									await client.moveFile(filePath, `${path}/${newFileName}`);
+									openPath(document.querySelector(".nav-input.dir").value);
+								} else {
+									try {
+										await window.parent.tb.fs.promises.rename(path, `${e.target.getAttribute("parent-path")}/${newFileName}`);
+										const type = e.target.classList.contains("file-item") ? "file" : "folder";
+										document.querySelector(`[path="${path}"]`).remove();
+										const item = document.createElement("div");
+										item.classList.add(`${type}-item`, "path-item");
+										const icon = document.createElement("div");
+										icon.classList.add("icon");
+										let ext = newFileName.split(".").pop();
+										const data = await fetch(`/fs//system/etc/terbium/file-icons.json`).then(res => res.json());
+										let iconName = data["ext-to-name"][ext];
+										let iconPath = data["name-to-path"][iconName];
+										let unknown = data["name-to-path"]["Unknown"];
+										if (iconPath) {
+											icon.innerHTML = iconPath;
+										} else {
+											icon.innerHTML = unknown;
+										}
+										item.appendChild(icon);
+										const itemTitle = document.createElement("span");
+										itemTitle.classList.add("title");
+										itemTitle.textContent = newFileName;
+										item.appendChild(itemTitle);
+										item.setAttribute("path", `${e.target.getAttribute("parent-path")}/${newFileName}`);
+										item.setAttribute("name", newFileName);
+										let pbs = path.split("/");
+										pbs.pop();
+										pbs = pbs.join("/");
+										item.setAttribute("parent-path", pbs);
+										document.querySelector(".exp").appendChild(item);
+									} catch (error) {
+										console.log(error);
+										const ask = await tb.dialog.Message({
+											title: `This file already exists. Enter a new name for ${newFileName}`,
+											defaultValue: newFileName,
+										});
+										if (ask !== undefined && ask !== "") {
+											await rename(path, ask);
+										}
 									}
 								}
 							},
@@ -836,17 +902,37 @@ const cm = async e => {
 				},
 			},
 			{
-				text: isTrash ? "Delete" : "Move To Trash",
+				text: "Copy",
+				click: async () => {
+					copied = { path: e.target.getAttribute("path"), name: e.target.getAttribute("name") };
+				},
+			},
+			{
+				text: "Cut",
+				click: async () => {
+					copied = { path: e.target.getAttribute("path"), name: e.target.getAttribute("name") };
+					e.target.classList.add("opacity-50");
+					cut = true;
+				},
+			},
+			{
+				text: isTrash ? "Delete" : e.target.getAttribute("path").includes("http") ? "Delete File" : "Move To Trash",
 				click: async () => {
 					const path = e.target.getAttribute("path");
-					if (document.querySelector(".exp").getAttribute("path") === "/system/trash") {
-						await Filer.fs.promises.unlink(path);
+					if (path.includes("http")) {
+						const { client, filePath } = await useDavClient(path);
+						client.deleteFile(filePath);
 						document.querySelector(".exp").removeChild(e.target);
 					} else {
-						let data = await Filer.fs.promises.readFile(path, "utf8");
-						await Filer.fs.promises.writeFile(`/system/trash/${e.target.getAttribute("name")}`, data);
-						await Filer.fs.promises.unlink(path);
-						document.querySelector(".exp").removeChild(e.target);
+						if (document.querySelector(".exp").getAttribute("path") === "/system/trash") {
+							await window.parent.tb.fs.promises.unlink(path);
+							document.querySelector(".exp").removeChild(e.target);
+						} else {
+							let data = await window.parent.tb.fs.promises.readFile(path, "utf8");
+							await window.parent.tb.fs.promises.writeFile(`/system/trash/${e.target.getAttribute("name")}`, data);
+							await window.parent.tb.fs.promises.unlink(path);
+							document.querySelector(".exp").removeChild(e.target);
+						}
 					}
 				},
 			},
@@ -857,43 +943,54 @@ const cm = async e => {
 					const name = e.target.getAttribute("name");
 					const lk = document.createElement("a");
 					lk.download = name;
-					fetch(`${window.location.origin}/fs/${path}`)
-						.then(response => response.blob())
-						.then(blob => {
-							const extension = path.split(".").pop().toLowerCase();
-							let mimeType;
-							switch (extension) {
-								case "txt":
-									mimeType = "text/plain";
-									break;
-								case "html":
-									mimeType = "text/html";
-									break;
-								case "jpg":
-								case "jpeg":
-									mimeType = "image/jpeg";
-									break;
-								case "png":
-									mimeType = "image/png";
-									break;
-								case "mp4":
-									mimeType = "video/mp4";
-									break;
-								case "mp3":
-									mimeType = "audio/mp3";
-									break;
-								default:
-									mimeType = "application/octet-stream";
-							}
-							const fileBlob = new Blob([blob], { type: mimeType });
-							const url = URL.createObjectURL(fileBlob);
-							lk.href = url;
-							lk.click();
-							URL.revokeObjectURL(url);
-						})
-						.catch(error => {
-							console.error(error);
-						});
+					if (path.includes("http")) {
+						const { client, filePath } = await useDavClient(path);
+						const blob = await client.getFileContents(filePath);
+						const stats = await client.stat(filePath);
+						const fileBlob = new Blob([blob], { type: stats.mime });
+						const url = URL.createObjectURL(fileBlob);
+						lk.href = url;
+						lk.click();
+						URL.revokeObjectURL(url);
+					} else {
+						fetch(`${window.location.origin}/fs/${path}`)
+							.then(response => response.blob())
+							.then(blob => {
+								const extension = path.split(".").pop().toLowerCase();
+								let mimeType;
+								switch (extension) {
+									case "txt":
+										mimeType = "text/plain";
+										break;
+									case "html":
+										mimeType = "text/html";
+										break;
+									case "jpg":
+									case "jpeg":
+										mimeType = "image/jpeg";
+										break;
+									case "png":
+										mimeType = "image/png";
+										break;
+									case "mp4":
+										mimeType = "video/mp4";
+										break;
+									case "mp3":
+										mimeType = "audio/mp3";
+										break;
+									default:
+										mimeType = "application/octet-stream";
+								}
+								const fileBlob = new Blob([blob], { type: mimeType });
+								const url = URL.createObjectURL(fileBlob);
+								lk.href = url;
+								lk.click();
+								URL.revokeObjectURL(url);
+							})
+							.catch(error => {
+								console.error(error);
+							});
+					}
 				},
 			},
 			{
@@ -930,10 +1027,10 @@ const cm = async e => {
 									const createUniqueFolder = async (path, folderName, number = null) => {
 										const folderPath = `${path}/${folderName}${number !== null ? ` (${number})` : ""}`;
 										try {
-											await Filer.fs.promises.access(folderPath);
+											await window.parent.tb.fs.promises.access(folderPath);
 											return createUniqueFolder(path, folderName, number + 1);
 										} catch (error) {
-											await Filer.fs.promises.mkdir(folderPath);
+											await window.parent.tb.fs.promises.mkdir(folderPath);
 										}
 									};
 									await createUniqueFolder(path, response);
@@ -949,15 +1046,15 @@ const cm = async e => {
                     self.t = e
                     let zip = {};
                     async function addzip(inp, basePath = '') {
-                        const files = await Filer.fs.promises.readdir(inp);
+                        const files = await window.parent.tb.fs.promises.readdir(inp);
                         for (const file of files) {
                             const fullPath = `${inp}/${file}`;
-                            const stats = await Filer.fs.promises.stat(fullPath);
+                            const stats = await window.parent.tb.fs.promises.stat(fullPath);
                             const zipPath = `${basePath}${file}`;
                             if (stats.isDirectory()) {
                                 await addzip(fullPath, `${zipPath}/`);
                             } else {
-                                const fileData = await Filer.fs.promises.readFile(fullPath);
+                                const fileData = await window.parent.tb.fs.promises.readFile(fullPath);
                                 zip[zipPath] = new Uint8Array(fileData);
                             }
                         }
@@ -982,7 +1079,7 @@ const cm = async e => {
                                     onOk: async (value) => {
                                         const zipBlob = new Blob([zipped.buffer], { type: 'application/zip' });
                                         const ab = await zipBlob.arrayBuffer();
-                                        await Filer.fs.promises.writeFile(value, new Uint8Array(ab));
+                                        await window.parent.tb.fs.promises.writeFile(value, new Uint8Array(ab));
                                         window.parent.tb.notification.Toast({
                                             message: `ZIP file created at ${value}`,
                                             application: "Files",
@@ -1017,7 +1114,7 @@ const cm = async e => {
 									if (newName !== null && newName !== "" && newName !== e.target.querySelector(".title").textContent) {
 										const rename = async (path, fileName) => {
 											try {
-												await Filer.fs.promises.rename(path, `${e.target.getAttribute("parent-path")}/${fileName}`);
+												await window.parent.tb.fs.promises.rename(path, `${e.target.getAttribute("parent-path")}/${fileName}`);
 												const type = e.target.classList.contains("file-item") ? "file" : "folder";
 												document.querySelector(`[path="${path}"]`).remove();
 												const item = document.createElement("div");
@@ -1085,7 +1182,7 @@ const cm = async e => {
 						click: async () => {
 							const path = e.target.getAttribute("path");
 							if (document.querySelector(".exp").getAttribute("path") === "/system/trash") {
-								await Filer.fs.promises.readdir(path, async (err, files) => {
+								await window.parent.tb.fs.promises.readdir(path, async (err, files) => {
 									if (err) {
 										console.error(err);
 										return;
@@ -1093,34 +1190,34 @@ const cm = async e => {
 									if (files.length > 0) {
 										for (const file of files) {
 											const filePath = `${path}/${file}`;
-											await Filer.fs.unlink(filePath);
+											await window.parent.tb.fs.unlink(filePath);
 										}
-										await Filer.fs.promises.rmdir(path);
+										await window.parent.tb.fs.promises.rmdir(path);
 										document.querySelector(".exp").removeChild(e.target);
 									} else {
-										await Filer.fs.promises.rmdir(path);
+										await window.parent.tb.fs.promises.rmdir(path);
 										document.querySelector(".exp").removeChild(e.target);
 									}
 								});
 							} else {
-								await Filer.fs.promises.readdir(path, async (err, files) => {
+								await window.parent.tb.fs.promises.readdir(path, async (err, files) => {
 									if (err) {
 										console.error(err);
 										return;
 									}
 									if (files.length > 0) {
-										await Filer.fs.promises.mkdir("/system/trash/" + path.split("/").pop());
+										await window.parent.tb.fs.promises.mkdir("/system/trash/" + path.split("/").pop());
 										for (const file of files) {
 											const filePath = `${path}/${file}`;
-											let data = await Filer.fs.readFile(filePath, "utf8");
-											await Filer.fs.promises.writeFile(`/system/trash/${path.split("/").pop()}/${file}`, data);
-											await Filer.fs.promises.unlink(filePath);
+											let data = await window.parent.tb.fs.readFile(filePath, "utf8");
+											await window.parent.tb.fs.promises.writeFile(`/system/trash/${path.split("/").pop()}/${file}`, data);
+											await window.parent.tb.fs.promises.unlink(filePath);
 										}
-										await Filer.fs.promises.rmdir(path);
+										await window.parent.tb.fs.promises.rmdir(path);
 										document.querySelector(".exp").removeChild(e.target);
 									} else {
-										await Filer.fs.promises.rmdir(path);
-										await Filer.fs.promises.mkdir("/system/trash/" + path.split("/").pop());
+										await window.parent.tb.fs.promises.rmdir(path);
+										await window.parent.tb.fs.promises.mkdir("/system/trash/" + path.split("/").pop());
 										document.querySelector(".exp").removeChild(e.target);
 									}
 								});
@@ -1156,7 +1253,9 @@ const cm = async e => {
 									onOk: async fileName => {
 										const path = document.querySelector(".exp").getAttribute("path");
 										const createFile = async (path, fileName) => {
-											await Filer.fs.exists(`${path}/${fileName}`, async exists => {
+											if (e.target.getAttribute("path").includes("http")) {
+												const { client, filePath } = await useDavClient(path);
+												const exists = await client.exists(`${filePath}/${fileName}`);
 												if (exists) {
 													const ask = await tb.dialog.Message({
 														title: `This file already exists. Enter a new name for ${fileName}`,
@@ -1166,11 +1265,26 @@ const cm = async e => {
 														await createFile(path, ask);
 													}
 												} else {
-													let sh = new Filer.fs.Shell();
-													await sh.touch(`${path}/${fileName}`, "");
-													createPath(fileName, `${path}/${fileName}`, "file");
+													client.putFileContents(`${filePath}/${fileName}`, "");
+													createPath(fileName, `${filePath}/${fileName}`, "file");
 												}
-											});
+											} else {
+												await window.parent.tb.fs.exists(`${path}/${fileName}`, async exists => {
+													if (exists) {
+														const ask = await tb.dialog.Message({
+															title: `This file already exists. Enter a new name for ${fileName}`,
+															defaultValue: "",
+														});
+														if (ask !== undefined && ask !== "") {
+															await createFile(path, ask);
+														}
+													} else {
+														let sh = window.parent.tb.sh;
+														await sh.touch(`${path}/${fileName}`, "");
+														createPath(fileName, `${path}/${fileName}`, "file");
+													}
+												});
+											}
 										};
 										await createFile(path, fileName);
 									},
@@ -1190,21 +1304,53 @@ const cm = async e => {
 								defaultValue: "",
 								onOk: async response => {
 									const path = document.querySelector(".exp").getAttribute("path");
-									const createUniqueFolder = async (path, folderName, number = null) => {
-										const folderPath = `${path}/${folderName}${number !== null ? ` (${number})` : ""}`;
-										try {
-											await Filer.fs.promises.access(folderPath);
-											return createUniqueFolder(path, folderName, number + 1);
-										} catch (error) {
-											await Filer.fs.promises.mkdir(folderPath);
+									if (path.includes("http")) {
+										const { client, filePath } = await useDavClient(path);
+										const exists = await client.exists(`${filePath}/${response}`);
+										if (exists) {
+											const ask = await tb.dialog.Message({
+												title: `This folder already exists. Enter a new name for ${response}`,
+												defaultValue: "",
+											});
+											if (ask !== undefined && ask !== "") {
+												await createFile(path, ask);
+											}
+										} else {
+											client.createDirectory(`${filePath}/${response}`);
 										}
-									};
-									await createUniqueFolder(path, response);
+									} else {
+										const createUniqueFolder = async (path, folderName, number = null) => {
+											const folderPath = `${path}/${folderName}${number !== null ? ` (${number})` : ""}`;
+											try {
+												await window.parent.tb.fs.promises.access(folderPath);
+												return createUniqueFolder(path, folderName, number + 1);
+											} catch (error) {
+												await window.parent.tb.fs.promises.mkdir(folderPath);
+											}
+										};
+										await createUniqueFolder(path, response);
+									}
 									createPath(response, `${path}/${response}`, "folder");
 								},
 							});
 						},
 					},
+			isTrash
+				? null
+				: copied || cut
+					? {
+							text: "Paste",
+							click: async () => {
+								await window.parent.tb.fs.promises.writeFile(`${document.querySelector(".exp").getAttribute("path")}/${copied.name}`, await window.parent.tb.fs.promises.readFile(copied.path, "utf8"));
+								if (cut) {
+									await window.parent.tb.fs.promises.unlink(copied.path);
+									cut = false;
+								}
+								copied = null;
+								openPath(`${document.querySelector(".exp").getAttribute("path")}`);
+							},
+						}
+					: null,
 			isTrash
 				? null
 				: {
@@ -1214,23 +1360,44 @@ const cm = async e => {
 							fauxput.type = "file";
 							fauxput.multiple = true;
 							fauxput.onchange = async e => {
-								for (const file of e.target.files) {
-									const content = await file.arrayBuffer();
-									const path = document.querySelector(".exp").getAttribute("path");
-									const filePath = `${path}/${file.name}`;
-									try {
-										await Filer.fs.promises.access(filePath);
-										await tb.dialog.Message({
-											title: `File "${file.name}" already exists`,
-											defaultValue: file.name,
-											onOk: async newFileName => {
-												if (newFileName !== null && newFileName !== "") {
-													await Filer.fs.promises.writeFile(`${path}/${newFileName}`, Filer.Buffer.from(content));
-												}
-											},
-										});
-									} catch (error) {
-										await Filer.fs.promises.writeFile(filePath, Filer.Buffer.from(content));
+								const path = document.querySelector(".exp").getAttribute("path");
+								if (path.includes("http")) {
+									for (const file of e.target.files) {
+										const content = await file.arrayBuffer();
+										const { client, filePath } = await useDavClient(path);
+										const exists = await client.exists(`${filePath}/${file.name}`);
+										if (exists) {
+											await tb.dialog.Message({
+												title: `File "${file.name}" already exists`,
+												defaultValue: file.name,
+												onOk: async newFileName => {
+													if (newFileName !== null && newFileName !== "") {
+														client.putFileContents(`${filePath}/${newFileName}`, Filer.Buffer.from(content));
+													}
+												},
+											});
+										} else {
+											client.putFileContents(`${filePath}/${file.name}`, Filer.Buffer.from(content));
+										}
+									}
+								} else {
+									for (const file of e.target.files) {
+										const content = await file.arrayBuffer();
+										const filePath = `${path}/${file.name}`;
+										try {
+											await window.parent.tb.fs.promises.access(filePath);
+											await tb.dialog.Message({
+												title: `File "${file.name}" already exists`,
+												defaultValue: file.name,
+												onOk: async newFileName => {
+													if (newFileName !== null && newFileName !== "") {
+														await window.parent.tb.fs.promises.writeFile(`${path}/${newFileName}`, Filer.Buffer.from(content));
+													}
+												},
+											});
+										} catch (error) {
+											await window.parent.tb.fs.promises.writeFile(filePath, Filer.Buffer.from(content));
+										}
 									}
 								}
 								openPath(document.querySelector(".nav-input.dir").value);
@@ -1238,6 +1405,27 @@ const cm = async e => {
 							fauxput.click();
 						},
 					},
+			isTrash
+				? null
+				: !showHidden
+					? {
+							text: "Show hidden files",
+							click: async () => {
+								const config = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${user}/files/config.json`, "utf8"));
+								config["show-hidden-files"] = true;
+								await window.parent.tb.fs.promises.writeFile(`/apps/user/${user}/files/config.json`, JSON.stringify(config));
+								openPath(document.querySelector(".nav-input.dir").value);
+							},
+						}
+					: {
+							text: "Hide hidden files",
+							click: async () => {
+								const config = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${user}/files/config.json`, "utf8"));
+								config["show-hidden-files"] = false;
+								await window.parent.tb.fs.promises.writeFile(`/apps/user/${user}/files/config.json`, JSON.stringify(config));
+								openPath(document.querySelector(".nav-input.dir").value);
+							},
+						},
 			// isTrash ? null : {
 			//     text: "Paste",
 			//     click: () => {}
@@ -1290,12 +1478,13 @@ const cm = async e => {
 window.addEventListener("contextmenu", cm);
 window.addEventListener("touchhold", cm);
 
-const navigate = path => {};
+let showHidden = false;
 
 const createPath = async (title, path, type) => {
-	const config = JSON.parse(await Filer.fs.promises.readFile(`/apps/user/${user}/files/config.json`, "utf8"));
+	const config = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${user}/files/config.json`, "utf8"));
 	if (config["show-hidden-files"] === false && title.startsWith(".")) return;
 
+	showHidden = config["show-hidden-files"];
 	let item = document.createElement("div");
 	item.classList.add("path-item");
 	item.setAttribute("path", path);
@@ -1313,16 +1502,19 @@ const createPath = async (title, path, type) => {
 	if (type === "file") {
 		item.classList.add("file-item");
 		let ext = path.split(".").pop();
-		const data = JSON.parse(await window.parent.Filer.fs.promises.readFile("/system/etc/terbium/file-icons.json"));
+		const data = JSON.parse(await window.parent.window.parent.tb.fs.promises.readFile("/system/etc/terbium/file-icons.json"));
 		let iconName = data["ext-to-name"][ext];
 		let iconPath = data["name-to-path"][iconName];
 		let unknown = data["name-to-path"]["Unknown"];
 		if (iconPath) {
-			const imgData = await Filer.fs.promises.readFile(iconPath, "utf8");
+			const imgData = await window.parent.tb.fs.promises.readFile(iconPath, "utf8");
 			icon.innerHTML = imgData;
 		} else {
-			const imgData = await Filer.fs.promises.readFile(unknown, "utf8");
+			const imgData = await window.parent.tb.fs.promises.readFile(unknown, "utf8");
 			icon.innerHTML = imgData;
+		}
+		if (copied && copied.name === item.getAttribute("name").toLowerCase() && cut) {
+			item.classList.add("opacity-50");
 		}
 		item.ondblclick = async e => {
 			let ext = path.split(".");
@@ -1331,7 +1523,7 @@ const createPath = async (title, path, type) => {
 			} else {
 				ext = ext.slice(-1).join(".");
 			}
-			const data = JSON.parse(await window.parent.Filer.fs.promises.readFile("/apps/system/files.tapp/extensions.json", "utf8"));
+			const data = JSON.parse(await window.parent.window.parent.tb.fs.promises.readFile("/apps/system/files.tapp/extensions.json", "utf8"));
 			if (data["image"].includes(ext)) {
 				parent.window.tb.file.handler.openFile(item.getAttribute("path"), "image");
 			} else if (data["video"].includes(ext)) {
@@ -1362,7 +1554,7 @@ const createPath = async (title, path, type) => {
 								const targetDirectory = `/apps/user/${window.parent.sessionStorage.getItem("currAcc")}/${appName}`;
 								await unzip(zipFilePath, targetDirectory, true);
 								console.log("Done!");
-								const appConf = await Filer.fs.promises.readFile(`/apps/user/${window.parent.sessionStorage.getItem("currAcc")}/${appName}/.tbconfig`, "utf8");
+								const appConf = await window.parent.tb.fs.promises.readFile(`/apps/user/${window.parent.sessionStorage.getItem("currAcc")}/${appName}/.tbconfig`, "utf8");
 								const appData = JSON.parse(appConf);
 								console.log(appData);
 								await window.parent.tb.launcher.addApp({
@@ -1389,15 +1581,15 @@ const createPath = async (title, path, type) => {
 									user: window.parent.sessionStorage.getItem("currAcc"),
 								});
 								try {
-									let apps = JSON.parse(await Filer.fs.promises.readFile(`/apps/installed.json`, "utf8"));
+									let apps = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/installed.json`, "utf8"));
 									apps.push({
 										name: appName,
 										user: await window.parent.tb.user.username(),
 										config: `/apps/user/${await window.parent.tb.user.username()}/${appName}/.tbconfig`,
 									});
-									await Filer.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(apps));
+									await window.parent.tb.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(apps));
 								} catch {
-									await Filer.fs.promises.writeFile(
+									await window.parent.tb.fs.promises.writeFile(
 										`/apps/installed.json`,
 										JSON.stringify([
 											{
@@ -1440,7 +1632,7 @@ const createPath = async (title, path, type) => {
 			} else if (data["text"].includes(ext)) {
 				parent.window.tb.file.handler.openFile(item.getAttribute("path"), "text");
 			} else {
-				let handlers = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"))["fileAssociatedApps"];
+				let handlers = JSON.parse(await window.parent.tb.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"))["fileAssociatedApps"];
 				handlers = Object.entries(handlers).filter(([type, app]) => {
 					return !(type === "text" && app === "text-editor") && !(type === "image" && app === "media-viewer") && !(type === "video" && app === "media-viewer") && !(type === "audio" && app === "media-viewer");
 				});
@@ -1492,7 +1684,7 @@ const createPath = async (title, path, type) => {
 									title: "Select a application",
 									filter: ".tapp",
 									onOk: async val => {
-										const app = JSON.parse(await Filer.fs.promises.readFile(`${val}/.tbconfig`, "utf8"));
+										const app = JSON.parse(await window.parent.tb.fs.promises.readFile(`${val}/.tbconfig`, "utf8"));
 										window.parent.tb.window.create({ ...app.wmArgs, message: { type: "process", path: item.item } });
 									},
 								});
@@ -1512,7 +1704,7 @@ const createPath = async (title, path, type) => {
 	} else if (type === "folder") {
 		if (title.toLocaleLowerCase().endsWith(".tapp")) {
 			try {
-				const data = await Filer.fs.promises.readFile(`${path}/icon.svg`, "utf8");
+				const data = await window.parent.tb.fs.promises.readFile(`${path}/icon.svg`, "utf8");
 				icon.innerHTML = data;
 			} catch {
 				icon.innerHTML = `
@@ -1647,12 +1839,22 @@ const openPath = async path => {
 	}
 	if (path === "local storage") {
 		showLS();
+		const modal = document.querySelector(".drive-modal");
+		modal.style.display = "flex";
+		modal.innerHTML = `
+			<svg style="width: 22px; height: fit-content;" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4.08 5.227A3 3 0 016.979 3H17.02a3 3 0 012.9 2.227l2.113 7.926A5.228 5.228 0 0018.75 12H5.25a5.228 5.228 0 00-3.284 1.153L4.08 5.227z"></path>
+                <path fill-rule="evenodd" d="M5.25 13.5a3.75 3.75 0 100 7.5h13.5a3.75 3.75 0 100-7.5H5.25zm10.5 4.5a.75.75 0 100-1.5.75.75 0 000 1.5zm3.75-.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" clip-rule="evenodd"></path>
+            </svg>
+			<span>LFS</span>
+		`;
 		return;
 	}
-	if (path.includes("dav")) {
-		console.log("Loading webdav: " + path);
-		let davInstances = JSON.parse(await Filer.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
-		let davConfig = davInstances.find(dav => path.startsWith(dav.url));
+	if (path.includes("mnt")) {
+		let davInstances = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/davs.json`, "utf8"));
+		const toFind = path.split("/")[2] || "";
+		let davConfig = davInstances.find(dav => dav.name === toFind);
+		console.log("Loading webdav: " + davConfig.url + path.split("/")[2]);
 		if (!davConfig) {
 			window.parent.tb.dialog.Alert({
 				title: "WebDAV Error",
@@ -1660,20 +1862,20 @@ const openPath = async path => {
 			});
 			return;
 		}
-		let davBase = davConfig.url.replace(/\/+$/, "");
-		let relPath = path.replace(davBase, "") || "/";
-		if (!relPath.startsWith("/")) relPath = "/" + relPath;
+		let relPath = path.replace(`/mnt/${davConfig.name}/`, "/");
+		console.log(relPath);
 		const exp = document.querySelector(".exp");
 		exp.innerHTML = "";
-		exp.setAttribute("path", path);
+		exp.setAttribute("path", davConfig.url + relPath);
 		const dirInput = document.querySelector(".nav-input.dir");
 		dirInput.value = path;
 		exp.innerHTML = `<div style="padding:1em;">Loading WebDAV...</div>`;
+		const modal = document.querySelector(".drive-modal");
 		try {
 			const client = webdav.createClient(davConfig.url, {
-				username: davConfig.user,
-				password: davConfig.pass,
-				authType: webdav.AuthType.Digest,
+				username: davConfig.username,
+				password: davConfig.password,
+				authType: webdav.AuthType.Password,
 			});
 			const contents = await client.getDirectoryContents(relPath);
 			exp.innerHTML = "";
@@ -1685,9 +1887,19 @@ const openPath = async path => {
                 </svg>
                 <span>${davConfig.name}</span>
             `;
+			modal.style.display = "flex";
+			modal.innerHTML = `
+				<svg style="width: 22px; height: fit-content;" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4.07982 5.227C4.25015 4.58826 4.6267 4.02366 5.15094 3.62094C5.67518 3.21822 6.31775 2.99993 6.97882 3H17.0198C17.6811 2.99971 18.3239 3.2179 18.8483 3.62063C19.3728 4.02337 19.7494 4.58809 19.9198 5.227L22.0328 13.153C21.1022 12.4051 19.9437 11.9982 18.7498 12H5.24982C4.05559 11.998 2.89667 12.4049 1.96582 13.153L4.07982 5.227Z"/>
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M5.25 13.5C4.75754 13.5 4.26991 13.597 3.81494 13.7855C3.35997 13.9739 2.94657 14.2501 2.59835 14.5983C2.25013 14.9466 1.97391 15.36 1.78545 15.8149C1.597 16.2699 1.5 16.7575 1.5 17.25C1.5 17.7425 1.597 18.2301 1.78545 18.6851C1.97391 19.14 2.25013 19.5534 2.59835 19.9017C2.94657 20.2499 3.35997 20.5261 3.81494 20.7145C4.26991 20.903 4.75754 21 5.25 21H18.75C19.2425 21 19.7301 20.903 20.1851 20.7145C20.64 20.5261 21.0534 20.2499 21.4017 19.9017C21.7499 19.5534 22.0261 19.14 22.2145 18.6851C22.403 18.2301 22.5 17.7425 22.5 17.25C22.5 16.7575 22.403 16.2699 22.2145 15.8149C22.0261 15.36 21.7499 14.9466 21.4017 14.5983C21.0534 14.2501 20.64 13.9739 20.1851 13.7855C19.7301 13.597 19.2425 13.5 18.75 13.5H5.25ZM15.75 18C15.9489 18 16.1397 17.921 16.2803 17.7803C16.421 17.6397 16.5 17.4489 16.5 17.25C16.5 17.0511 16.421 16.8603 16.2803 16.7197C16.1397 16.579 15.9489 16.5 15.75 16.5C15.5511 16.5 15.3603 16.579 15.2197 16.7197C15.079 16.8603 15 17.0511 15 17.25C15 17.4489 15.079 17.6397 15.2197 17.7803C15.3603 17.921 15.5511 18 15.75 18ZM19.5 17.25C19.5 17.4489 19.421 17.6397 19.2803 17.7803C19.1397 17.921 18.9489 18 18.75 18C18.5511 18 18.3603 17.921 18.2197 17.7803C18.079 17.6397 18 17.4489 18 17.25C18 17.0511 18.079 16.8603 18.2197 16.7197C18.3603 16.579 18.5511 16.5 18.75 16.5C18.9489 16.5 19.1397 16.579 19.2803 16.7197C19.421 16.8603 19.5 17.0511 19.5 17.25Z"/>
+                    <circle cx="18" cy="17.25" r="3" fill="#5DD881"/>
+                </svg>
+				<span>WebDav</span>
+			`;
 			for (const item of contents) {
 				const name = item.basename;
-				const itemPath = path.replace(/\/+$/, "") + "/" + name;
+				const itemPath = `${davConfig.url}${relPath}/${name}`;
+				if (item.type === "directory" && item.filename === path.replace(`/mnt/${davConfig.name}/`, "")) continue;
 				const type = item.type === "directory" ? "folder" : "file";
 				const el = document.createElement("div");
 				el.classList.add("path-item", type === "folder" ? "folder-item" : "file-item");
@@ -1703,15 +1915,15 @@ const openPath = async path => {
                         </svg>
                     `;
 				} else {
-					const data = JSON.parse(await window.parent.Filer.fs.promises.readFile("/system/etc/terbium/file-icons.json"));
+					const data = JSON.parse(await window.parent.window.parent.tb.fs.promises.readFile("/system/etc/terbium/file-icons.json"));
 					const ext = itemPath.split(".").pop();
 					const iconName = data["ext-to-name"][ext];
 					let iconPath = data["name-to-path"][iconName];
 					let unknown = data["name-to-path"]["Unknown"];
 					if (iconPath) {
-						icon.innerHTML = await window.parent.Filer.fs.promises.readFile(iconPath, "utf8");
+						icon.innerHTML = await window.parent.window.parent.tb.fs.promises.readFile(iconPath, "utf8");
 					} else {
-						icon.innerHTML = await window.parent.Filer.fs.promises.readFile(unknown, "utf8");
+						icon.innerHTML = await window.parent.window.parent.tb.fs.promises.readFile(unknown, "utf8");
 					}
 				}
 				el.appendChild(icon);
@@ -1720,10 +1932,10 @@ const openPath = async path => {
 				itemTitle.textContent = name;
 				el.appendChild(itemTitle);
 				if (type === "folder") {
-					el.addEventListener("dblclick", () => openPath(itemPath));
+					el.addEventListener("dblclick", () => openPath(itemPath.replace(davConfig.url, `/mnt/${davConfig.name}`)));
 				} else {
 					el.addEventListener("dblclick", async () => {
-						let handlers = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"))["fileAssociatedApps"];
+						let handlers = JSON.parse(await window.parent.tb.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"))["fileAssociatedApps"];
 						handlers = Object.entries(handlers).filter(([type, app]) => {
 							return !(type === "text" && app === "text-editor") && !(type === "image" && app === "media-viewer") && !(type === "video" && app === "media-viewer") && !(type === "audio" && app === "media-viewer");
 						});
@@ -1731,7 +1943,7 @@ const openPath = async path => {
 						for (const [type, app] of handlers) {
 							hands.push({ text: app, value: type });
 						}
-						const data = JSON.parse(await Filer.fs.promises.readFile("/apps/system/files.tapp/extensions.json", "utf8"));
+						const data = JSON.parse(await window.parent.tb.fs.promises.readFile("/apps/system/files.tapp/extensions.json", "utf8"));
 						await tb.dialog.Select({
 							title: `Select a application to open: ${itemPath.split("/").pop()}`,
 							options: [
@@ -1772,16 +1984,16 @@ const openPath = async path => {
 											title: "Select a application",
 											filter: ".tapp",
 											onOk: async val => {
-												const app = JSON.parse(await Filer.fs.promises.readFile(`${val}/.tbconfig`, "utf8"));
+												const app = JSON.parse(await window.parent.tb.fs.promises.readFile(`${val}/.tbconfig`, "utf8"));
 												window.parent.tb.window.create({ ...app.wmArgs, message: { type: "process", path: item.item } });
 											},
 										});
 										break;
 									default:
 										if (hands.length === 0) {
-											parent.window.tb.file.handler.openFile(e.target.getAttribute("path"), "text");
+											parent.window.tb.file.handler.openFile(itemPath, "text");
 										} else {
-											parent.window.tb.file.handler.openFile(e.target.getAttribute("path"), val);
+											parent.window.tb.file.handler.openFile(itemPath, val);
 										}
 										break;
 								}
@@ -1802,15 +2014,26 @@ const openPath = async path => {
                 </svg>
                 <span>${davConfig.name}</span>
             `;
+			modal.style.display = "flex";
+			modal.innerHTML = `
+				<svg style="width: 22px; height: fit-content;" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4.07982 5.227C4.25015 4.58826 4.6267 4.02366 5.15094 3.62094C5.67518 3.21822 6.31775 2.99993 6.97882 3H17.0198C17.6811 2.99971 18.3239 3.2179 18.8483 3.62063C19.3728 4.02337 19.7494 4.58809 19.9198 5.227L22.0328 13.153C21.1022 12.4051 19.9437 11.9982 18.7498 12H5.24982C4.05559 11.998 2.89667 12.4049 1.96582 13.153L4.07982 5.227Z"/>
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M5.25 13.5C4.75754 13.5 4.26991 13.597 3.81494 13.7855C3.35997 13.9739 2.94657 14.2501 2.59835 14.5983C2.25013 14.9466 1.97391 15.36 1.78545 15.8149C1.597 16.2699 1.5 16.7575 1.5 17.25C1.5 17.7425 1.597 18.2301 1.78545 18.6851C1.97391 19.14 2.25013 19.5534 2.59835 19.9017C2.94657 20.2499 3.35997 20.5261 3.81494 20.7145C4.26991 20.903 4.75754 21 5.25 21H18.75C19.2425 21 19.7301 20.903 20.1851 20.7145C20.64 20.5261 21.0534 20.2499 21.4017 19.9017C21.7499 19.5534 22.0261 19.14 22.2145 18.6851C22.403 18.2301 22.5 17.7425 22.5 17.25C22.5 16.7575 22.403 16.2699 22.2145 15.8149C22.0261 15.36 21.7499 14.9466 21.4017 14.5983C21.0534 14.2501 20.64 13.9739 20.1851 13.7855C19.7301 13.597 19.2425 13.5 18.75 13.5H5.25ZM15.75 18C15.9489 18 16.1397 17.921 16.2803 17.7803C16.421 17.6397 16.5 17.4489 16.5 17.25C16.5 17.0511 16.421 16.8603 16.2803 16.7197C16.1397 16.579 15.9489 16.5 15.75 16.5C15.5511 16.5 15.3603 16.579 15.2197 16.7197C15.079 16.8603 15 17.0511 15 17.25C15 17.4489 15.079 17.6397 15.2197 17.7803C15.3603 17.921 15.5511 18 15.75 18ZM19.5 17.25C19.5 17.4489 19.421 17.6397 19.2803 17.7803C19.1397 17.921 18.9489 18 18.75 18C18.5511 18 18.3603 17.921 18.2197 17.7803C18.079 17.6397 18 17.4489 18 17.25C18 17.0511 18.079 16.8603 18.2197 16.7197C18.3603 16.579 18.5511 16.5 18.75 16.5C18.9489 16.5 19.1397 16.579 19.2803 16.7197C19.421 16.8603 19.5 17.0511 19.5 17.25Z"/>
+                    <circle cx="18" cy="17.25" r="3" fill="#D8645D"/>
+                </svg>
+				<span>WebDav</span>
+			`;
 		}
 		const search = document.querySelector(".nav-input.search");
 		search.setAttribute("placeholder", `Search ${path.split("/").pop()}`);
 		return;
+	} else {
+		document.querySelector(".drive-modal").style.display = "none";
 	}
 	if (path.split("/").pop() === "") {
 		path = path.substring(0, path.length - 1);
 	}
-	await Filer.fs.exists(path, async exists => {
+	await window.parent.tb.fs.exists(path, async exists => {
 		if (!exists) {
 			console.error("Path does not exist");
 			return;
@@ -1834,10 +2057,10 @@ const openPath = async path => {
 		}
 		openPath(`/home/${user}`);
 	} else {
-		Filer.fs.readdir(path, async (err, files) => {
+		window.parent.tb.fs.readdir(path, async (err, files) => {
 			if (err) return console.error(err);
 			for (let file of files) {
-				await Filer.fs.stat(path + "/" + file, (err, stats) => {
+				await window.parent.tb.fs.stat(path + "/" + file, (err, stats) => {
 					if (err) return console.error(err);
 					if (stats.isDirectory()) {
 						createPath(file, path + "/" + file, "folder");
@@ -1867,7 +2090,7 @@ async function unzip(path, target, app) {
 	}
 	const zipFileContent = await response.arrayBuffer();
 	if (!(await dirExists(target))) {
-		await Filer.fs.promises.mkdir(target, { recursive: true });
+		await window.parent.tb.fs.promises.mkdir(target, { recursive: true });
 	}
 	const compressedFiles = window.parent.tb.fflate.unzipSync(new Uint8Array(zipFileContent));
 	for (const [relativePath, content] of Object.entries(compressedFiles)) {
@@ -1879,14 +2102,14 @@ async function unzip(path, target, app) {
 			if (i === pathParts.length - 1 && !relativePath.endsWith("/")) {
 				try {
 					console.log(`touch ${currentPath.slice(0, -1)}`);
-					await Filer.fs.promises.writeFile(currentPath.slice(0, -1), Filer.Buffer.from(content));
+					await window.parent.tb.fs.promises.writeFile(currentPath.slice(0, -1), Filer.Buffer.from(content));
 				} catch {
 					console.log(`Cant make ${currentPath.slice(0, -1)}`);
 				}
 			} else if (!(await dirExists(currentPath))) {
 				try {
 					console.log(`mkdir ${currentPath}`);
-					await Filer.fs.promises.mkdir(currentPath);
+					await window.parent.tb.fs.promises.mkdir(currentPath);
 				} catch {
 					console.log(`Cant make ${currentPath}`);
 				}
@@ -1895,7 +2118,7 @@ async function unzip(path, target, app) {
 		if (relativePath.endsWith("/")) {
 			try {
 				console.log(`mkdir fp ${fullPath}`);
-				await Filer.fs.promises.mkdir(fullPath);
+				await window.parent.tb.fs.promises.mkdir(fullPath);
 			} catch {
 				console.log(`Cant make ${fullPath}`);
 			}
@@ -1914,7 +2137,7 @@ async function unzip(path, target, app) {
 
 const dirExists = async path => {
 	return new Promise(resolve => {
-		Filer.fs.stat(path, (err, stats) => {
+		window.parent.tb.fs.stat(path, (err, stats) => {
 			if (err) {
 				if (err.code === "ENOENT") {
 					resolve(false);
@@ -1942,13 +2165,13 @@ search.addEventListener("input", e => {
 	}
 	exp.innerHTML = "";
 	exp.setAttribute("path", path);
-	Filer.fs.readdir(path, async (err, files) => {
+	window.parent.tb.fs.readdir(path, async (err, files) => {
 		if (err) {
 			console.error(err);
 			return;
 		}
 		for (let file of files) {
-			await Filer.fs.stat(path + "/" + file, (err, stats) => {
+			await window.parent.tb.fs.stat(path + "/" + file, (err, stats) => {
 				if (err) {
 					console.error(err);
 					return;
@@ -1978,9 +2201,9 @@ const cfgload = async () => {
 	}
 	const topbarheight = document.querySelector(".topbar").offsetHeight;
 	document.querySelector("main").style.setProperty("--topbar-height", `${topbarheight}px`);
-	let config = JSON.parse(await Filer.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/config.json`, "utf8"));
+	let config = JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/config.json`, "utf8"));
 	if (config["quick-center"] === true) {
-		await createCollapsible("Quick Center", "quick-center", config["open-collapsibles"]["quick-center"], JSON.parse(await Filer.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/quick-center.json`, "utf8"))["paths"]);
+		await createCollapsible("Quick Center", "quick-center", config["open-collapsibles"]["quick-center"], JSON.parse(await window.parent.tb.fs.promises.readFile(`/apps/user/${sessionStorage.getItem("currAcc")}/files/quick-center.json`, "utf8"))["paths"]);
 	}
 	if (config["drives"]) {
 		await createCollapsible("Drives", "drives", config["open-collapsibles"]["drives"], config["drives"]);

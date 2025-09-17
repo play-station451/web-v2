@@ -7,30 +7,67 @@ export default function CustomOS() {
 		const rep = (content: string) => {
 			const parser = new DOMParser();
 			const doc = parser.parseFromString(content, "text/html");
-			console.log(`Terbium Bootloader v2.0.0 RC-1 is now loading: ${sessionStorage.getItem("bootfile")}`);
+			console.log(`Terbium Bootloader v2.1.0 is now loading: ${sessionStorage.getItem("bootfile")}`);
 			if (doc.body && doc.head) {
 				const b = document.createElement("base");
 				b.href = `/fs/${sessionStorage.getItem("bootfile")!.replace(/\/?[^\/]+\.html$/, "")}/`;
 				doc.head.insertBefore(b, doc.head.firstChild);
 				document.body.innerHTML = doc.body.innerHTML;
 				document.head.innerHTML = doc.head.innerHTML;
-				const scripts = doc.querySelectorAll("script");
-				scripts.forEach(script => {
+				const htmlAttrs = doc.documentElement.attributes;
+				for (const attr of Array.from(htmlAttrs)) {
+					document.documentElement.setAttribute(attr.name, attr.value);
+				}
+				const headAttrs = doc.head.attributes;
+				for (const attr of Array.from(headAttrs)) {
+					document.head.setAttribute(attr.name, attr.value);
+				}
+				const bodyAttrs = doc.body.attributes;
+				for (const attr of Array.from(bodyAttrs)) {
+					document.body.setAttribute(attr.name, attr.value);
+				}
+				const scripts = document.querySelectorAll("script");
+				for (const script of scripts) {
 					const newScript = document.createElement("script");
-					if (script.src) {
-						if (script.src.includes("http")) {
-							newScript.src = script.src;
-						} else if (!script.src.includes(`${window.location.origin}/fs/`)) {
-							newScript.src = `/fs/${sessionStorage.getItem("bootfile")!.replace(/\/?[^\/]+\.html$/, "")}${script.src.replace(window.location.origin, "")}`;
-						} else {
-							newScript.src = script.src;
+					for (const attr of script.attributes) {
+						if (attr.name !== "src") {
+							newScript.setAttribute(attr.name, attr.value);
 						}
+					}
+					if (script.src) {
+						let newSrc = script.src;
+						if (script.src.includes("http")) {
+							newSrc = script.src;
+						} else if (!script.src.includes(`${window.location.origin}/fs/`)) {
+							newSrc = `/fs/${sessionStorage.getItem("bootfile")!.replace(/\/?[^\/]+\.html$/, "")}${script.src.replace(window.location.origin, "")}`;
+						}
+						newScript.src = newSrc;
 					} else {
 						newScript.textContent = script.textContent;
 					}
 					document.head.appendChild(newScript);
 					script.parentNode?.removeChild(script);
-				});
+				}
+				const styles: any = document.querySelectorAll("link[rel='stylesheet']");
+				for (const style of styles) {
+					const newStyle = document.createElement("link");
+					for (const attr of style.attributes) {
+						if (attr.name !== "href") {
+							newStyle.setAttribute(attr.name, attr.value);
+						}
+					}
+					if (style.href) {
+						let newHref = style.href;
+						if (style.href.includes("http")) {
+							newHref = style.href;
+						} else if (!style.href.includes(`${window.location.origin}/fs/`)) {
+							newHref = `/fs/${sessionStorage.getItem("bootfile")!.replace(/\/?[^\/]+\.html$/, "")}${style.href.replace(window.location.origin, "")}`;
+						}
+						newStyle.href = newHref;
+					}
+					document.head.appendChild(newStyle);
+					style.parentNode?.removeChild(style);
+				}
 				setloaded(true);
 			} else {
 				console.error(`Failed to boot: ${sessionStorage.getItem("bootfile")}`);
@@ -39,7 +76,7 @@ export default function CustomOS() {
 			}
 		};
 
-		Filer.fs.promises
+		window.tb.fs.promises
 			.readFile(sessionStorage.getItem("bootfile")!, "utf8")
 			.then(data => {
 				rep(data);

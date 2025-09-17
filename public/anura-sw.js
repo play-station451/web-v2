@@ -27,8 +27,8 @@ const filerfs = new Filer.FileSystem({
 });
 const filersh = new filerfs.Shell();
 
-let opfs = undefined;
-let opfssh = undefined;
+let opfs;
+let opfssh;
 
 async function currentFs() {
 	// isConnected will return true if the anura instance is running, and otherwise infinitely wait.
@@ -73,7 +73,7 @@ async function currentFs() {
 self.Buffer = Filer.Buffer;
 
 importScripts("/assets/libs/comlink.min.umd.js");
-
+importScripts("/assets/libs/idb-keyval.js");
 importScripts("/assets/libs/workbox/workbox-sw.js");
 workbox.setConfig({
 	debug: false,
@@ -309,7 +309,7 @@ const filepickerCallbacks = {};
 
 addEventListener("message", event => {
 	if (event.data.anura_target === "anura.x86.proxy") {
-		let callback = callbacks[event.data.id];
+		const callback = callbacks[event.data.id];
 		callback(event.data.value);
 	}
 	if (event.data.anura_target === "anura.cache") {
@@ -317,7 +317,7 @@ addEventListener("message", event => {
 		idbKeyval.set("cacheenabled", event.data.value);
 	}
 	if (event.data.anura_target === "anura.filepicker.result") {
-		let callback = filepickerCallbacks[event.data.id];
+		const callback = filepickerCallbacks[event.data.id];
 		callback(event.data.value);
 	}
 	if (event.data.anura_target === "anura.comlink.init") {
@@ -344,13 +344,13 @@ workbox.routing.registerRoute(/\/extension\//, async ({ url }) => {
 workbox.routing.registerRoute(
 	/\/showFilePicker/,
 	async ({ url }) => {
-		let id = crypto.randomUUID();
-		let clients = (await self.clients.matchAll()).filter(v => new URL(v.url).pathname === "/");
+		const id = crypto.randomUUID();
+		const clients = (await self.clients.matchAll()).filter(v => new URL(v.url).pathname === "/");
 		if (clients.length < 1) return new Response("no clients were available to take your request");
-		let client = clients[0];
+		const client = clients[0];
 
-		let regex = url.searchParams.get("regex") || ".*";
-		let type = url.searchParams.get("type") || "file";
+		const regex = url.searchParams.get("regex") || ".*";
+		const type = url.searchParams.get("type") || "file";
 
 		client.postMessage({
 			anura_target: "anura.filepicker",
@@ -404,7 +404,7 @@ async function serveFile(path, fsOverride, shOverride) {
 		const stats = await fs.promises.stat(path);
 		if (stats.type === "DIRECTORY") {
 			// Can't do withFileTypes because it is unserializable
-			let entries = await Promise.all((await fs.promises.readdir(path)).map(async e => await fs.promises.stat(`${path}/${e}`)));
+			const entries = await Promise.all((await fs.promises.readdir(path)).map(async e => await fs.promises.stat(`${path}/${e}`)));
 			function page() {
 				return `<!DOCTYPE html>
 					<html>
@@ -602,7 +602,7 @@ workbox.routing.registerRoute(
 	fsRegex,
 	async ({ url, request }) => {
 		let path = url.pathname.match(fsRegex)[1];
-		let action = request.headers.get("x-fs-action") || url.searchParams.get("action");
+		const action = request.headers.get("x-fs-action") || url.searchParams.get("action");
 		if (!action) {
 			return new Response(
 				JSON.stringify({
@@ -619,7 +619,7 @@ workbox.routing.registerRoute(
 			);
 		}
 		path = decodeURI(path);
-		let body = await request.arrayBuffer();
+		const body = await request.arrayBuffer();
 		return updateFile(path, {
 			action,
 			contents: Buffer.from(body),
@@ -631,7 +631,7 @@ workbox.routing.registerRoute(
 workbox.routing.registerRoute(/^(?!.*(\/config.json|\/MILESTONE|\/x86images\/|\/service\/))/, async ({ url }) => {
 	if (cacheenabled === undefined) {
 		console.debug("retrieving cache value");
-		let result = await idbKeyval.get("cacheenabled");
+		const result = await idbKeyval.get("cacheenabled");
 		if (result !== undefined || result !== null) {
 			cacheenabled = result;
 		}
@@ -658,7 +658,7 @@ workbox.routing.registerRoute(/^(?!.*(\/config.json|\/MILESTONE|\/x86images\/|\/
 	}
 	if (url.password) return new Response("<script>window.location.href = window.location.href</script>", { headers: { "content-type": "text/html" } });
 	const basepath = "/anura_files";
-	let path = decodeURI(url.pathname);
+	const path = decodeURI(url.pathname);
 
 	// Force Filer to be used in cache routes, as it does not require waiting for anura to be connected
 	const fs = opfs || filerfs;
@@ -723,8 +723,9 @@ workbox.routing.registerRoute(/^(?!.*(\/config.json|\/MILESTONE|\/x86images\/|\/
 importScripts("/uv/uv.bundle.js");
 importScripts("/uv/uv.config.js");
 importScripts("/uv/uv.sw.js");
-importScripts("/scramjet/scramjet.shared.js", "/scramjet/scramjet.worker.js");
+importScripts("/scram/scramjet.all.js");
 
+const { ScramjetServiceWorker } = $scramjetLoadWorker();
 const scramjet = new ScramjetServiceWorker();
 const uv = new UVServiceWorker();
 
@@ -736,7 +737,7 @@ methods.forEach(method => {
 		async event => {
 			console.debug("Got UV req");
 			uv.on("request", event => {
-				event.data.headers["user-agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Terbium Browser/2.0.0";
+				event.data.headers["user-agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Terbium-Browser/2.1.0";
 			});
 			return await uv.fetch(event);
 		},
@@ -783,13 +784,8 @@ methods.forEach(method => {
 	workbox.routing.registerRoute(
 		/\/service\//,
 		async ({ event }) => {
-			console.debug("Got SJ req");
-			try {
-				await scramjet.loadConfig();
-			} catch (error) {
-				console.error(error);
-				return new Response("Internal Server Error", { status: 500 });
-			}
+			console.log("Got SJ req");
+			await scramjet.loadConfig();
 			if (scramjet.route(event)) {
 				return scramjet.fetch(event);
 			}

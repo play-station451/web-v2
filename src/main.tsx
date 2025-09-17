@@ -2,60 +2,66 @@ import { StrictMode, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
-import Setup from "./Setup.tsx";
-import Login from "./Login.tsx";
+import { BareMuxConnection } from "@mercuryworkshop/bare-mux";
 import Boot from "./Boot.tsx";
 import CustomOS from "./CustomOS.tsx";
-import Updater from "./Updater.tsx";
 import { hash } from "./hash.json";
-import { fileExists } from "./sys/types.ts";
 import Loader from "./Loading.tsx";
+import Login from "./Login.tsx";
 import Recovery from "./Recovery.tsx";
-import { BareMuxConnection } from "@mercuryworkshop/bare-mux";
+import Setup from "./Setup.tsx";
+import { fileExists } from "./sys/types.ts";
+import Updater from "./Updater.tsx";
 
 const Root = () => {
 	const [currPag, setPag] = useState(<Loader />);
+	// @ts-expect-error expected, api is limited to fs until boot
+	if (typeof window.tb === "undefined") window.tb = {};
+	if (typeof window.tb.fs === "undefined" && typeof Filer !== "undefined" && Filer.fs) {
+		console.log("[FS] File System Ready");
+		window.tb.fs = Filer.fs;
+		window.tb.sh = new Filer.fs.Shell();
+	}
 	const params = new URLSearchParams(window.location.search);
 	useEffect(() => {
 		const tempTransport = async () => {
 			const connection = new BareMuxConnection("/baremux/worker.js");
-			await connection.setTransport("/epoxy/index.mjs", [{ wisp: `wss://wisp.terbiumon.top/wisp/` }]);
-			const scramjet = new window.ScramjetController({
+			await connection.setTransport("/epoxy/index.mjs", [{ wisp: "wss://wisp.terbiumon.top/wisp/" }]);
+			const { ScramjetController } = $scramjetLoadController();
+			window.scramjetTb = {
 				prefix: "/service/",
 				files: {
-					wasm: "/scramjet/scramjet.wasm.wasm",
-					worker: "/scramjet/scramjet.worker.js",
-					client: "/scramjet/scramjet.client.js",
-					shared: "/scramjet/scramjet.shared.js",
-					sync: "/scramjet/scramjet.sync.js",
+					wasm: "/scram/scramjet.wasm.wasm",
+					all: "/scram/scramjet.all.js",
+					sync: "/scram/scramjet.sync.js",
 				},
 				defaultFlags: {
 					rewriterLogs: false,
 				},
 				codec: {
-					encode: `
-            if (!url) return Promise.resolve(url);
-            let result = "";
-	          let len = url.length;
-	          for (let i = 0; i < len; i++) {
-	            const char = url[i];
-              result += i % 2 ? String.fromCharCode(char.charCodeAt(0) ^ 2) : char;
-            }
-	          return encodeURIComponent(result);
-          `,
-					decode: `
-            if (!url) return Promise.resolve(url);
-	          url = decodeURIComponent(url);
-	          let result = "";
-            let len = url.length;
-	          for (let i = 0; i < len; i++) {
-	            const char = url[i];
-              result += i % 2 ? String.fromCharCode(char.charCodeAt(0) ^ 2) : char;
-	          }
-		        return result;
-          `,
+					encode: function encode(input: string): string {
+						let result = "";
+						let len = input.length;
+						for (let i = 0; i < len; i++) {
+							const char = input[i];
+							result += i % 2 ? String.fromCharCode(char.charCodeAt(0) ^ 2) : char;
+						}
+						return encodeURIComponent(result);
+					},
+					decode: function decode(input: string): string {
+						if (!input) return input;
+						input = decodeURIComponent(input);
+						let result = "";
+						let len = input.length;
+						for (let i = 0; i < len; i++) {
+							const char = input[i];
+							result += i % 2 ? String.fromCharCode(char.charCodeAt(0) ^ 2) : char;
+						}
+						return result;
+					},
 				},
-			});
+			};
+			window.scramjet = new ScramjetController(scramjetTb);
 			scramjet.init();
 			navigator.serviceWorker.register("/anura-sw.js");
 		};
@@ -66,7 +72,7 @@ const Root = () => {
 			const upd = async () => {
 				let sha;
 				if (await fileExists("/system/etc/terbium/hash.cache")) {
-					sha = await Filer.fs.promises.readFile("/system/etc/terbium/hash.cache", "utf8");
+					sha = await window.tb.fs.promises.readFile("/system/etc/terbium/hash.cache", "utf8");
 				} else {
 					sha = hash;
 				}

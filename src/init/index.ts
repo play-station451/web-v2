@@ -1,4 +1,4 @@
-import { Filer, dirExists } from "../sys/types";
+import { dirExists } from "../sys/types";
 import apps from "../apps.json";
 import { copyfs } from "./fs.init";
 import { hash } from "../hash.json";
@@ -9,7 +9,7 @@ export async function init() {
 	 */
 	console.log("Initing File System please wait...");
 	if (!(await dirExists("/home"))) {
-		await Filer.promises.mkdir("/home");
+		await window.tb.fs.promises.mkdir("/home");
 	}
 	const user = JSON.parse(`${sessionStorage.getItem("new-user")}`).username;
 
@@ -17,31 +17,31 @@ export async function init() {
 	 * create apps structure
 	 */
 	if (!(await dirExists("/apps"))) {
-		await Filer.promises.mkdir("/apps");
-		await Filer.promises.mkdir("/apps/system");
-		await Filer.promises.mkdir("/apps/user");
-		await Filer.promises.writeFile("/apps/web_apps.json", JSON.stringify({ apps: [] }));
+		await window.tb.fs.promises.mkdir("/apps");
+		await window.tb.fs.promises.mkdir("/apps/system");
+		await window.tb.fs.promises.mkdir("/apps/user");
+		await window.tb.fs.promises.writeFile("/apps/web_apps.json", JSON.stringify({ apps: [] }));
 	} else {
 		if (!(await dirExists("/apps/user"))) {
-			await Filer.promises.mkdir("/apps/user");
+			await window.tb.fs.promises.mkdir("/apps/user");
 		}
 	}
 
 	if (!(await dirExists(`/apps/user/${user}`))) {
-		await Filer.promises.mkdir(`/apps/user/${user}`);
-		await Filer.promises.mkdir(`/apps/user/${user}/files`);
-		await Filer.promises.mkdir(`/apps/user/${user}/terminal`);
+		await window.tb.fs.promises.mkdir(`/apps/user/${user}`);
+		await window.tb.fs.promises.mkdir(`/apps/user/${user}/files`);
+		await window.tb.fs.promises.mkdir(`/apps/user/${user}/terminal`);
 	}
 
 	/**
 	 * create system structure
 	 */
 	if (!(await dirExists("/system"))) {
-		await Filer.promises.mkdir("/system");
-		await Filer.promises.mkdir("/system/trash");
-		await Filer.promises.mkdir("/system/bin");
-		await Filer.promises.mkdir("/system/etc");
-		await Filer.promises.mkdir("/system/etc/terbium");
+		await window.tb.fs.promises.mkdir("/system");
+		await window.tb.fs.promises.mkdir("/system/trash");
+		await window.tb.fs.promises.mkdir("/system/bin");
+		await window.tb.fs.promises.mkdir("/system/etc");
+		await window.tb.fs.promises.mkdir("/system/etc/terbium");
 		let stockSettings = {
 			theme: "dark",
 			"system-blur": true,
@@ -58,121 +58,46 @@ export async function init() {
 			},
 			"host-name": "terbium",
 		};
-		await Filer.promises.writeFile("/system/etc/terbium/settings.json", JSON.stringify(stockSettings));
-		await Filer.promises.writeFile("/system/etc/terbium/sudousers.json", JSON.stringify([]));
-		await Filer.promises.mkdir("/system/etc/terbium/wallpapers");
-		await Filer.promises.mkdir("/system/var");
-		await Filer.promises.mkdir("/system/var/terbium");
-		await Filer.promises.writeFile("/system/etc/terbium/hash.cache", hash);
+		await window.tb.fs.promises.writeFile("/system/etc/terbium/settings.json", JSON.stringify(stockSettings));
+		await window.tb.fs.promises.writeFile("/system/etc/terbium/sudousers.json", JSON.stringify([]));
+		await window.tb.fs.promises.mkdir("/system/etc/terbium/wallpapers");
+		await window.tb.fs.promises.mkdir("/system/var");
+		await window.tb.fs.promises.mkdir("/system/var/terbium");
+		await window.tb.fs.promises.writeFile("/system/etc/terbium/hash.cache", hash);
 		let startApps = {
-			system_apps: [
-				{
-					title: "Terminal",
-					icon: "/fs/apps/system/terminal.tapp/icon.svg",
-					src: "/fs/apps/system/terminal.tapp/index.html",
-					size: {
-						width: 400,
-						height: 400,
-					},
-				},
-				{
-					title: "Files",
-					icon: "/fs/apps/system/files.tapp/icon.svg",
-					src: "/fs/apps/system/files.tapp/index.html",
-					size: {
-						width: 600,
-						height: 500,
-					},
-				},
-				{
-					title: "Settings",
-					icon: "/fs/apps/system/settings.tapp/icon.svg",
-					src: "/fs/apps/system/settings.tapp/index.html",
-					single: true,
-				},
-				{
-					title: {
-						text: "App Store",
-						html: `<div style="display: flex; flex-direction: row; height: 32px"; margin-top: -32px;><input class="app-search bg-white/15 border-0 outline-hidden text-white py-1 px-2 rounded-lg transition-all duration-150 ease-in-out font-semibold cursor-text" type="search" placeholder="Search for apps" /><select drag="false" id="repo-inp" class="bg-[#ffffff20] absolute z-9 max-h-[160px] rounded-lg cursor-pointer backdrop-blur-[100px] overflow-auto transition-all duration-150 ease-in-out h-8 w-[130px] right-[70px] text-center flex items-center justify-center" onchange="(function(){const selectValue = document.getElementById('repo-inp').value;if (selectValue === 'cust') {tb.dialog.Message({title: 'Enter Custom TB Repository',onOk: async (val) => {localStorage.setItem('appRepo', val);}});tb.window.reload()} else {localStorage.setItem('appRepo', selectValue);} tb.window.reload()})()"><option style="background-color: #00000096; text-align: center;" value="https://raw.githubusercontent.com/terbiumOS/app-repo/main/apps.json">TB Main</option><option style="background-color: #00000096; text-align: center;" value="https://raw.githubusercontent.com/Notplayingallday383/app-repo/main/apps.json">XSTARS Xtras</option><option style="background-color: #00000096; text-align: center;" value="cust">Custom Repo</option></select></div>`,
-					},
-					icon: "/fs/apps/system/app store.tapp/icon.svg",
-					src: "/fs/apps/system/app store.tapp/index.html",
-					size: {
-						width: 775,
-						height: 500,
-					},
-				},
-				{
-					title: "Browser",
-					icon: "/apps/browser.tapp/icon.svg",
-					src: "/apps/browser.tapp/index.html",
-				},
-				{
-					title: "Feedback",
-					icon: "/fs/apps/system/feedback.tapp/icon.svg",
-					src: "https://forms.gle/m664xxmrugWQADQt9",
-					proxy: true,
-					size: {
-						width: 600,
-						height: 500,
-					},
-				},
-				{
-					title: "Media Viewer",
-					icon: "/fs/apps/system/media viewer.tapp/icon.svg",
-					src: "/fs/apps/system/media viewer.tapp/index.html",
-				},
-				{
-					title: "Calculator",
-					icon: "/fs/apps/system/calculator.tapp/icon.svg",
-					src: "/fs/apps/system/calculator.tapp/index.html",
-					snapable: false,
-					maximizable: false,
-					size: {
-						width: 338,
-						height: 556,
-					},
-					controls: ["minimize", "close"],
-				},
-				{
-					title: "About",
-					icon: "/fs/apps/system/about.tapp/icon.svg",
-					src: "/fs/apps/system/about.tapp/index.html",
-				},
-				{
-					title: "Text Editor",
-					icon: "/fs/apps/system/text editor.tapp/icon.svg",
-					src: "/fs/apps/system/text editor.tapp/index.html",
-				},
-				{
-					title: "Task Manager",
-					icon: "/fs/apps/system/task manager.tapp/icon.svg",
-					src: "/fs/apps/system/task manager.tapp/index.html",
-				},
-			],
+			system_apps: apps.map(app => app.config),
 			pinned_apps: [],
 		};
-		await Filer.promises.writeFile("/system/var/terbium/start.json", JSON.stringify(startApps));
-		await Filer.promises.writeFile(`/apps/installed.json`, JSON.stringify([]));
-		await Filer.promises.mkdir("/apps/anura/");
+		await window.tb.fs.promises.writeFile("/system/var/terbium/start.json", JSON.stringify(startApps));
+		await window.tb.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify([]));
+		await window.tb.fs.promises.mkdir("/apps/anura/");
 		let dockPins = [
 			{
 				title: "Terminal",
 				icon: "/fs/apps/system/terminal.tapp/icon.svg",
 				isPinnable: true,
 				src: "/fs/apps/system/terminal.tapp/index.html",
+				size: {
+					width: 612,
+					height: 400,
+				},
 			},
 			{
 				title: "Files",
 				icon: "/fs/apps/system/files.tapp/icon.svg",
 				isPinnable: true,
 				src: "/fs/apps/system/files.tapp/index.html",
+				size: {
+					width: 600,
+					height: 500,
+				},
 			},
 			{
 				title: "Settings",
 				icon: "/fs/apps/system/settings.tapp/icon.svg",
 				isPinnable: true,
 				src: "/fs/apps/system/settings.tapp/index.html",
+				single: true,
 			},
 			{
 				title: "Feedback",
@@ -186,23 +111,23 @@ export async function init() {
 				},
 			},
 		];
-		await Filer.promises.writeFile("/system/var/terbium/dock.json", JSON.stringify(dockPins));
-		await Filer.promises.mkdir("/system/lib");
-		await Filer.promises.mkdir("/system/lib/anura");
-		await Filer.promises.mkdir("/system/tmp");
+		await window.tb.fs.promises.writeFile("/system/var/terbium/dock.json", JSON.stringify(dockPins));
+		await window.tb.fs.promises.mkdir("/system/lib");
+		await window.tb.fs.promises.mkdir("/system/lib/anura");
+		await window.tb.fs.promises.mkdir("/system/tmp");
 
 		let recentApps: any[] = [];
-		await Filer.promises.writeFile("/system/var/terbium/recent.json", JSON.stringify(recentApps));
+		await window.tb.fs.promises.writeFile("/system/var/terbium/recent.json", JSON.stringify(recentApps));
 	}
 	var items: any[] = [];
 
 	if (!(await dirExists(`/home/${user}`))) {
-		await Filer.promises.mkdir(`/home/${user}`);
+		await window.tb.fs.promises.mkdir(`/home/${user}`);
 		let userSettings = {
 			wallpaper: "/assets/wallpapers/1.png",
 			wallpaperMode: "cover",
 			animations: true,
-			proxy: sessionStorage.getItem("selectedProxy") || "Ultraviolet",
+			proxy: sessionStorage.getItem("selectedProxy") || "Scramjet",
 			transport: "Default (Epoxy)",
 			wispServer: `${location.protocol.replace("http", "ws")}//${location.hostname}:${location.port}/wisp/`,
 			"battery-percent": false,
@@ -213,11 +138,12 @@ export async function init() {
 				showSeconds: false,
 			},
 		};
-		await Filer.promises.writeFile(`/home/${user}/settings.json`, JSON.stringify(userSettings));
-		await Filer.promises.mkdir(`/home/${user}/desktop`);
+		await window.tb.fs.promises.writeFile(`/home/${user}/settings.json`, JSON.stringify(userSettings));
+		await window.tb.fs.promises.mkdir(`/home/${user}/desktop`);
 		let r2 = [];
 		let sysapps: { name: string; config: string; user: string }[] = [];
-		apps.forEach(async (app, i) => {
+		for (let i = 0; i < apps.length; i++) {
+			const app = apps[i];
 			const name = app.name.toLowerCase();
 			var topPos: number = 0;
 			var leftPos: number = 0;
@@ -252,8 +178,8 @@ export async function init() {
 					left: leftPos,
 				},
 			});
-			await Filer.promises.mkdir(`/apps/system/${name}.tapp`);
-			await Filer.promises.writeFile(
+			await window.tb.fs.promises.mkdir(`/apps/system/${name}.tapp`);
+			await window.tb.fs.promises.writeFile(
 				`/apps/system/${name}.tapp/index.json`,
 				JSON.stringify({
 					name: app.name,
@@ -266,11 +192,11 @@ export async function init() {
 				config: `/apps/system/${name}.tapp/index.json`,
 				user: "System",
 			});
-			await Filer.promises.symlink(`/apps/system/${name}.tapp/index.json`, `/home/${user}/desktop/${name}.lnk`);
-		});
+			await window.tb.fs.promises.symlink(`/apps/system/${name}.tapp/index.json`, `/home/${user}/desktop/${name}.lnk`);
+		}
 		await copyfs();
-		await Filer.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(items));
-		await Filer.promises.writeFile(
+		await window.tb.fs.promises.writeFile(`/home/${user}/desktop/.desktop.json`, JSON.stringify(items));
+		await window.tb.fs.promises.writeFile(
 			`/apps/user/${user}/files/config.json`,
 			JSON.stringify({
 				"quick-center": true,
@@ -290,31 +216,31 @@ export async function init() {
 			}),
 			"utf8",
 		);
-		await Filer.promises.writeFile(`/apps/user/${user}/files/davs.json`, JSON.stringify([]));
-		await Filer.promises.mkdir(`/apps/user/${user}/browser`);
-		await Filer.promises.writeFile(`/apps/user/${user}/browser/favorites.json`, JSON.stringify([]));
-		await Filer.promises.writeFile(`/apps/user/${user}/browser/userscripts.json`, JSON.stringify([]));
-		await Filer.promises.writeFile(`/apps/installed.json`, JSON.stringify(sysapps));
+		await window.tb.fs.promises.writeFile(`/apps/user/${user}/files/davs.json`, JSON.stringify([]));
+		await window.tb.fs.promises.mkdir(`/apps/user/${user}/browser`);
+		await window.tb.fs.promises.writeFile(`/apps/user/${user}/browser/favorites.json`, JSON.stringify([]));
+		await window.tb.fs.promises.writeFile(`/apps/user/${user}/browser/userscripts.json`, JSON.stringify([]));
+		await window.tb.fs.promises.writeFile(`/apps/installed.json`, JSON.stringify(sysapps));
 		const response = await fetch("/apps/files.tapp/icons.json");
 		const dat = await response.json();
 		const iconNames = Object.keys(dat["name-to-path"]);
 		const icons = Object.values(dat["name-to-path"]);
 		var iconArrays: { [key: string]: string } = {};
 
-		await Filer.promises.mkdir(`/system/etc/terbium/file-icons`);
+		await window.tb.fs.promises.mkdir(`/system/etc/terbium/file-icons`);
 		iconNames.forEach(async name => {
 			iconArrays[name] = `/system/etc/terbium/file-icons/${name}.svg`; // name, path
 			const icon = icons[iconNames.indexOf(name)];
-			await Filer.promises.writeFile(`/system/etc/terbium/file-icons/${name}.svg`, icon);
+			await window.tb.fs.promises.writeFile(`/system/etc/terbium/file-icons/${name}.svg`, icon);
 		});
-		await Filer.promises.writeFile(
+		await window.tb.fs.promises.writeFile(
 			`/system/etc/terbium/file-icons.json`,
 			JSON.stringify({
 				"ext-to-name": dat["ext-to-name"],
 				"name-to-path": iconArrays,
 			}),
 		);
-		await Filer.promises.writeFile(
+		await window.tb.fs.promises.writeFile(
 			`/apps/user/${user}/files/quick-center.json`,
 			JSON.stringify({
 				paths: {
@@ -328,8 +254,26 @@ export async function init() {
 			}),
 			"utf8",
 		);
-		const res = await fetch("/apps/terminal.tapp/scripts/info.json");
-		const data = await res.json();
-		await Filer.promises.writeFile(`/apps/user/${user}/terminal/info.json`, JSON.stringify(data));
+		await window.tb.fs.promises.writeFile(`/apps/user/${user}/terminal/info.json`, JSON.stringify({}));
+		await window.tb.fs.promises.mkdir(`/apps/user/${user}/app store/`);
+		await window.tb.fs.promises.writeFile(
+			`/apps/user/${user}/app store/repos.json`,
+			JSON.stringify([
+				{
+					name: "TB App Repo",
+					url: "https://raw.githubusercontent.com/TerbiumOS/tb-repo/refs/heads/main/manifest.json",
+				},
+				{
+					name: "XSTARS XTRAS",
+					url: "https://raw.githubusercontent.com/Notplayingallday383/app-repo/refs/heads/main/manifest.json",
+				},
+				{
+					name: "Anura App Repo",
+					url: "https://raw.githubusercontent.com/MercuryWorkshop/anura-repo/refs/heads/master/manifest.json",
+					icon: "https://anura.pro/icon.png",
+				},
+			]),
+		);
 	}
+	return true;
 }

@@ -1,6 +1,6 @@
 function pkill(args) {
 	if (args._raw.includes("list")) {
-		const windows = tb.process.list();
+		const windows = window.parent.tb.process.list();
 		Object.values(windows).forEach(window => {
 			displayOutput(`${window.name}, ${window.pid}`);
 		});

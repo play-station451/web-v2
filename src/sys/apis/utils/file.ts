@@ -192,7 +192,7 @@ export const isFilePathString = (str: string): boolean => {
 
 export const fileStat: FileStats = {
 	name: async (file: string): Promise<string> => {
-		const stats = await Filer.fs.promises.stat(file);
+		const stats = await window.tb.fs.promises.stat(file);
 		if (stats.type.toLowerCase() === "file") {
 			const name = path.basename(stats.name);
 			return name;
@@ -200,7 +200,7 @@ export const fileStat: FileStats = {
 		return "unknown";
 	},
 	ext: async (file: string): Promise<string> => {
-		const stats = await Filer.fs.promises.stat(file);
+		const stats = await window.tb.fs.promises.stat(file);
 		if (stats.type.toLowerCase() === "file") {
 			const ext = path.extname(stats.name).replace(".", "").toLowerCase();
 			return ext;
@@ -208,7 +208,7 @@ export const fileStat: FileStats = {
 		return "unknown";
 	},
 	type: async (file: string): Promise<string> => {
-		const stats = await Filer.fs.promises.stat(file);
+		const stats = await window.tb.fs.promises.stat(file);
 		if (stats.type.toLowerCase() === "file") {
 			const ext = path.extname(stats.name).replace(".", "").toLowerCase();
 			const type = getNameFromExtension(ext);
@@ -217,7 +217,7 @@ export const fileStat: FileStats = {
 		return "unknown";
 	},
 	size: async (file: string): Promise<string> => {
-		const stats = await Filer.fs.promises.stat(file);
+		const stats = await window.tb.fs.promises.stat(file);
 		if (stats.type.toLowerCase() === "file") {
 			const size = stats.size;
 			const units = ["B", "KB", "MB", "GB", "TB"];
@@ -233,7 +233,7 @@ export const fileStat: FileStats = {
 		return "0 B";
 	},
 	cTime: async (file: string): Promise<string> => {
-		const stats = await Filer.fs.promises.stat(file);
+		const stats = await window.tb.fs.promises.stat(file);
 		if (stats.type.toLowerCase() === "file") {
 			const cTime = new Date(stats.ctime).toLocaleString("en-US", {
 				year: "numeric",
@@ -248,7 +248,7 @@ export const fileStat: FileStats = {
 		return "unknown";
 	},
 	mTime: async (file: string): Promise<string> => {
-		const stats = await Filer.fs.promises.stat(file);
+		const stats = await window.tb.fs.promises.stat(file);
 		if (stats.type.toLowerCase() === "file") {
 			const mTime = new Date(stats.mtime).toLocaleString("en-US", {
 				year: "numeric",
@@ -264,35 +264,24 @@ export const fileStat: FileStats = {
 		return "unknown";
 	},
 	isFile: async (file: string): Promise<boolean> => {
-		const stats = await Filer.fs.promises.stat(file);
+		const stats = await window.tb.fs.promises.stat(file);
 		if (stats.type.toLowerCase() === "file") {
 			return true;
 		}
 		return false;
 	},
 	isDir: async (file: string): Promise<boolean> => {
-		const stats = await Filer.fs.promises.stat(file);
+		const stats = await window.tb.fs.promises.stat(file);
 		if (stats.type.toLowerCase() === "directory") {
 			return true;
 		}
 		return false;
 	},
 	dir: async (file: string): Promise<string> => {
-		const stats = await Filer.fs.promises.stat(file);
+		const stats = await window.tb.fs.promises.stat(file);
 		if (stats.type.toLowerCase() === "file") {
 			return path.dirname(file);
 		}
 		return "unknown";
 	},
-};
-
-export const validPath = async (str: string) => {
-	if (typeof str !== "string") return false;
-	if (!str.includes("/")) return false;
-	if (/[<>:"|?*\x00-\x1F]/.test(str)) return false;
-
-	const segments = str.split("/").filter(Boolean);
-	if (segments.length === 0) return false;
-
-	await Filer.fs.promises.access(str, Filer.fs.constants.F_OK);
 };

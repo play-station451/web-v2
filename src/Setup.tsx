@@ -49,14 +49,14 @@ export default function Setup() {
 				answer: pw.harden(data.securityQuestion.answer),
 			};
 		}
-		await Filer.fs.promises.writeFile(`/home/${usr}/user.json`, JSON.stringify(userInf), "utf8");
-		await Filer.fs.promises.writeFile("/system/etc/terbium/sudousers.json", JSON.stringify([usr]), "utf8");
-		await Filer.fs.promises.mkdir(`/home/${usr}/documents/`);
-		await Filer.fs.promises.mkdir(`/home/${usr}/images/`);
-		await Filer.fs.promises.mkdir(`/home/${usr}/videos/`);
-		await Filer.fs.promises.mkdir(`/home/${usr}/music/`);
-		let settings = JSON.parse(await Filer.fs.promises.readFile(`/home/${usr}/settings.json`, "utf8"));
-		let syssettings = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"));
+		await window.tb.fs.promises.writeFile(`/home/${usr}/user.json`, JSON.stringify(userInf), "utf8");
+		await window.tb.fs.promises.writeFile("/system/etc/terbium/sudousers.json", JSON.stringify([usr]), "utf8");
+		await window.tb.fs.promises.mkdir(`/home/${usr}/documents/`);
+		await window.tb.fs.promises.mkdir(`/home/${usr}/images/`);
+		await window.tb.fs.promises.mkdir(`/home/${usr}/videos/`);
+		await window.tb.fs.promises.mkdir(`/home/${usr}/music/`);
+		let settings = JSON.parse(await window.tb.fs.promises.readFile(`/home/${usr}/settings.json`, "utf8"));
+		let syssettings = JSON.parse(await window.tb.fs.promises.readFile("/system/etc/terbium/settings.json", "utf8"));
 		if (!syssettings["setup"] || syssettings["setup"] === false) {
 			syssettings["setup"] = true;
 		}
@@ -71,15 +71,15 @@ export default function Setup() {
 		}
 		const wsrv = sessionStorage.getItem("selectedBare") || `${location.protocol.replace("http", "ws")}//${location.hostname}:${location.port}/wisp/`;
 		settings["wispServer"] = wsrv;
-		await Filer.fs.promises.writeFile(`/home/${usr}/settings.json`, JSON.stringify(settings), "utf8");
-		await Filer.fs.promises.writeFile("/system/etc/terbium/settings.json", JSON.stringify(syssettings), "utf8");
+		await window.tb.fs.promises.writeFile(`/home/${usr}/settings.json`, JSON.stringify(settings), "utf8");
+		await window.tb.fs.promises.writeFile("/system/etc/terbium/settings.json", JSON.stringify(syssettings), "utf8");
 		const wispExist = await fileExists("//apps/system/settings.tapp/wisp-servers.json");
 		if (!wispExist) {
 			const stockDat = [
 				{ id: `${location.protocol.replace("http", "ws")}//${location.hostname}:${location.port}/wisp/`, name: "Backend" },
 				{ id: "wss://wisp.terbiumon.top/wisp/", name: "TB Wisp Instance" },
 			];
-			await Filer.fs.promises.writeFile("//apps/system/settings.tapp/wisp-servers.json", JSON.stringify(stockDat));
+			await window.tb.fs.promises.writeFile("//apps/system/settings.tapp/wisp-servers.json", JSON.stringify(stockDat));
 		}
 		localStorage.setItem("setup", "true");
 		if (sessionStorage!.getItem("logged-in") === null || sessionStorage!.getItem("logged-in") === undefined || sessionStorage!.getItem("logged-in") === "false") {
@@ -131,7 +131,6 @@ export default function Setup() {
 			const pfp = pfpRef.current?.getAttribute("data-src");
 			const randomColors = ["orange", "red", "green", "blue", "purple", "pink", "yellow"];
 			const finalPfp = pfp || `/assets/img/default - ${randomColors[Math.floor(Math.random() * randomColors.length)]}.png`;
-			if (typeof sessionStorage === "undefined") throw Error("Session storage is not supported on this device.");
 			let passdata: any = JSON.parse(sessionStorage.getItem("new-user") as string) || {};
 			passdata["pfp"] = finalPfp;
 			sessionStorage.setItem("new-user", JSON.stringify(passdata));
@@ -355,7 +354,7 @@ export default function Setup() {
 			}, 150);
 		};
 
-		const [selectedProxy, setSelectedProxy] = useState(() => sessionStorage.getItem("selectedProxy") || "Ultraviolet");
+		const [selectedProxy, setSelectedProxy] = useState(() => sessionStorage.getItem("selectedProxy") || "Scramjet");
 		const [proxyDropdownOpen, setProxyDropdownOpen] = useState(false);
 		const toggleProxyDropDown = () => {
 			setProxyDropdownOpen(prev => {
@@ -443,7 +442,7 @@ export default function Setup() {
 				{ id: "wss://wisp.terbiumon.top/wisp/", name: "TB Wisp Instance" },
 				{ id: value, name: "Custom Wisp" },
 			];
-			await Filer.fs.promises.writeFile("//apps/system/settings.tapp/wisp-servers.json", JSON.stringify(stockDat));
+			await window.tb.fs.promises.writeFile("//apps/system/settings.tapp/wisp-servers.json", JSON.stringify(stockDat));
 		};
 
 		return (
@@ -505,9 +504,7 @@ export default function Setup() {
 			currentViewRef.current?.classList.remove("-translate-x-6");
 			currentViewRef.current?.classList.remove("opacity-0");
 		}, 150);
-		setTimeout(() => {
-			saveData();
-		}, 2000);
+		saveData();
 		return (
 			<p
 				ref={el => {
@@ -554,7 +551,7 @@ export default function Setup() {
 					>
 						{currentStep < 5 && (
 							<button
-								className={`cursor-pointer bg-[#ffffff0a] text-[#ffffff38] border-[#ffffff22] hover:bg-[#ffffff10] hover:text-[#ffffff8d] focus:bg-[#ffffff1f] focus:text-[#ffffff8d] focus:border-[#73a9ffd6] focus:ring-[#73a9ff74] focus:outline-hidden focus:ring-2 ring-[transparent] ring-0 border-[1px] font-[600] px-[20px] py-[8px] rounded-[6px] duration-150 ${currentStep === 5 || currentStep === 4 ? "translate-y-8 opacity-0 pointer-events-none" : ""}`}
+								className={`cursor-pointer bg-[#ffffff0a] text-[#ffffff38] border-[#ffffff22] hover:bg-[#ffffff10] hover:text-[#ffffff8d] focus:bg-[#ffffff1f] focus:text-[#ffffff8d] focus:border-[#73a9ffd6] focus:ring-[#73a9ff74] focus:outline-hidden focus:ring-2 ring-[transparent] ring-0 border-[1px] font-[600] px-[20px] py-[8px] rounded-[6px] duration-150 ${currentStep === 5 ? "translate-y-8 opacity-0 pointer-events-none" : ""}`}
 								onMouseDown={Back}
 							>
 								Previous

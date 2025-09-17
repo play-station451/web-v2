@@ -26,10 +26,7 @@ export const registry = {
 		//@ts-ignore
 		this.cache[data.path] = data.content;
 
-		if (window.Filer) {
-			const Filer = window.Filer;
-			await Filer.fs.promises.writeFile("/system/etc/terbium/settings.json", JSON.stringify(this.cache));
-		}
+		await window.tb.fs.promises.writeFile("/system/etc/terbium/settings.json", JSON.stringify(this.cache));
 	},
 	exists(data: any) {
 		// @ts-expect-error

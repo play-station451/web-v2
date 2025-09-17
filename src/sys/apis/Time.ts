@@ -2,8 +2,7 @@ let format: string = "12h";
 let internet: boolean;
 let showSeconds: boolean;
 const getTime = () => {
-	const Filer = window.Filer;
-	Filer.fs.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, (err: any, data: any) => {
+	window.tb.fs.readFile(`/home/${sessionStorage.getItem("currAcc")}/settings.json`, (err: any, data: any) => {
 		if (err) return console.error(err);
 		const settings = JSON.parse(data);
 		format = settings["times"]["format"];

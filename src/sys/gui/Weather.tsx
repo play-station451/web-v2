@@ -29,20 +29,20 @@ export default function Weather() {
 	useEffect(() => {
 		const getWeather = async () => {
 			try {
-				const settings: SysSettings = JSON.parse(await Filer.fs.promises.readFile("/system/etc/terbium/settings.json"));
+				const settings: SysSettings = JSON.parse(await window.tb.fs.promises.readFile("/system/etc/terbium/settings.json"));
 				const defaultLocation = "40.7590322,-74.0516312";
 				const loc = settings.location || defaultLocation;
 				const locationResponse = await fetch(`https://api.weather.gov/points/${loc}`, {
 					method: "GET",
 					headers: {
-						"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0 Safari/537.36 Terbium-Browser/2.0.0",
+						"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0 Safari/537.36 Terbium-Browser/2.1.0",
 					},
 				});
 				const locationData: LocationData = await locationResponse.json();
 				const forecastResponse = await fetch(locationData.properties.forecast, {
 					method: "GET",
 					headers: {
-						"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0 Safari/537.36 Terbium-Browser/2.0.0",
+						"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0 Safari/537.36 Terbium-Browser/2.1.0",
 					},
 				});
 				const forecastData: ForecastData = await forecastResponse.json();

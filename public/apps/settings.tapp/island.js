@@ -20,7 +20,7 @@ tb_island.addControl({
 							let reader = new FileReader();
 							reader.onload = async () => {
 								let settings = JSON.parse(reader.result);
-								await Filer.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, JSON.stringify(settings), "utf8");
+								await window.parent.tb.fs.promises.writeFile(`/home/${await window.tb.user.username()}/settings.json`, JSON.stringify(settings), "utf8");
 							};
 							reader.readAsText(file);
 						};
@@ -30,7 +30,7 @@ tb_island.addControl({
 				{
 					text: "Export Settings",
 					click: async () => {
-						let settings = JSON.parse(await Filer.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
+						let settings = JSON.parse(await window.parent.tb.fs.promises.readFile(`/home/${await window.tb.user.username()}/settings.json`, "utf8"));
 						let data = JSON.stringify(settings);
 						let blob = new Blob([data], { type: "application/json" });
 						let url = URL.createObjectURL(blob);

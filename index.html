@@ -1,21 +1,23 @@
-<tb/>
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/tb.svg" />
+    <link rel="icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Terbium</title>
+    <link rel="manifest" href="/manifest.json" />
     <meta name="title" content="Terbium" />
     <meta name="description" content="The next generation of Terbium. built to last." />
+    <meta name="theme-color" content="#D16FFF" />
+    <meta property="og:image" content="/tb.svg" />
     <meta name="google-adsense-account" content="ca-pub-2875368391887289" />
   </head>
   <body>
     <div id="root" class="flex flex-col h-full bg-[#0e0e0e] overflow-hidden"></div>
+    <script src="/scram/scramjet.all.js"></script>
     <script type="module" src="/src/main.tsx"></script>
     <script type="module" src="/src/init/index.ts"></script>
     <script src="assets/libs/filer.min.js"></script>
-    <script src="/scramjet/scramjet.controller.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/eruda" onload="if (localStorage.getItem('eruda'))  window.eruda.init()"></script>
 
     <!-- Google tag (gtag.js) -->

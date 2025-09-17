@@ -24,7 +24,9 @@
 		"strict": true,
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
-		"noFallthroughCasesInSwitch": true
+		"noFallthroughCasesInSwitch": true,
+
+		"typeRoots": ["./node_modules/@types", "./node_modules/@mercuryworkshop/scramjet/dist/types"]
 	},
-	"include": ["src"]
+	"include": ["src", "node_modules/@mercuryworkshop/scramjet/dist/types/types.d.ts"]
 }
